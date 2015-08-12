@@ -1,0 +1,34 @@
+{
+  "name": "splunk-logging",
+  "version": "1.0.0",
+  "description": "Splunk Event Collector logging interface for JavaScript",
+  "homepage": "http://dev.splunk.com",
+  "main": "index.js",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/splunk/splunk-javascript-logging.git"
+  },
+  "keywords": [
+    "splunk",
+    "event",
+    "collector",
+    "logging",
+    "stream"
+  ],
+  "author": {
+    "name": "Splunk",
+    "email": "devinfo@splunk.com",
+    "url": "http://dev.splunk.com"
+  },
+  "license": "Apache 2.0",
+  "engine": {
+    "node": ">=0.8.0"
+  },
+  "dependencies": {
+    "request": "^2.60.0"
+  },
+  "devDependencies": {
+    "jshint" : "0.5.x >= 0.5.4"
+  }
+}
