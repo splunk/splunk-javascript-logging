@@ -55,7 +55,7 @@ module.exports = {
     },
     /**
      * TODO: docs
-     * Takes config settings, anything, & a callback
+     * Takes config settings, anything, & a callback(err, resp, body)
      * 
      * Makes an HTTP POST to the configured server
      */
