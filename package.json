@@ -1,11 +1,11 @@
 {
   "name": "splunk-logging",
-  "version": "1.0.0",
+  "version": "0.8.0",
   "description": "Splunk Event Collector logging interface for JavaScript",
   "homepage": "http://dev.splunk.com",
   "main": "index.js",
   "scripts": {
-    "test": "node tests/tests.js"
+    "test": "istanbul cover _mocha -- -R spec"
   },
   "repository": {
     "type": "git",
@@ -31,7 +31,8 @@
     "request": "^2.60.0"
   },
   "devDependencies": {
-    "jshint" : "0.5.x >= 0.5.4",
-    "nodeunit" : "0.9.x"
+    "istanbul": "^0.3.17",
+    "jshint": "0.5.x >= 0.5.4",
+    "mocha": "^2.2.5"
   }
 }

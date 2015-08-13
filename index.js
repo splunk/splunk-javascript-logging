@@ -1,6 +1,9 @@
 var request = require("request");
 
 module.exports = {
+    /**
+     * TODO: docs
+     */
     levels: {
         info: "info"
     },
@@ -28,7 +31,7 @@ module.exports = {
         else {
             configuration.name = configuration.name || "splunk-javascript-logging";
             configuration.host = configuration.host || "localhost";
-            configuration.url = configuration.url || "/services/collector/event/1.0"
+            configuration.url = configuration.url || "/services/collector/event/1.0";
             configuration.useHTTPS = configuration.hasOwnProperty("useHTTPS") ? configuration.useHTTPS : true;
             configuration.strictSSL = configuration.hasOwnProperty("strictSSL") ? configuration.strictSSL : false;
             
