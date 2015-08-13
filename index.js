@@ -1,6 +1,9 @@
 var request = require("request");
 
 module.exports = {
+    levels: {
+        info: "info"
+    },
     /**
      * TODO: docs
      * Takes an object with keys:
@@ -19,23 +22,27 @@ module.exports = {
         else if (!configuration.hasOwnProperty("token")) {
             throw new Error("Configuration object must have a token.");
         }
+        else if (typeof configuration.token !== "string") {
+            throw new Error("Configuration token must be a string.");
+        }
         else {
             configuration.name = configuration.name || "splunk-javascript-logging";
             configuration.host = configuration.host || "localhost";
-            configuration.useHTTPS = configuration.useHTTPS || true;
-            configuration.strictSSL = configuration.strictSSL || false;
+            configuration.url = configuration.url || "/services/collector/event/1.0"
+            configuration.useHTTPS = configuration.hasOwnProperty("useHTTPS") ? configuration.useHTTPS : true;
+            configuration.strictSSL = configuration.hasOwnProperty("strictSSL") ? configuration.strictSSL : false;
             // TODO: Force the info logging level?
-            configuration.level = "info";
+            configuration.level = configuration.level || this.levels.info;
 
             // Port - try to parse it as an int, error if it fails
             if (!configuration.hasOwnProperty("port")) {
-                configuration.port = configuration.port || 8088;
-            }
-            else if (isNaN(parseInt(configuration.port, 10))) {
-                throw new Error("Port must be an integer, found: " + configuration.port);
+                configuration.port = 8088;
             }
             else {
-                configuration.port = parseInt(configuration.port, 10) || 8088;    
+                configuration.port = parseInt(configuration.port, 10);
+                if (isNaN(configuration.port)) {
+                    throw new Error("Port must be an integer, found: " + configuration.port);
+                }
             }
 
             return configuration;
@@ -60,11 +67,9 @@ module.exports = {
      * Makes an HTTP POST to the configured server
      */
     sendEvent: function (config, event, callback) {
-        var pathPrefix = config.useHTTPS ? "https" : "http";
-        var pathSuffix = "/services/collector/event/1.0";
-
+        var scheme = config.useHTTPS ? "https" : "http";
         var options = {
-            url: pathPrefix + "://" + config.host + ":" + config.port + pathSuffix,
+            url: scheme + "://" + config.host + ":" + config.port + config.url,
             headers: {
                 Authorization: "Splunk " + config.token
             },
