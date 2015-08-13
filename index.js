@@ -31,10 +31,10 @@ module.exports = {
             configuration.url = configuration.url || "/services/collector/event/1.0"
             configuration.useHTTPS = configuration.hasOwnProperty("useHTTPS") ? configuration.useHTTPS : true;
             configuration.strictSSL = configuration.hasOwnProperty("strictSSL") ? configuration.strictSSL : false;
+            
             // TODO: Force the info logging level?
             configuration.level = configuration.level || this.levels.info;
 
-            // Port - try to parse it as an int, error if it fails
             if (!configuration.hasOwnProperty("port")) {
                 configuration.port = 8088;
             }
@@ -67,7 +67,10 @@ module.exports = {
      * Makes an HTTP POST to the configured server
      */
     sendEvent: function (config, event, callback) {
-        var scheme = config.useHTTPS ? "https" : "http";
+        var scheme = "https";
+        if (config.hasOwnProperty("https") && !config.useHTTPS) {
+            scheme = "http";
+        }
         var options = {
             url: scheme + "://" + config.host + ":" + config.port + config.url,
             headers: {
