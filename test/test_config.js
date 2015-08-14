@@ -72,7 +72,7 @@ describe("validateConfiguration", function () {
         assert.strictEqual(config.token, validatedConfig.token);
         assert.strictEqual("splunk-javascript-logging/0.8.0", validatedConfig.name);
         assert.strictEqual("localhost", validatedConfig.host);
-        assert.strictEqual("/services/collector/event/1.0", validatedConfig.url);
+        assert.strictEqual("/services/collector/event/1.0", validatedConfig.path);
         assert.strictEqual(true, validatedConfig.useHTTPS);
         assert.strictEqual(false, validatedConfig.strictSSL);
         assert.strictEqual("info", validatedConfig.level);
@@ -90,7 +90,7 @@ describe("validateConfiguration", function () {
         assert.strictEqual(config.token, validatedConfig.token);
         assert.strictEqual("splunk-javascript-logging/0.8.0", validatedConfig.name);
         assert.strictEqual("localhost", validatedConfig.host);
-        assert.strictEqual("/services/collector/event/1.0", validatedConfig.url);
+        assert.strictEqual("/services/collector/event/1.0", validatedConfig.path);
         assert.strictEqual(false, validatedConfig.useHTTPS);
         assert.strictEqual(true, validatedConfig.strictSSL);
         assert.strictEqual("info", validatedConfig.level);
@@ -107,7 +107,7 @@ describe("validateConfiguration", function () {
         assert.strictEqual(config.token, validatedConfig.token);
         assert.strictEqual("splunk-javascript-logging/0.8.0", validatedConfig.name);
         assert.strictEqual("localhost", validatedConfig.host);
-        assert.strictEqual(config.url, validatedConfig.url);
+        assert.strictEqual(config.path, validatedConfig.path);
         assert.strictEqual(true, validatedConfig.useHTTPS);
         assert.strictEqual(false, validatedConfig.strictSSL);
         assert.strictEqual("info", validatedConfig.level);
@@ -124,7 +124,7 @@ describe("validateConfiguration", function () {
         assert.strictEqual(config.token, validatedConfig.token);
         assert.strictEqual("splunk-javascript-logging/0.8.0", validatedConfig.name);
         assert.strictEqual("localhost", validatedConfig.host);
-        assert.strictEqual("/services/collector/event/1.0", validatedConfig.url);
+        assert.strictEqual("/services/collector/event/1.0", validatedConfig.path);
         assert.strictEqual(true, validatedConfig.useHTTPS);
         assert.strictEqual(false, validatedConfig.strictSSL);
         assert.strictEqual("info", validatedConfig.level);

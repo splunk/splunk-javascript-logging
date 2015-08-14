@@ -15,7 +15,6 @@ module.exports = {
      *     name (optional, defaults to splunk-javascript-logging)
      */
     validateConfiguration: function(configuration) {
-        // TODO: do we want to use callbacks here, especially for when conf is invalid?
         if (!configuration) {
             throw new Error("Configuration is required.");
         }
@@ -31,11 +30,9 @@ module.exports = {
         else {
             configuration.name = configuration.name || "splunk-javascript-logging/0.8.0";
             configuration.host = configuration.host || "localhost";
-            configuration.url = configuration.url || "/services/collector/event/1.0";
+            configuration.path = configuration.path || "/services/collector/event/1.0";
             configuration.useHTTPS = configuration.hasOwnProperty("useHTTPS") ? configuration.useHTTPS : true;
             configuration.strictSSL = configuration.hasOwnProperty("strictSSL") ? configuration.strictSSL : false;
-            
-            // TODO: Force the info logging level?
             configuration.level = configuration.level || this.levels.info;
 
             if (!configuration.hasOwnProperty("port")) {
@@ -75,7 +72,7 @@ module.exports = {
             scheme = "http";
         }
         var options = {
-            url: scheme + "://" + config.host + ":" + config.port + config.url,
+            url: scheme + "://" + config.host + ":" + config.port + config.path,
             headers: {
                 Authorization: "Splunk " + config.token
             },
