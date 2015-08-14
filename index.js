@@ -29,7 +29,7 @@ module.exports = {
             throw new Error("Configuration token must be a string.");
         }
         else {
-            configuration.name = configuration.name || "splunk-javascript-logging";
+            configuration.name = configuration.name || "splunk-javascript-logging/0.8.0";
             configuration.host = configuration.host || "localhost";
             configuration.url = configuration.url || "/services/collector/event/1.0";
             configuration.useHTTPS = configuration.hasOwnProperty("useHTTPS") ? configuration.useHTTPS : true;
