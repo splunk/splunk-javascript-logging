@@ -66,7 +66,7 @@ module.exports = {
      * 
      * Makes an HTTP POST to the configured server
      */
-    sendEvent: function (config, event, callback) {
+    send: function (config, data, callback) {
         var scheme = "https";
         if (config.hasOwnProperty("https") && !config.useHTTPS) {
             scheme = "http";
@@ -77,7 +77,7 @@ module.exports = {
                 Authorization: "Splunk " + config.token
             },
             json: true,
-            body: this._makeBody(event),
+            body: this._makeBody(data),
             strictSSL: config.strictSSL
         };
 

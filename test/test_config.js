@@ -96,10 +96,10 @@ describe("validateConfiguration", function () {
         assert.strictEqual("info", validatedConfig.level);
         assert.strictEqual(8088, validatedConfig.port);
     });
-    it("should set non-default url", function() {
+    it("should set non-default path", function() {
         var config = {
             token: "a-token-goes-here-usually",
-            url: "/something/different/here/1.0"
+            path: "/something/different/here/1.0"
         };
         var validatedConfig = splunklogging.validateConfiguration(config);
 
