@@ -71,6 +71,7 @@ module.exports = {
         if (config.hasOwnProperty("https") && !config.useHTTPS) {
             scheme = "http";
         }
+        // TODO: move the request out of this function
         var options = {
             url: scheme + "://" + config.host + ":" + config.port + config.path,
             headers: {
