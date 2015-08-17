@@ -33,7 +33,7 @@
   },
   "devDependencies": {
     "istanbul": "0.3.17",
-    "jshint": "0.5.x >= 0.5.4",
+    "jshint": "2.8.0",
     "mocha": "2.2.5"
   }
 }
