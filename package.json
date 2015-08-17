@@ -26,14 +26,14 @@
   },
   "license": "Apache 2.0",
   "engine": {
-    "node": ">=0.8.0"
+    "node": ">=0.10.0"
   },
   "dependencies": {
-    "request": "^2.60.0"
+    "request": "2.60.0"
   },
   "devDependencies": {
-    "istanbul": "^0.3.17",
+    "istanbul": "0.3.17",
     "jshint": "0.5.x >= 0.5.4",
-    "mocha": "^2.2.5"
+    "mocha": "2.2.5"
   }
 }
