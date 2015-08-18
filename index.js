@@ -32,7 +32,6 @@ module.exports = {
             // Specifying the url will override host, port, useHTTPS, & path if possible
             if (configuration.url) {
                 var parsed = url.parse(configuration.url);
-                console.log(parsed);
                 if (parsed.protocol) {
                     configuration.useHTTPS = (parsed.protocol === "https:");
                 }
