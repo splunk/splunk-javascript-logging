@@ -34,6 +34,30 @@ describe("validateConfiguration", function () {
             assert.strictEqual(err.message, "Configuration is required.");
         }
     });
+    it("should error with string config", function() {
+        var config = "this is not an object";
+        try {
+            splunklogging.validateConfiguration(config);
+            assert.fail(false, "Expected an error.");
+        }
+        catch (err) {
+            assert.ok(err);
+            assert.strictEqual(err.message, "Configuration must be an object.");
+        }
+    });
+    it("should error without a token in config", function() {
+        var config = {
+            something: "else"
+        };
+        try {
+            splunklogging.validateConfiguration(config);
+            assert.fail(false, "Expected an error.");
+        }
+        catch (err) {
+            assert.ok(err);
+            assert.strictEqual(err.message, "Configuration object must have a token.");
+        }
+    });
     it("should error with non-string token in config", function() {
         var config = {
             token: {}
