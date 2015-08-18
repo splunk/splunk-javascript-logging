@@ -188,7 +188,7 @@ describe("validateConfiguration", function () {
         assert.strictEqual("info", validatedConfig.level);
         assert.strictEqual(8088, validatedConfig.port);
     });
-    it("should fail to set host from url property with host only", function() {
+    it("should set host from url property with host only", function() {
         var config = {
             token: "a-token-goes-here-usually",
             url: "splunk.local"
