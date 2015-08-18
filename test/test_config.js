@@ -130,4 +130,55 @@ describe("validateConfiguration", function () {
         assert.strictEqual("info", validatedConfig.level);
         assert.strictEqual(config.port, validatedConfig.port);
     });
+    it("should set scheme, host, port & path from url property", function() {
+        var config = {
+            token: "a-token-goes-here-usually",
+            url: "http://splunk.local:9088/services/collector/different/1.0"
+        };
+        var validatedConfig = splunklogging.validateConfiguration(config);
+
+        assert.ok(validatedConfig);
+        assert.strictEqual(config.token, validatedConfig.token);
+        assert.strictEqual("splunk-javascript-logging/0.8.0", validatedConfig.name);
+        assert.strictEqual("splunk.local", validatedConfig.host);
+        assert.strictEqual("/services/collector/different/1.0", validatedConfig.path);
+        assert.strictEqual(false, validatedConfig.useHTTPS);
+        assert.strictEqual(false, validatedConfig.strictSSL);
+        assert.strictEqual("info", validatedConfig.level);
+        assert.strictEqual(9088, validatedConfig.port);
+    });
+    it("should set scheme from url property", function() {
+        var config = {
+            token: "a-token-goes-here-usually",
+            url: "http:"
+        };
+        var validatedConfig = splunklogging.validateConfiguration(config);
+
+        assert.ok(validatedConfig);
+        assert.strictEqual(config.token, validatedConfig.token);
+        assert.strictEqual("splunk-javascript-logging/0.8.0", validatedConfig.name);
+        assert.strictEqual("localhost", validatedConfig.host);
+        assert.strictEqual("/services/collector/event/1.0", validatedConfig.path);
+        assert.strictEqual(false, validatedConfig.useHTTPS);
+        assert.strictEqual(false, validatedConfig.strictSSL);
+        assert.strictEqual("info", validatedConfig.level);
+        assert.strictEqual(8088, validatedConfig.port);
+    });
+    it("should fail to set host from url property with host only", function() {
+        var config = {
+            token: "a-token-goes-here-usually",
+            url: "splunk.local"
+        };
+        var validatedConfig = splunklogging.validateConfiguration(config);
+
+        assert.ok(validatedConfig);
+        assert.strictEqual(config.token, validatedConfig.token);
+        assert.strictEqual("splunk-javascript-logging/0.8.0", validatedConfig.name);
+        assert.strictEqual("splunk.local", validatedConfig.host);
+        assert.strictEqual("/services/collector/event/1.0", validatedConfig.path);
+        assert.strictEqual(true, validatedConfig.useHTTPS);
+        assert.strictEqual(false, validatedConfig.strictSSL);
+        assert.strictEqual("info", validatedConfig.level);
+        assert.strictEqual(8088, validatedConfig.port);
+    });
 });

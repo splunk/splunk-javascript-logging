@@ -1,4 +1,5 @@
 var request = require("request");
+var url = require("url");
 
 module.exports = {
     /**
@@ -28,6 +29,26 @@ module.exports = {
             throw new Error("Configuration token must be a string.");
         }
         else {
+            // Specifying the url will override host, port, useHTTPS, & path if possible
+            if (configuration.url) {
+                var parsed = url.parse(configuration.url);
+                console.log(parsed);
+                if (parsed.protocol) {
+                    configuration.useHTTPS = (parsed.protocol === "https:");
+                }
+                if (parsed.port) {
+                    configuration.port = parsed.port;
+                }
+                if (parsed.hostname && parsed.path) {
+                    configuration.host = parsed.hostname;
+                    configuration.path = parsed.path;
+                }
+                else if (parsed.path) {
+                    // If hostname isn't set, but path is assume path is the host
+                    configuration.host = parsed.path;
+                }
+            }
+
             configuration.name = configuration.name || "splunk-javascript-logging/0.8.0";
             configuration.host = configuration.host || "localhost";
             configuration.path = configuration.path || "/services/collector/event/1.0";
