@@ -1,48 +1,48 @@
 var splunklogging = require("../index");
 var assert = require("assert");
 
-describe("validateConfiguration", function () {
+describe("validateConfig", function () {
     it("should error on no config", function() {
         try {
-            splunklogging.validateConfiguration();
+            splunklogging.validateConfig();
             assert.fail(false, "Expected an error.");
         }
         catch (err) {
             assert.ok(err);
-            assert.strictEqual(err.message, "Configuration is required.");
+            assert.strictEqual(err.message, "Config is required.");
         }
     });
     it("should error with undefined config", function() {
         var config;
         try {
-            splunklogging.validateConfiguration(config);
+            splunklogging.validateConfig(config);
             assert.fail(false, "Expected an error.");
         }
         catch (err) {
             assert.ok(err);
-            assert.strictEqual(err.message, "Configuration is required.");
+            assert.strictEqual(err.message, "Config is required.");
         }
     });
     it("should error with null config", function() {
         var config = null;
         try {
-            splunklogging.validateConfiguration(config);
+            splunklogging.validateConfig(config);
             assert.fail(false, "Expected an error.");
         }
         catch (err) {
             assert.ok(err);
-            assert.strictEqual(err.message, "Configuration is required.");
+            assert.strictEqual(err.message, "Config is required.");
         }
     });
     it("should error with string config", function() {
         var config = "this is not an object";
         try {
-            splunklogging.validateConfiguration(config);
+            splunklogging.validateConfig(config);
             assert.fail(false, "Expected an error.");
         }
         catch (err) {
             assert.ok(err);
-            assert.strictEqual(err.message, "Configuration must be an object.");
+            assert.strictEqual(err.message, "Config must be an object.");
         }
     });
     it("should error without a token in config", function() {
@@ -50,12 +50,12 @@ describe("validateConfiguration", function () {
             something: "else"
         };
         try {
-            splunklogging.validateConfiguration(config);
+            splunklogging.validateConfig(config);
             assert.fail(false, "Expected an error.");
         }
         catch (err) {
             assert.ok(err);
-            assert.strictEqual(err.message, "Configuration object must have a token.");
+            assert.strictEqual(err.message, "Config object must have a token.");
         }
     });
     it("should error with non-string token in config", function() {
@@ -63,12 +63,12 @@ describe("validateConfiguration", function () {
             token: {}
         };
         try {
-            splunklogging.validateConfiguration(config);
+            splunklogging.validateConfig(config);
             assert.fail(false, "Expected an error.");
         }
         catch (err) {
             assert.ok(err);
-            assert.strictEqual(err.message, "Configuration token must be a string.");
+            assert.strictEqual(err.message, "Config token must be a string.");
         }
     });
     it("should error with NaN port", function() {
@@ -78,7 +78,7 @@ describe("validateConfiguration", function () {
         };
 
         try {
-            splunklogging.validateConfiguration(config);
+            splunklogging.validateConfig(config);
             assert.fail(false, "Expected an error.");
         }
         catch (err) {
@@ -90,7 +90,7 @@ describe("validateConfiguration", function () {
         var config = {
             token: "a-token-goes-here-usually"
         };
-        var validatedConfig = splunklogging.validateConfiguration(config);
+        var validatedConfig = splunklogging.validateConfig(config);
 
         assert.ok(validatedConfig);
         assert.strictEqual(config.token, validatedConfig.token);
@@ -109,7 +109,7 @@ describe("validateConfiguration", function () {
             useHTTPS: false,
             strictSSL: true
         };
-        var validatedConfig = splunklogging.validateConfiguration(config);
+        var validatedConfig = splunklogging.validateConfig(config);
 
         assert.strictEqual(config.token, validatedConfig.token);
         assert.strictEqual("splunk-javascript-logging/0.8.0", validatedConfig.name);
@@ -125,7 +125,7 @@ describe("validateConfiguration", function () {
             token: "a-token-goes-here-usually",
             path: "/something/different/here/1.0"
         };
-        var validatedConfig = splunklogging.validateConfiguration(config);
+        var validatedConfig = splunklogging.validateConfig(config);
 
         assert.ok(validatedConfig);
         assert.strictEqual(config.token, validatedConfig.token);
@@ -142,7 +142,7 @@ describe("validateConfiguration", function () {
             token: "a-token-goes-here-usually",
             port: 1234
         };
-        var validatedConfig = splunklogging.validateConfiguration(config);
+        var validatedConfig = splunklogging.validateConfig(config);
 
         assert.ok(validatedConfig);
         assert.strictEqual(config.token, validatedConfig.token);
@@ -159,7 +159,7 @@ describe("validateConfiguration", function () {
             token: "a-token-goes-here-usually",
             url: "http://splunk.local:9088/services/collector/different/1.0"
         };
-        var validatedConfig = splunklogging.validateConfiguration(config);
+        var validatedConfig = splunklogging.validateConfig(config);
 
         assert.ok(validatedConfig);
         assert.strictEqual(config.token, validatedConfig.token);
@@ -176,7 +176,7 @@ describe("validateConfiguration", function () {
             token: "a-token-goes-here-usually",
             url: "http:"
         };
-        var validatedConfig = splunklogging.validateConfiguration(config);
+        var validatedConfig = splunklogging.validateConfig(config);
 
         assert.ok(validatedConfig);
         assert.strictEqual(config.token, validatedConfig.token);
@@ -193,7 +193,7 @@ describe("validateConfiguration", function () {
             token: "a-token-goes-here-usually",
             url: "splunk.local"
         };
-        var validatedConfig = splunklogging.validateConfiguration(config);
+        var validatedConfig = splunklogging.validateConfig(config);
 
         assert.ok(validatedConfig);
         assert.strictEqual(config.token, validatedConfig.token);

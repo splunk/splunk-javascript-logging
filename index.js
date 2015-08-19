@@ -15,57 +15,57 @@ module.exports = {
      *     host (optional, defaults to localhost)
      *     name (optional, defaults to splunk-javascript-logging)
      */
-    validateConfiguration: function(configuration) {
-        if (!configuration) {
-            throw new Error("Configuration is required.");
+    validateConfig: function(config) {
+        if (!config) {
+            throw new Error("Config is required.");
         }
-        else if (typeof configuration !== "object") {
-            throw new Error("Configuration must be an object.");
+        else if (typeof config !== "object") {
+            throw new Error("Config must be an object.");
         }
-        else if (!configuration.hasOwnProperty("token")) {
-            throw new Error("Configuration object must have a token.");
+        else if (!config.hasOwnProperty("token")) {
+            throw new Error("Config object must have a token.");
         }
-        else if (typeof configuration.token !== "string") {
-            throw new Error("Configuration token must be a string.");
+        else if (typeof config.token !== "string") {
+            throw new Error("Config token must be a string.");
         }
         else {
             // Specifying the url will override host, port, useHTTPS, & path if possible
-            if (configuration.url) {
-                var parsed = url.parse(configuration.url);
+            if (config.url) {
+                var parsed = url.parse(config.url);
                 if (parsed.protocol) {
-                    configuration.useHTTPS = (parsed.protocol === "https:");
+                    config.useHTTPS = (parsed.protocol === "https:");
                 }
                 if (parsed.port) {
-                    configuration.port = parsed.port;
+                    config.port = parsed.port;
                 }
                 if (parsed.hostname && parsed.path) {
-                    configuration.host = parsed.hostname;
-                    configuration.path = parsed.path;
+                    config.host = parsed.hostname;
+                    config.path = parsed.path;
                 }
                 else if (parsed.path) {
                     // If hostname isn't set, but path is assume path is the host
-                    configuration.host = parsed.path;
+                    config.host = parsed.path;
                 }
             }
 
-            configuration.name = configuration.name || "splunk-javascript-logging/0.8.0";
-            configuration.host = configuration.host || "localhost";
-            configuration.path = configuration.path || "/services/collector/event/1.0";
-            configuration.useHTTPS = configuration.hasOwnProperty("useHTTPS") ? configuration.useHTTPS : true;
-            configuration.strictSSL = configuration.hasOwnProperty("strictSSL") ? configuration.strictSSL : false;
-            configuration.level = configuration.level || this.levels.info;
+            config.name = config.name || "splunk-javascript-logging/0.8.0";
+            config.host = config.host || "localhost";
+            config.path = config.path || "/services/collector/event/1.0";
+            config.useHTTPS = config.hasOwnProperty("useHTTPS") ? config.useHTTPS : true;
+            config.strictSSL = config.hasOwnProperty("strictSSL") ? config.strictSSL : false;
+            config.level = config.level || this.levels.info;
 
-            if (!configuration.hasOwnProperty("port")) {
-                configuration.port = 8088;
+            if (!config.hasOwnProperty("port")) {
+                config.port = 8088;
             }
             else {
-                configuration.port = parseInt(configuration.port, 10);
-                if (isNaN(configuration.port)) {
-                    throw new Error("Port must be an integer, found: " + configuration.port);
+                config.port = parseInt(config.port, 10);
+                if (isNaN(config.port)) {
+                    throw new Error("Port must be an integer, found: " + config.port);
                 }
             }
 
-            return configuration;
+            return config;
         }
     },
     /**
