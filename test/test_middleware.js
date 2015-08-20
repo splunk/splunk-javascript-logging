@@ -20,6 +20,14 @@ var successBody = {
     code: 0
 };
 
+describe("Test config file 'config.json'", function() {
+    it("should at least have a token", function() {
+        assert.ok(configurationFile);
+        assert.ok(configurationFile.hasOwnProperty("token"));
+        assert.ok(configurationFile.token.length > 0);
+    });
+});
+
 describe("send", function () {
     it("should use default middleware, and error with bad token", function(done) {
         var config = {
