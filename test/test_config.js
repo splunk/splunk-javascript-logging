@@ -71,6 +71,20 @@ describe("validateConfig", function () {
             assert.strictEqual(err.message, "Config token must be a string.");
         }
     });
+    it("should error with non-function middleware in config", function() {
+        var config = {
+            token: "a-token-goes-here-usually",
+            middleware: "this is not a function"
+        };
+        try {
+            splunklogging.validateConfig(config);
+            assert.fail(false, "Expected an error.");
+        }
+        catch (err) {
+            assert.ok(err);
+            assert.strictEqual(err.message, "Config middleware must be a function.");
+        }
+    });
     it("should error with NaN port", function() {
         var config = {
             token: "a-token-goes-here-usually",

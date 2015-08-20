@@ -14,6 +14,7 @@ module.exports = {
      *     token (required)
      *     host (optional, defaults to localhost)
      *     name (optional, defaults to splunk-javascript-logging)
+     *     etc.
      */
     validateConfig: function(config) {
         if (!config) {
@@ -47,6 +48,14 @@ module.exports = {
                     config.host = parsed.path;
                 }
             }
+            
+            if (!config.hasOwnProperty("middleware")) {
+                config.middleware = this._defaultMiddleware;
+            }
+            else if (config.hasOwnProperty("middleware") && typeof config.middleware !== "function") {
+                throw new Error("Config middleware must be a function.");
+            }
+            // else, keep the middleware as is
 
             config.name = config.name || "splunk-javascript-logging/0.8.0";
             config.host = config.host || "localhost";
@@ -80,18 +89,12 @@ module.exports = {
         };
         return body;
     },
-    /**
-     * TODO: docs
-     * Takes config settings, anything, & a callback(err, resp, body)
-     * 
-     * Makes an HTTP POST to the configured server
-     */
-    send: function (config, data, callback) {
+    _sendEvents: function(config, data, callback) {
+        // TODO: test http
         var scheme = "https";
-        if (config.hasOwnProperty("https") && !config.useHTTPS) {
+        if (config.hasOwnProperty("useHTTPS") && !config.useHTTPS) {
             scheme = "http";
         }
-        // TODO: move the request out of this function
         var options = {
             url: scheme + "://" + config.host + ":" + config.port + config.path,
             headers: {
@@ -103,5 +106,20 @@ module.exports = {
         };
 
         request.post(options, callback);
+    },
+    _defaultMiddleware: function(config, data, callback) {
+        module.exports._sendEvents(config, data, callback);
+    },
+    /**
+     * TODO: docs
+     * Takes config settings, anything, & a callback(err, resp, body)
+     * 
+     * Makes an HTTP POST to the configured server
+     */
+    send: function (config, data, callback) {
+        // Assume the config hasn't been validated yet, if it has there should be no side effects
+        config = this.validateConfig(config);
+
+        config.middleware(config, data, callback);
     }
 };
