@@ -31,7 +31,12 @@ describe("SplunkLogger send", function() {
 
             var data = "something";
 
-            logger.send(config, data, function(err, resp, body) {
+            var settings = {
+                config: config,
+                data: data
+            };
+
+            logger.send(settings, function(err, resp, body) {
                 assert.ok(!err);
                 assert.strictEqual(resp.headers["content-type"], "application/json; charset=UTF-8");
                 assert.strictEqual(resp.body, body);
@@ -49,7 +54,12 @@ describe("SplunkLogger send", function() {
 
             var data = "something";
 
-            logger.send(config, data, function(err, resp, body) {
+            var settings = {
+                config: config,
+                data: data
+            };
+
+            logger.send(settings, function(err, resp, body) {
                 assert.ok(!err);
                 assert.strictEqual(resp.headers["content-type"], "application/json; charset=UTF-8");
                 assert.strictEqual(resp.body, body);
@@ -67,8 +77,12 @@ describe("SplunkLogger send", function() {
             var logger = new SplunkLogger(config);
 
             var data = "something";
+            var settings = {
+                config: config,
+                data: data
+            };
 
-            logger.send(config, data, function(err, resp, body) {
+            logger.send(settings, function(err, resp, body) {
                 assert.ok(err);
                 assert.strictEqual(err.message, "socket hang up");
                 assert.strictEqual(err.code, "ECONNRESET");
@@ -84,8 +98,12 @@ describe("SplunkLogger send", function() {
             var logger = new SplunkLogger(config);
 
             var data = "something";
+            var settings = {
+                config: config,
+                data: data
+            };
 
-            logger.send(config, data, function(err, resp, body) {
+            logger.send(settings, function(err, resp, body) {
                 assert.ok(!err);
                 assert.strictEqual(resp.headers["content-type"], "application/json; charset=UTF-8");
                 assert.strictEqual(resp.body, body);
@@ -117,16 +135,16 @@ describe("SplunkLogger send", function() {
 
             var middlewareCount = 0;
 
-            function middleware(data, next) {
+            function middleware(settings, next) {
                 middlewareCount++;
-                assert.strictEqual(data, "something");
-                next(null, data);
+                assert.strictEqual(settings.data, "something");
+                next(null, settings);
             }
 
             var logger = new SplunkLogger(config);
             logger.use(middleware);
 
-            logger._sendEvents = function(config, data, next) {
+            logger._sendEvents = function(settings, next) {
                 var response = {
                     headers: {
                         "content-type": "application/json; charset=UTF-8",
@@ -138,8 +156,12 @@ describe("SplunkLogger send", function() {
             };
 
             var initialData = "something";
+            var settings = {
+                config: config,
+                data: initialData
+            };
 
-            logger.send(config, initialData, function(err, resp, body) {
+            logger.send(settings, function(err, resp, body) {
                 assert.ok(!err);
                 assert.strictEqual(resp.body, body);
                 assert.strictEqual(body.code, successBody.code);
@@ -155,25 +177,25 @@ describe("SplunkLogger send", function() {
 
             var middlewareCount = 0;
 
-            function middleware(data, callback) {
+            function middleware(settings, callback) {
                 middlewareCount++;
-                assert.strictEqual(data, "somet??hing");
-                data = encodeURIComponent("somet??hing");
-                callback(null, data);
+                assert.strictEqual(settings.data, "somet??hing");
+                settings.data = encodeURIComponent("somet??hing");
+                callback(null, settings);
             }
 
-            function middleware2(data, callback) {
+            function middleware2(settings, callback) {
                 middlewareCount++;
-                assert.strictEqual(data, "somet%3F%3Fhing");
-                callback(null, data);
+                assert.strictEqual(settings.data, "somet%3F%3Fhing");
+                callback(null, settings);
             }
 
             var logger = new SplunkLogger(config);
             logger.use(middleware);
             logger.use(middleware2);
 
-            logger._sendEvents = function(config, data, next) {
-                assert.strictEqual(data, "somet%3F%3Fhing");
+            logger._sendEvents = function(settings, next) {
+                assert.strictEqual(settings.data, "somet%3F%3Fhing");
                 var response = {
                     headers: {
                         "content-type": "application/json; charset=UTF-8",
@@ -185,8 +207,12 @@ describe("SplunkLogger send", function() {
             };
 
             var initialData = "somet??hing";
+            var settings = {
+                config: config,
+                data: initialData
+            };
 
-            logger.send(config, initialData, function(err, resp, body) {
+            logger.send(settings, function(err, resp, body) {
                 assert.ok(!err);
                 assert.strictEqual(resp.body, body);
                 assert.strictEqual(body.code, successBody.code);
@@ -202,25 +228,25 @@ describe("SplunkLogger send", function() {
 
             var middlewareCount = 0;
 
-            function middleware(data, next) {
+            function middleware(settings, next) {
                 middlewareCount++;
-                assert.strictEqual(data, "somet??hing");
-                data = encodeURIComponent("somet??hing");
-                next(null, data);
+                assert.strictEqual(settings.data, "somet??hing");
+                settings.data = encodeURIComponent("somet??hing");
+                next(null, settings);
             }
 
-            function middleware2(data, next) {
+            function middleware2(settings, next) {
                 middlewareCount++;
-                assert.strictEqual(data, "somet%3F%3Fhing");
-                data = decodeURIComponent(data) + " changed";
-                assert.strictEqual(data, "somet??hing changed");
-                next(null, data);
+                assert.strictEqual(settings.data, "somet%3F%3Fhing");
+                settings.data = decodeURIComponent(settings.data) + " changed";
+                assert.strictEqual(settings.data, "somet??hing changed");
+                next(null, settings);
             }
 
-            function middleware3(data, next) {
+            function middleware3(settings, next) {
                 middlewareCount++;
-                assert.strictEqual(data, "somet??hing changed");
-                next(null, data);
+                assert.strictEqual(settings.data, "somet??hing changed");
+                next(null, settings);
             }
 
             var logger = new SplunkLogger(config);
@@ -228,8 +254,8 @@ describe("SplunkLogger send", function() {
             logger.use(middleware2);
             logger.use(middleware3);
 
-            logger._sendEvents = function(config, data, next) {
-                assert.strictEqual(data, "somet??hing changed");
+            logger._sendEvents = function(settings, next) {
+                assert.strictEqual(settings.data, "somet??hing changed");
                 var response = {
                     headers: {
                         "content-type": "application/json; charset=UTF-8",
@@ -241,8 +267,12 @@ describe("SplunkLogger send", function() {
             };
 
             var initialData = "somet??hing";
+            var settings = {
+                config: config,
+                data: initialData
+            };
 
-            logger.send(config, initialData, function(err, resp, body) {
+            logger.send(settings, function(err, resp, body) {
                 assert.ok(!err);
                 assert.strictEqual(resp.body, body);
                 assert.strictEqual(body.code, successBody.code);
@@ -258,41 +288,41 @@ describe("SplunkLogger send", function() {
 
             var middlewareCount = 0;
 
-            function middleware(data, next) {
+            function middleware(settings, next) {
                 middlewareCount++;
-                assert.strictEqual(data, initialData);
+                assert.strictEqual(settings.data, initialData);
 
-                assert.strictEqual(data.property, initialData.property);
-                assert.strictEqual(data.nested.object, initialData.nested.object);
-                assert.strictEqual(data.number, initialData.number);
-                assert.strictEqual(data.bool, initialData.bool);
+                assert.strictEqual(settings.data.property, initialData.property);
+                assert.strictEqual(settings.data.nested.object, initialData.nested.object);
+                assert.strictEqual(settings.data.number, initialData.number);
+                assert.strictEqual(settings.data.bool, initialData.bool);
 
-                data.property = "new";
-                data.bool = true;
-                next(null, data);
+                settings.data.property = "new";
+                settings.data.bool = true;
+                next(null, settings);
             }
 
-            function middleware2(data, next) {
+            function middleware2(settings, next) {
                 middlewareCount++;
                 
-                assert.strictEqual(data.property, "new");
-                assert.strictEqual(data.nested.object, initialData.nested.object);
-                assert.strictEqual(data.number, initialData.number);
-                assert.strictEqual(data.bool, true);
+                assert.strictEqual(settings.data.property, "new");
+                assert.strictEqual(settings.data.nested.object, initialData.nested.object);
+                assert.strictEqual(settings.data.number, initialData.number);
+                assert.strictEqual(settings.data.bool, true);
 
-                data.number = 789;
-                next(null, data);
+                settings.data.number = 789;
+                next(null, settings);
             }
 
-            function middleware3(data, next) {
+            function middleware3(settings, next) {
                 middlewareCount++;
                 
-                assert.strictEqual(data.property, "new");
-                assert.strictEqual(data.nested.object, initialData.nested.object);
-                assert.strictEqual(data.number, 789);
-                assert.strictEqual(data.bool, true);
+                assert.strictEqual(settings.data.property, "new");
+                assert.strictEqual(settings.data.nested.object, initialData.nested.object);
+                assert.strictEqual(settings.data.number, 789);
+                assert.strictEqual(settings.data.bool, true);
 
-                next(null, data);
+                next(null, settings);
             }
 
             var logger = new SplunkLogger(config);
@@ -300,11 +330,11 @@ describe("SplunkLogger send", function() {
             logger.use(middleware2);
             logger.use(middleware3);
 
-            logger._sendEvents = function(config, data, next) {
-                assert.strictEqual(data.property, "new");
-                assert.strictEqual(data.nested.object, initialData.nested.object);
-                assert.strictEqual(data.number, 789);
-                assert.strictEqual(data.bool, true);
+            logger._sendEvents = function(settings, next) {
+                assert.strictEqual(settings.data.property, "new");
+                assert.strictEqual(settings.data.nested.object, initialData.nested.object);
+                assert.strictEqual(settings.data.number, 789);
+                assert.strictEqual(settings.data.bool, true);
 
                 var response = {
                     headers: {
@@ -324,8 +354,12 @@ describe("SplunkLogger send", function() {
                 number: 1234,
                 bool: false
             };
+            var settings = {
+                config: config,
+                data: initialData
+            };
 
-            logger.send(config, initialData, function(err, resp, body) {
+            logger.send(settings, function(err, resp, body) {
                 assert.ok(!err);
                 assert.strictEqual(resp.body, body);
                 assert.strictEqual(body.code, successBody.code);

@@ -14,8 +14,32 @@ var url = require("url");
  *     etc.
  */
 var SplunkLogger = function(config) {
-    this.config = this._validateConfig(config);
+    this.config = this._initializeConfig(config);
     this.middlewares = [];
+};
+
+/**
+ * TODO: docs, do we want to add other levels?
+ * 
+ */
+SplunkLogger.prototype.levels = {
+    info: "info"
+};
+
+
+var defaultConfig = {
+    name: "splunk-javascript-logging/0.8.0",
+    host: "localhost",
+    path: "/services/collector/event/1.0",
+    protocol: "https",
+    level: SplunkLogger.prototype.levels.info,
+    port: 8088
+};
+
+var defaultRequestOptions = {
+    json: true, // Sets the content-type header to application/json
+    strictSSL: false,
+    url: defaultConfig.protocol + "://" + defaultConfig.host + ":" + defaultConfig.port + defaultConfig.path
 };
 
 /**
@@ -23,8 +47,13 @@ var SplunkLogger = function(config) {
  * 
  * validates the config, throwing an error if it's horribly wrong
  */
-SplunkLogger.prototype._validateConfig = function(config) {
+SplunkLogger.prototype._initializeConfig = function(config) {
+    // Copy over the instance config
     var ret = {};
+    for (var key in this.config) {
+        ret[key] = this.config[key];
+    }
+
     if (!config) {
         throw new Error("Config is required.");
     }
@@ -56,16 +85,17 @@ SplunkLogger.prototype._validateConfig = function(config) {
                 config.host = parsed.path;
             }
         }
-        ret.token = config.token;
-        ret.name = config.name || "splunk-javascript-logging/0.8.0";
-        ret.host = config.host || "localhost";
-        ret.path = config.path || "/services/collector/event/1.0";
-        ret.protocol = config.protocol || "https";
-        ret.strictSSL = config.hasOwnProperty("strictSSL") ? config.strictSSL : false;
-        ret.level = config.level || this.levels.info;
+
+        // Take the argument's value, then instance value, then the default value
+        ret.token = config.token || ret.token;
+        ret.name = config.name || ret.name || defaultConfig.name;
+        ret.host = config.host || ret.host || defaultConfig.host;
+        ret.path = config.path || ret.path || defaultConfig.path;
+        ret.protocol = config.protocol || ret.protocol || defaultConfig.protocol;
+        ret.level = config.level || ret.level || defaultConfig.level;
 
         if (!config.hasOwnProperty("port")) {
-            ret.port = 8088;
+            ret.port = ret.port || defaultConfig.port;
         }
         else {
             ret.port = parseInt(config.port, 10);
@@ -81,11 +111,50 @@ SplunkLogger.prototype._validateConfig = function(config) {
 };
 
 /**
- * TODO: docs, do we want to add other levels?
+ * TODO: docs
  * 
+ * NOTE: This function calls _initializeConfig
  */
-SplunkLogger.prototype.levels = {
-    info: "info"
+SplunkLogger.prototype._initializeRequestOptions = function(config, options) {
+    var ret = {};
+    for (var key in defaultRequestOptions) {
+        ret[key] = defaultRequestOptions[key];
+    }
+
+    // _initializeConfig will throw an error config or this.config is
+    //     undefined, or doesn't have at least the token property set
+    config = this._initializeConfig(config || this.config);
+    options = options || ret;
+
+    ret.url = config.protocol + "://" + config.host + ":" + config.port + config.path;
+    ret.json = options.json || ret.json;
+    ret.strictSSL = options.strictSSL || ret.strictSSL;
+    ret.headers = ret.headers || {};
+    ret.headers.Authorization = "Splunk " + config.token;
+
+    return ret;
+};
+
+/**
+ * TODO: docs
+ * 
+ * Takes the setting object & tries to initialize the
+ * config and request options.
+ */
+SplunkLogger.prototype._initializeSettings = function(settings) {
+    if (!settings) {
+        throw new Error("Settings argument is required.");
+    }
+    else if (typeof settings !== "object") {
+        throw new Error("Settings argument must be an object.");
+    }
+    else if (!settings.hasOwnProperty("data")) {
+        throw new Error("Settings argument must have the data property set.");
+    }
+
+    settings.requestOptions = this._initializeRequestOptions(settings.config, settings.requestOptions);
+
+    return settings;
 };
 
 /**
@@ -122,18 +191,15 @@ SplunkLogger.prototype.use = function(middleware) {
  * Makes an HTTP POST to the configured server.
  * Any config not specified will be 
  */
-SplunkLogger.prototype._sendEvents = function(config, data, callback) {
-    var options = {
-        url: config.protocol + "://" + config.host + ":" + config.port + config.path,
-        headers: {
-            Authorization: "Splunk " + config.token
-        },
-        json: true,
-        body: this._makeBody(data),
-        strictSSL: config.strictSSL
-    };
-    
-    request.post(options, callback);
+SplunkLogger.prototype._sendEvents = function(settings, callback) {
+    // Validate the settings again, right before using them
+    settings = this._initializeSettings(settings);
+
+    var token = settings.config.token || this.config.token;
+    settings.requestOptions.headers["Authorization"] = "Splunk " + token;
+    settings.requestOptions.body = this._makeBody(settings.data);
+
+    request.post(settings.requestOptions, callback);
 };
 
 /**
@@ -141,26 +207,31 @@ SplunkLogger.prototype._sendEvents = function(config, data, callback) {
  * Takes config settings, anything, & a callback(err, resp, body)
  * 
  */
-SplunkLogger.prototype.send = function (config, data, callback) {
-    // TODO: handle optional parameters
+SplunkLogger.prototype.send = function (settings, callback) {
+    // Validate the settings
+    settings = this._initializeSettings(settings);
 
+
+    // TODO: the following should be addressed with _initializeConfig
     // TODO: properly handle config changing "on the fly"
     //     : decide between 3 sources of config (default, this.config & config parameter)
     // Currently, we're ignoring anything set on this.config
-    config = this._validateConfig(config);
+    // config = this._initializeConfig(config);
+    // settings.config = this._initializeConfig(settings.config);
+
 
     // TODO: implement error handling for all middlewares, and _sendEvents
 
     // Send the data to the first middleware
     var callbacks = this.middlewares;
     callbacks.unshift(function(callback) {
-        callback(null, data);
+        callback(null, settings);
     });
 
     // After running all, if any, middlewares send the events
     var that = this;
-    utils.chain(callbacks, function(err, data) { 
-        that._sendEvents(config, data, callback);
+    utils.chain(callbacks, function(err, settings) { 
+        that._sendEvents(settings, callback);
     });
 };
 
