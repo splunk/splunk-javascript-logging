@@ -4,6 +4,14 @@ var url = require("url");
 
 /**
  * TODO: docs
+ * default error handler
+ */
+function _err(err) {
+    console.log("ERROR:", err);
+}
+
+/**
+ * TODO: docs
  *
  * Constructor
  *
@@ -16,6 +24,7 @@ var url = require("url");
 var SplunkLogger = function(config) {
     this.config = this._initializeConfig(config);
     this.middlewares = [];
+    // this.error = config.err || _err;
 };
 
 /**
@@ -51,7 +60,9 @@ SplunkLogger.prototype._initializeConfig = function(config) {
     // Copy over the instance config
     var ret = {};
     for (var key in this.config) {
-        ret[key] = this.config[key];
+        if (this.config.hasOwnProperty(key)){
+            ret[key] = this.config[key];
+        }
     }
 
     if (!config) {
@@ -118,7 +129,9 @@ SplunkLogger.prototype._initializeConfig = function(config) {
 SplunkLogger.prototype._initializeRequestOptions = function(config, options) {
     var ret = {};
     for (var key in defaultRequestOptions) {
-        ret[key] = defaultRequestOptions[key];
+        if (defaultRequestOptions.hasOwnProperty(key)) {
+            ret[key] = defaultRequestOptions[key];
+        }
     }
 
     // _initializeConfig will throw an error config or this.config is
@@ -127,9 +140,9 @@ SplunkLogger.prototype._initializeRequestOptions = function(config, options) {
     options = options || ret;
 
     ret.url = config.protocol + "://" + config.host + ":" + config.port + config.path;
-    ret.json = options.json || ret.json;
+    ret.json = options.hasOwnProperty("json") ? options.json : ret.json;
     ret.strictSSL = options.strictSSL || ret.strictSSL;
-    ret.headers = ret.headers || {};
+    ret.headers = options.headers || {};
     ret.headers.Authorization = "Splunk " + config.token;
 
     return ret;
@@ -189,7 +202,7 @@ SplunkLogger.prototype.use = function(middleware) {
  * TODO: docs
  *
  * Makes an HTTP POST to the configured server.
- * Any config not specified will be 
+ * Any config not specified will be set to the default configuration.
  */
 SplunkLogger.prototype._sendEvents = function(settings, callback) {
     // Validate the settings again, right before using them
@@ -230,8 +243,13 @@ SplunkLogger.prototype.send = function (settings, callback) {
 
     // After running all, if any, middlewares send the events
     var that = this;
-    utils.chain(callbacks, function(err, settings) { 
-        that._sendEvents(settings, callback);
+    utils.chain(callbacks, function(err, settings) {
+        // if (err) {
+        //     that.error(err);
+        // }
+        // else {
+            that._sendEvents(settings, callback);
+        // }
     });
 };
 
