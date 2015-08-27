@@ -225,7 +225,7 @@ describe("SplunkLogger", function() {
         });
     });
     
-    describe("_initializeConfig", function(){
+    describe("_initializeConfig", function() {
 
     });
 
@@ -240,8 +240,7 @@ describe("SplunkLogger", function() {
                 assert.strictEqual(err.message, "Config is required.");
             }
         });
-
-        it("should create defaults with token in config", function() {
+        it("should create default options with token in config", function() {
             var config = {
                 token: "some-value"
             };
@@ -256,6 +255,76 @@ describe("SplunkLogger", function() {
             assert.ok(options.headers.Authorization, "Splunk " + config.token);
             assert.strictEqual(options.json, true);
             assert.strictEqual(options.strictSSL, false);
+        });
+        it("should create options with full config", function() {
+            var config = {
+                token: "some-value",
+                protocol: "http",
+                host: "splunk.local",
+                port: 1234,
+                path: "/services/collector/custom/1.0"
+            };
+            config = SplunkLogger.prototype._initializeConfig(config);
+
+            var options = SplunkLogger.prototype._initializeRequestOptions(config);
+            assert.ok(options);
+            assert.strictEqual(options.url, "http://splunk.local:1234/services/collector/custom/1.0");
+            assert.ok(options.headers);
+            assert.ok(options.headers.hasOwnProperty("Authorization"));
+            assert.ok(options.headers.Authorization, "Splunk " + config.token);
+            assert.strictEqual(options.json, true);
+            assert.strictEqual(options.strictSSL, false); 
+        });
+        it("should create options with full config, empty options", function() {
+            var config = {
+                token: "some-value",
+                protocol: "http",
+                host: "splunk.local",
+                port: 1234,
+                path: "/services/collector/custom/1.0"
+            };
+            config = SplunkLogger.prototype._initializeConfig(config);
+
+            var options = SplunkLogger.prototype._initializeRequestOptions(config, {});
+            assert.ok(options);
+            assert.strictEqual(options.url, "http://splunk.local:1234/services/collector/custom/1.0");
+            assert.ok(options.headers);
+            assert.ok(options.headers.hasOwnProperty("Authorization"));
+            assert.ok(options.headers.Authorization, "Splunk " + config.token);
+            assert.strictEqual(options.json, true);
+            assert.strictEqual(options.strictSSL, false); 
+        });
+
+        it("should create options with full config, & full options", function() {
+            var config = {
+                token: "some-value",
+                protocol: "http",
+                host: "splunk.local",
+                port: 1234,
+                path: "/services/collector/custom/1.0"
+            };
+            config = SplunkLogger.prototype._initializeConfig(config);
+
+            var initialOptions = {
+                json: false,
+                strictSSL: true,
+                url: "should be overwritten",
+                headers: {
+                    Custom: "header-value",
+                    Authorization: "Should be overwritten"
+                }
+            };
+
+            var options = SplunkLogger.prototype._initializeRequestOptions(config, initialOptions);
+            assert.ok(options);
+            assert.strictEqual(options.url, "http://splunk.local:1234/services/collector/custom/1.0");
+            assert.ok(options.headers);
+            assert.ok(options.headers.hasOwnProperty("Custom"));
+            assert.strictEqual(options.headers.Custom, initialOptions.headers.Custom);
+            assert.ok(options.headers.hasOwnProperty("Authorization"));
+            assert.ok(options.headers.Authorization, "Splunk " + config.token);
+            assert.strictEqual(options.json, false);
+            assert.strictEqual(options.strictSSL, true); 
         });
     });
 
