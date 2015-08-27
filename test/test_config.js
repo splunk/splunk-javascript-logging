@@ -4,6 +4,8 @@ var assert = require("assert");
 describe("SplunkLogger", function() {
 
     describe("constructor", function () {
+        // TODO: remove dupe tests here from below
+        // TODO: add tests for 3 way merge of config (this.config, defaults, & config arg)
         it("should error without config", function() {
             try {
                 var logger = new SplunkLogger();
@@ -135,6 +137,7 @@ describe("SplunkLogger", function() {
             };
             var logger = new SplunkLogger(config);
 
+            assert.ok(logger);
             assert.strictEqual(config.token, logger.config.token);
             assert.strictEqual("splunk-javascript-logging/0.8.0", logger.config.name);
             assert.strictEqual("localhost", logger.config.host);
@@ -226,7 +229,201 @@ describe("SplunkLogger", function() {
     });
     
     describe("_initializeConfig", function() {
+        it("should error with no args", function() {
+            try {
+                SplunkLogger.prototype._initializeConfig();
+                assert.ok(false, "Expected an error.");
+            }
+            catch(err) {
+                assert.ok(err);
+                assert.strictEqual(err.message, "Config is required.");
+            }
+        });
+        it("should error with non-string config", function() {
+            try {
+                SplunkLogger.prototype._initializeConfig("not an object");
+                assert.ok(false, "Expected an error.");
+            }
+            catch(err) {
+                assert.ok(err);
+                assert.strictEqual(err.message, "Config must be an object.");
+            }
+        });
+        it("should error without token in config", function() {
+            try {
+                var config = {
+                    notToken: "value"
+                };
+                SplunkLogger.prototype._initializeConfig(config);
+                assert.ok(false, "Expected an error.");
+            }
+            catch(err) {
+                assert.ok(err);
+                assert.strictEqual(err.message, "Config object must have a token.");
+            }
+        });
+        it("should error with non-string token in config", function() {
+            try {
+                var config = {
+                    token: false
+                };
+                SplunkLogger.prototype._initializeConfig(config);
+                assert.ok(false, "Expected an error.");
+            }
+            catch(err) {
+                assert.ok(err);
+                assert.strictEqual(err.message, "Config token must be a string.");
+            }
+        });
+        it("should error with NaN port", function() {
+            var config = {
+                token: "a-token-goes-here-usually",
+                port: "this isn't a port"
+            };
 
+            try {
+                SplunkLogger.prototype._initializeConfig(config);
+                assert.fail(false, "Expected an error.");
+            }
+            catch (err) {
+                assert.ok(err);
+                assert.strictEqual(err.message, "Port must be an integer, found: NaN");
+            }
+        });
+        it("should correctly parse port with leading zero", function() {
+            var config = {
+                token: "a-token-goes-here-usually",
+                port: "000000001234"
+            };
+
+            var loggerConfig = SplunkLogger.prototype._initializeConfig(config);
+            assert.strictEqual(loggerConfig.port, 1234);
+        });
+        it("should correctly parse port < 1000", function() {
+            var config = {
+                token: "a-token-goes-here-usually",
+                port: 999
+            };
+            try {
+                SplunkLogger.prototype._initializeConfig(config);
+                assert.fail(false, "Expected an error.");
+            }
+            catch (err) {
+                assert.ok(err);
+                assert.strictEqual(err.message, "Port must be an integer between 1000 and 65535, found: " + config.port);
+            }
+        });
+        it("should set default config with token only config", function() {
+            var config = {
+                token: "a-token-goes-here-usually"
+            };
+            var loggerConfig = SplunkLogger.prototype._initializeConfig(config);
+
+            assert.ok(loggerConfig);
+            assert.strictEqual(config.token, loggerConfig.token);
+            assert.strictEqual("splunk-javascript-logging/0.8.0", loggerConfig.name);
+            assert.strictEqual("localhost", loggerConfig.host);
+            assert.strictEqual("/services/collector/event/1.0", loggerConfig.path);
+            assert.strictEqual("https", loggerConfig.protocol);
+            assert.strictEqual("info", loggerConfig.level);
+            assert.strictEqual(8088, loggerConfig.port);
+        });
+        it("should set non-default boolean config values", function() {
+            var config = {
+                token: "a-token-goes-here-usually",
+                protocol: "http",
+                strictSSL: true
+            };
+            var loggerConfig = SplunkLogger.prototype._initializeConfig(config);
+
+            assert.strictEqual(config.token, loggerConfig.token);
+            assert.strictEqual("splunk-javascript-logging/0.8.0", loggerConfig.name);
+            assert.strictEqual("localhost", loggerConfig.host);
+            assert.strictEqual("/services/collector/event/1.0", loggerConfig.path);
+            assert.strictEqual("http", loggerConfig.protocol);
+            assert.strictEqual("info", loggerConfig.level);
+            assert.strictEqual(8088, loggerConfig.port);
+        });
+        it("should set non-default path", function() {
+            var config = {
+                token: "a-token-goes-here-usually",
+                path: "/something/different/here/1.0"
+            };
+            var loggerConfig = SplunkLogger.prototype._initializeConfig(config);
+
+            assert.ok(loggerConfig);
+            assert.strictEqual(config.token, loggerConfig.token);
+            assert.strictEqual("splunk-javascript-logging/0.8.0", loggerConfig.name);
+            assert.strictEqual("localhost", loggerConfig.host);
+            assert.strictEqual(config.path, loggerConfig.path);
+            assert.strictEqual("https", loggerConfig.protocol);
+            assert.strictEqual("info", loggerConfig.level);
+            assert.strictEqual(8088, loggerConfig.port);
+        });
+        it("should set non-default port", function() {
+            var config = {
+                token: "a-token-goes-here-usually",
+                port: 1234
+            };
+            var loggerConfig = SplunkLogger.prototype._initializeConfig(config);
+
+            assert.ok(loggerConfig);
+            assert.strictEqual(config.token, loggerConfig.token);
+            assert.strictEqual("splunk-javascript-logging/0.8.0", loggerConfig.name);
+            assert.strictEqual("localhost", loggerConfig.host);
+            assert.strictEqual("/services/collector/event/1.0", loggerConfig.path);
+            assert.strictEqual("https", loggerConfig.protocol);
+            assert.strictEqual("info", loggerConfig.level);
+            assert.strictEqual(config.port, loggerConfig.port);
+        });
+        it("should set protocol, host, port & path from url property", function() {
+            var config = {
+                token: "a-token-goes-here-usually",
+                url: "http://splunk.local:9088/services/collector/different/1.0"
+            };
+            var loggerConfig = SplunkLogger.prototype._initializeConfig(config);
+
+            assert.ok(loggerConfig);
+            assert.strictEqual(config.token, loggerConfig.token);
+            assert.strictEqual("splunk-javascript-logging/0.8.0", loggerConfig.name);
+            assert.strictEqual("splunk.local", loggerConfig.host);
+            assert.strictEqual("/services/collector/different/1.0", loggerConfig.path);
+            assert.strictEqual("http", loggerConfig.protocol);
+            assert.strictEqual("info", loggerConfig.level);
+            assert.strictEqual(9088, loggerConfig.port);
+        });
+        it("should set protocol from url property", function() {
+            var config = {
+                token: "a-token-goes-here-usually",
+                url: "http:"
+            };
+            var loggerConfig = SplunkLogger.prototype._initializeConfig(config);
+
+            assert.ok(loggerConfig);
+            assert.strictEqual(config.token, loggerConfig.token);
+            assert.strictEqual("splunk-javascript-logging/0.8.0", loggerConfig.name);
+            assert.strictEqual("localhost", loggerConfig.host);
+            assert.strictEqual("/services/collector/event/1.0", loggerConfig.path);
+            assert.strictEqual("http", loggerConfig.protocol);
+            assert.strictEqual("info", loggerConfig.level);
+            assert.strictEqual(8088, loggerConfig.port);
+        });
+        it("should set host from url property with host only", function() {
+            var config = {
+                token: "a-token-goes-here-usually",
+                url: "splunk.local"
+            };
+            var loggerConfig = SplunkLogger.prototype._initializeConfig(config);
+
+            assert.ok(loggerConfig);
+            assert.strictEqual(config.token, loggerConfig.token);
+            assert.strictEqual("splunk-javascript-logging/0.8.0", loggerConfig.name);
+            assert.strictEqual("splunk.local", loggerConfig.host);
+            assert.strictEqual("/services/collector/event/1.0", loggerConfig.path);
+            assert.strictEqual("https", loggerConfig.protocol);
+            assert.strictEqual("info", loggerConfig.level);
+            assert.strictEqual(8088, loggerConfig.port);
+        });
     });
 
     describe("_initializeRequestOptions", function() {
