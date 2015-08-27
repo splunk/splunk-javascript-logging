@@ -71,10 +71,10 @@ SplunkLogger.prototype._initializeConfig = function(config) {
     else if (typeof config !== "object") {
         throw new Error("Config must be an object.");
     }
-    else if (!config.hasOwnProperty("token")) {
+    else if (!ret.hasOwnProperty("token") && !config.hasOwnProperty("token")) {
         throw new Error("Config object must have a token.");
     }
-    else if (typeof config.token !== "string") {
+    else if (typeof ret.token !== "string" && typeof config.token !== "string") {
         throw new Error("Config token must be a string.");
     }
     else {
@@ -134,16 +134,16 @@ SplunkLogger.prototype._initializeRequestOptions = function(config, options) {
         }
     }
 
-    // _initializeConfig will throw an error config or this.config is
-    //     undefined, or doesn't have at least the token property set
-    config = this._initializeConfig(config || this.config);
+    config = config || this.config || defaultConfig;
     options = options || ret;
 
     ret.url = config.protocol + "://" + config.host + ":" + config.port + config.path;
     ret.json = options.hasOwnProperty("json") ? options.json : ret.json;
     ret.strictSSL = options.strictSSL || ret.strictSSL;
     ret.headers = options.headers || {};
-    ret.headers.Authorization = "Splunk " + config.token;
+    if (config.token) {
+        ret.headers.Authorization = "Splunk " + config.token;    
+    }    
 
     return ret;
 };
@@ -164,6 +164,10 @@ SplunkLogger.prototype._initializeSettings = function(settings) {
     else if (!settings.hasOwnProperty("data")) {
         throw new Error("Settings argument must have the data property set.");
     }
+
+    // _initializeConfig will throw an error config or this.config is
+    //     undefined, or doesn't have at least the token property set
+    settings.config = this._initializeConfig(settings.config || this.config);
 
     settings.requestOptions = this._initializeRequestOptions(settings.config, settings.requestOptions);
 
