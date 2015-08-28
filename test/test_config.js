@@ -420,6 +420,24 @@ describe("SplunkLogger", function() {
             assert.strictEqual("info", loggerConfig.level);
             assert.strictEqual(8088, loggerConfig.port);
         });
+        it("should ignore prototype values", function() {
+            Object.prototype.something = "ignore";
+            var config = {
+                token: "a-token-goes-here-usually",
+                url: "splunk.local"
+            };
+            var loggerConfig = SplunkLogger.prototype._initializeConfig(config);
+
+            assert.ok(loggerConfig);
+            assert.ok(!loggerConfig.hasOwnProperty("something"));
+            assert.strictEqual(config.token, loggerConfig.token);
+            assert.strictEqual("splunk-javascript-logging/0.8.0", loggerConfig.name);
+            assert.strictEqual("splunk.local", loggerConfig.host);
+            assert.strictEqual("/services/collector/event/1.0", loggerConfig.path);
+            assert.strictEqual("https", loggerConfig.protocol);
+            assert.strictEqual("info", loggerConfig.level);
+            assert.strictEqual(8088, loggerConfig.port);
+        });
     });
     describe("_initializeRequestOptions", function() {
         it("should get defaults with no args", function() {
@@ -517,6 +535,24 @@ describe("SplunkLogger", function() {
             assert.ok(options.headers.Authorization, "Splunk " + config.token);
             assert.strictEqual(options.json, false);
             assert.strictEqual(options.strictSSL, true); 
+        });
+        it("should create default options with token in config", function() {
+            Object.prototype.something = "ignore";
+            var config = {
+                token: "some-value"
+            };
+            // Get the defaults because we're passing in a config
+            config = SplunkLogger.prototype._initializeConfig(config);
+
+            var options = SplunkLogger.prototype._initializeRequestOptions(config);
+            assert.ok(options);
+            assert.ok(!options.hasOwnProperty("something"));
+            assert.strictEqual(options.url, "https://localhost:8088/services/collector/event/1.0");
+            assert.ok(options.headers);
+            assert.ok(options.headers.hasOwnProperty("Authorization"));
+            assert.ok(options.headers.Authorization, "Splunk " + config.token);
+            assert.strictEqual(options.json, true);
+            assert.strictEqual(options.strictSSL, false);
         });
     });
     describe("_initializeSettings", function() {

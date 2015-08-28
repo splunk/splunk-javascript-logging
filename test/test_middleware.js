@@ -68,6 +68,31 @@ describe("SplunkLogger send", function() {
                 done();
             });
         });
+        it("should succeed without token passed through settings", function(done) {
+            var config = {
+                token: configurationFile.token
+            };
+            var logger = new SplunkLogger(config);
+
+            assert.strictEqual(logger.config.token, config.token);
+
+            var data = "something";
+
+
+            var settings = {
+                config: {},
+                data: data
+            };
+
+            logger.send(settings, function(err, resp, body) {
+                assert.ok(!err);
+                assert.strictEqual(resp.headers["content-type"], "application/json; charset=UTF-8");
+                assert.strictEqual(resp.body, body);
+                assert.strictEqual(body.text, successBody.text);
+                assert.strictEqual(body.code, successBody.code);
+                done();
+            });
+        });
         it("should fail on wrong protocol (assumes HTTP is invalid)", function(done) {
             var config = {
                 token: configurationFile.token,
@@ -369,8 +394,8 @@ describe("SplunkLogger send", function() {
             });
         });
     });
-    describe("using custom error handler", function(done) {
-        it("", function() {
+    describe("error handlers", function() {
+        it("default error handler", function() {
             var config = {
                 token: "token-goes-here"
             };
@@ -380,28 +405,11 @@ describe("SplunkLogger send", function() {
             function middleware(settings, next) {
                 middlewareCount++;
                 assert.strictEqual(settings.data, "something");
-                next("error", settings);
+                next(new Error("error!"));
             }
 
             var logger = new SplunkLogger(config);
             logger.use(middleware);
-
-            logger._sendEvents = function(settings, next) {
-                var response = {
-                    headers: {
-                        "content-type": "application/json; charset=UTF-8",
-                        isCustom: true
-                    },
-                    body: successBody
-                };
-                next(null, response, successBody);
-            };
-
-            var ran = false;
-
-            logger.error = function(err) {
-                ran = true;
-            };
 
             var initialData = "something";
             var settings = {
@@ -409,15 +417,21 @@ describe("SplunkLogger send", function() {
                 data: initialData
             };
 
-            logger.send(settings, function(err, resp, body) {
-                assert.ok(!err);
-                assert.strictEqual(resp.body, body);
-                assert.strictEqual(body.code, successBody.code);
-                assert.strictEqual(body.text, successBody.text);
-                assert.strictEqual(middlewareCount, 1);
-                assert.ok(ran);
-                done();
-            });
+            var run = false;
+
+            // Wrap the default error callback for code coverage
+            var errCallback = logger.error;
+            logger.error = function(err) {
+                run = true;
+                assert.strictEqual(err.message, "error!");
+                errCallback(err);
+            };
+
+            // Fire & forget, the callback won't be called anyways due to the error
+            logger.send(settings);
+
+            assert.ok(run);
+            assert.strictEqual(middlewareCount, 1);
         });
     });
 });

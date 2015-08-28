@@ -60,7 +60,7 @@ SplunkLogger.prototype._initializeConfig = function(config) {
     // Copy over the instance config
     var ret = {};
     for (var key in this.config) {
-        if (this.config.hasOwnProperty(key)){
+        if (this.config.hasOwnProperty(key)) {
             ret[key] = this.config[key];
         }
     }
@@ -211,9 +211,7 @@ SplunkLogger.prototype.use = function(middleware) {
 SplunkLogger.prototype._sendEvents = function(settings, callback) {
     // Validate the settings again, right before using them
     settings = this._initializeSettings(settings);
-
-    var token = settings.config.token || this.config.token;
-    settings.requestOptions.headers["Authorization"] = "Splunk " + token;
+    settings.requestOptions.headers["Authorization"] = "Splunk " + settings.config.token;
     settings.requestOptions.body = this._makeBody(settings.data);
 
     request.post(settings.requestOptions, callback);
