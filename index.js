@@ -24,7 +24,7 @@ function _err(err) {
 var SplunkLogger = function(config) {
     this.config = this._initializeConfig(config);
     this.middlewares = [];
-    // this.error = config.err || _err;
+    this.error = _err;
 };
 
 /**
@@ -228,17 +228,6 @@ SplunkLogger.prototype.send = function (settings, callback) {
     // Validate the settings
     settings = this._initializeSettings(settings);
 
-
-    // TODO: the following should be addressed with _initializeConfig
-    // TODO: properly handle config changing "on the fly"
-    //     : decide between 3 sources of config (default, this.config & config parameter)
-    // Currently, we're ignoring anything set on this.config
-    // config = this._initializeConfig(config);
-    // settings.config = this._initializeConfig(settings.config);
-
-
-    // TODO: implement error handling for all middlewares, and _sendEvents
-
     // Send the data to the first middleware
     var callbacks = this.middlewares;
     callbacks.unshift(function(callback) {
@@ -248,12 +237,13 @@ SplunkLogger.prototype.send = function (settings, callback) {
     // After running all, if any, middlewares send the events
     var that = this;
     utils.chain(callbacks, function(err, settings) {
-        // if (err) {
-        //     that.error(err);
-        // }
-        // else {
+        // Errors from any of the middleware callbacks will fall through to here
+        if (err) {
+            that.error(err);
+        }
+        else {
             that._sendEvents(settings, callback);
-        // }
+        }
     });
 };
 

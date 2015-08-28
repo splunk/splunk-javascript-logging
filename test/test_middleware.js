@@ -369,4 +369,55 @@ describe("SplunkLogger send", function() {
             });
         });
     });
+    describe("using custom error handler", function(done) {
+        it("", function() {
+            var config = {
+                token: "token-goes-here"
+            };
+
+            var middlewareCount = 0;
+
+            function middleware(settings, next) {
+                middlewareCount++;
+                assert.strictEqual(settings.data, "something");
+                next("error", settings);
+            }
+
+            var logger = new SplunkLogger(config);
+            logger.use(middleware);
+
+            logger._sendEvents = function(settings, next) {
+                var response = {
+                    headers: {
+                        "content-type": "application/json; charset=UTF-8",
+                        isCustom: true
+                    },
+                    body: successBody
+                };
+                next(null, response, successBody);
+            };
+
+            var ran = false;
+
+            logger.error = function(err) {
+                ran = true;
+            };
+
+            var initialData = "something";
+            var settings = {
+                config: config,
+                data: initialData
+            };
+
+            logger.send(settings, function(err, resp, body) {
+                assert.ok(!err);
+                assert.strictEqual(resp.body, body);
+                assert.strictEqual(body.code, successBody.code);
+                assert.strictEqual(body.text, successBody.text);
+                assert.strictEqual(middlewareCount, 1);
+                assert.ok(ran);
+                done();
+            });
+        });
+    });
 });
