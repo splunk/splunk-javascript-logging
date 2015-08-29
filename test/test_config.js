@@ -537,7 +537,7 @@ describe("SplunkLogger", function() {
             assert.strictEqual(options.strictSSL, true); 
         });
         it("should create default options with token in config", function() {
-            Object.prototype.something = "ignore";
+            Object.prototype.someproperty = "ignore";
             var config = {
                 token: "some-value"
             };
@@ -546,7 +546,7 @@ describe("SplunkLogger", function() {
 
             var options = SplunkLogger.prototype._initializeRequestOptions(config);
             assert.ok(options);
-            assert.ok(!options.hasOwnProperty("something"));
+            assert.ok(!options.hasOwnProperty("someproperty"));
             assert.strictEqual(options.url, "https://localhost:8088/services/collector/event/1.0");
             assert.ok(options.headers);
             assert.ok(options.headers.hasOwnProperty("Authorization"));
