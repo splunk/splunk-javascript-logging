@@ -555,43 +555,43 @@ describe("SplunkLogger", function() {
             assert.strictEqual(options.strictSSL, false);
         });
     });
-    describe("_initializeSettings", function() {
+    describe("_initializeContext", function() {
         it("should error with no args", function() {
             try {
-                SplunkLogger.prototype._initializeSettings();
+                SplunkLogger.prototype._initializeContext();
                 assert.ok(false, "Expected an error.");
             }
             catch(err) {
                 assert.ok(err);
-                assert.strictEqual(err.message, "Settings argument is required.");
+                assert.strictEqual(err.message, "Context argument is required.");
             }
         });
-        it("should error with non-object settings", function() {
+        it("should error with non-object context", function() {
             try {
-                SplunkLogger.prototype._initializeSettings("not an object");
+                SplunkLogger.prototype._initializeContext("not an object");
                 assert.ok(false, "Expected an error.");
             }
             catch(err) {
                 assert.ok(err);
-                assert.strictEqual(err.message, "Settings argument must be an object.");
+                assert.strictEqual(err.message, "Context argument must be an object.");
             }
         });
-        it("should error with non-object settings", function() {
+        it("should error with non-object context", function() {
             try {
-                SplunkLogger.prototype._initializeSettings({});
+                SplunkLogger.prototype._initializeContext({});
                 assert.ok(false, "Expected an error.");
             }
             catch(err) {
                 assert.ok(err);
-                assert.strictEqual(err.message, "Settings argument must have the data property set.");
+                assert.strictEqual(err.message, "Context argument must have the data property set.");
             }
         });
         it("should error with data only", function() {
             try {
-                var settings = {
+                var context = {
                     data: "something"
                 };
-                SplunkLogger.prototype._initializeSettings(settings);
+                SplunkLogger.prototype._initializeContext(context);
                 assert.ok(false, "Expected an error.");
             }
             catch(err) {
@@ -599,25 +599,25 @@ describe("SplunkLogger", function() {
                 assert.strictEqual(err.message, "Config is required.");
             }
         });
-        it("should succeed with default settings, specifying data & config token", function() {
-            var settings = {
+        it("should succeed with default context, specifying data & config token", function() {
+            var context = {
                 data: "some data",
                 config: {
                     token: "a-token-goes-here-usually"
                 }
             };
 
-            var initialized = SplunkLogger.prototype._initializeSettings(settings);
+            var initialized = SplunkLogger.prototype._initializeContext(context);
             var data = initialized.data;
             var config = initialized.config;
             var requestOptions = initialized.requestOptions;
 
             assert.ok(initialized);
             assert.ok(data);
-            assert.strictEqual(data, settings.data);
+            assert.strictEqual(data, context.data);
 
             assert.ok(config);
-            assert.strictEqual(config.token, settings.config.token);
+            assert.strictEqual(config.token, context.config.token);
             assert.strictEqual(config.name, "splunk-javascript-logging/0.8.0");
             assert.strictEqual(config.host, "localhost");
             assert.strictEqual(config.path, "/services/collector/event/1.0");
@@ -631,7 +631,7 @@ describe("SplunkLogger", function() {
             assert.strictEqual(requestOptions.url, "https://localhost:8088/services/collector/event/1.0");
             assert.ok(requestOptions.hasOwnProperty("headers"));
             assert.strictEqual(Object.keys(requestOptions.headers).length, 1);
-            assert.strictEqual(requestOptions.headers.Authorization, "Splunk " + settings.config.token);
+            assert.strictEqual(requestOptions.headers.Authorization, "Splunk " + context.config.token);
         });
     });
     describe("constructor + _initializeConfig", function() {

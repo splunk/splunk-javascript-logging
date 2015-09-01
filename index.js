@@ -151,27 +151,27 @@ SplunkLogger.prototype._initializeRequestOptions = function(config, options) {
 /**
  * TODO: docs
  * 
- * Takes the setting object & tries to initialize the
+ * Takes the context object & tries to initialize the
  * config and request options.
  */
-SplunkLogger.prototype._initializeSettings = function(settings) {
-    if (!settings) {
-        throw new Error("Settings argument is required.");
+SplunkLogger.prototype._initializeContext = function(context) {
+    if (!context) {
+        throw new Error("Context argument is required.");
     }
-    else if (typeof settings !== "object") {
-        throw new Error("Settings argument must be an object.");
+    else if (typeof context !== "object") {
+        throw new Error("Context argument must be an object.");
     }
-    else if (!settings.hasOwnProperty("data")) {
-        throw new Error("Settings argument must have the data property set.");
+    else if (!context.hasOwnProperty("data")) {
+        throw new Error("Context argument must have the data property set.");
     }
 
     // _initializeConfig will throw an error config or this.config is
     //     undefined, or doesn't have at least the token property set
-    settings.config = this._initializeConfig(settings.config || this.config);
+    context.config = this._initializeConfig(context.config || this.config);
 
-    settings.requestOptions = this._initializeRequestOptions(settings.config, settings.requestOptions);
+    context.requestOptions = this._initializeRequestOptions(context.config, context.requestOptions);
 
-    return settings;
+    return context;
 };
 
 /**
@@ -208,39 +208,39 @@ SplunkLogger.prototype.use = function(middleware) {
  * Makes an HTTP POST to the configured server.
  * Any config not specified will be set to the default configuration.
  */
-SplunkLogger.prototype._sendEvents = function(settings, callback) {
-    // Validate the settings again, right before using them
-    settings = this._initializeSettings(settings);
-    settings.requestOptions.headers["Authorization"] = "Splunk " + settings.config.token;
-    settings.requestOptions.body = this._makeBody(settings.data);
+SplunkLogger.prototype._sendEvents = function(context, callback) {
+    // Validate the context again, right before using them
+    context = this._initializeContext(context);
+    context.requestOptions.headers["Authorization"] = "Splunk " + context.config.token;
+    context.requestOptions.body = this._makeBody(context.data);
 
-    request.post(settings.requestOptions, callback);
+    request.post(context.requestOptions, callback);
 };
 
 /**
  * TODO: docs
- * Takes config settings, anything, & a callback(err, resp, body)
+ * Takes config context, anything, & a callback(err, resp, body)
  * 
  */
-SplunkLogger.prototype.send = function (settings, callback) {
-    // Validate the settings
-    settings = this._initializeSettings(settings);
+SplunkLogger.prototype.send = function (context, callback) {
+    // Validate the context
+    context = this._initializeContext(context);
 
     // Send the data to the first middleware
     var callbacks = this.middlewares;
     callbacks.unshift(function(callback) {
-        callback(null, settings);
+        callback(null, context);
     });
 
     // After running all, if any, middlewares send the events
     var that = this;
-    utils.chain(callbacks, function(err, settings) {
+    utils.chain(callbacks, function(err, context) {
         // Errors from any of the middleware callbacks will fall through to here
         if (err) {
             that.error(err);
         }
         else {
-            that._sendEvents(settings, callback);
+            that._sendEvents(context, callback);
         }
     });
 };
