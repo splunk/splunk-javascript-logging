@@ -429,14 +429,15 @@ describe("SplunkLogger send", function() {
             function middleware(context, next) {
                 middlewareCount++;
                 assert.strictEqual(context.data, "something");
-                next(new Error("error!"));
+                context.data = "something else";
+                next(new Error("error!"), context);
             }
 
             var logger = new SplunkLogger(config);
             logger.use(middleware);
 
             var initialData = "something";
-            var context = {
+            var initialContext = {
                 config: config,
                 data: initialData
             };
@@ -445,14 +446,18 @@ describe("SplunkLogger send", function() {
 
             // Wrap the default error callback for code coverage
             var errCallback = logger.error;
-            logger.error = function(err) {
+            logger.error = function(err, context) {
                 run = true;
+                assert.ok(err);
+                assert.ok(context);
                 assert.strictEqual(err.message, "error!");
-                errCallback(err);
+                initialContext.data = "something else";
+                assert.strictEqual(context, initialContext);
+                errCallback(err, context);
             };
 
             // Fire & forget, the callback won't be called anyways due to the error
-            logger.send(context);
+            logger.send(initialContext);
 
             assert.ok(run);
             assert.strictEqual(middlewareCount, 1);

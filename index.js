@@ -6,8 +6,8 @@ var url = require("url");
  * TODO: docs
  * default error handler
  */
-function _err(err) {
-    console.log("ERROR:", err);
+function _err(err, context) {
+    console.log("ERROR:", err, " CONTEXT", context);
 }
 
 /**
@@ -234,10 +234,11 @@ SplunkLogger.prototype.send = function (context, callback) {
 
     // After running all, if any, middlewares send the events
     var that = this;
-    utils.chain(callbacks, function(err, context) {
+    utils.chain(callbacks, function(err) {
         // Errors from any of the middleware callbacks will fall through to here
         if (err) {
-            that.error(err);
+            // TODO: how can I extract the context from a middleware?
+            that.error(err, context);
         }
         else {
             that._sendEvents(context, callback);
