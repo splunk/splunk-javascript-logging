@@ -419,7 +419,7 @@ describe("SplunkLogger send", function() {
         });
     });
     describe("error handlers", function() {
-        it("default error handler", function() {
+        it("default error handler", function(done) {
             var config = {
                 token: "token-goes-here"
             };
@@ -444,6 +444,10 @@ describe("SplunkLogger send", function() {
 
             var run = false;
 
+            // Suppress console.log
+            var log = console.log;
+            console.log = function(msg){};
+
             // Wrap the default error callback for code coverage
             var errCallback = logger.error;
             logger.error = function(err, context) {
@@ -454,6 +458,9 @@ describe("SplunkLogger send", function() {
                 initialContext.data = "something else";
                 assert.strictEqual(context, initialContext);
                 errCallback(err, context);
+                // Restore console.log
+                console.log = log;
+                done();
             };
 
             // Fire & forget, the callback won't be called anyways due to the error
