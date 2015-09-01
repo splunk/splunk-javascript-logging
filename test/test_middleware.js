@@ -137,6 +137,30 @@ describe("SplunkLogger send", function() {
                 done();
             });
         });
+        it("should error with valid token, using strict SSL", function(done) {
+            var config = {
+                token: configurationFile.token,
+            };
+
+            var logger = new SplunkLogger(config);
+
+            var data = "something";
+            var context = {
+                config: config,
+                data: data,
+                requestOptions: {
+                    strictSSL: true
+                }
+            };
+
+            logger.send(context, function(err, resp, body) {
+                assert.ok(err);
+                assert.strictEqual(err.message, "SELF_SIGNED_CERT_IN_CHAIN");
+                assert.ok(!resp);
+                assert.ok(!body);
+                done();
+            });
+        });
     });
     describe("using custom middleware", function() {
         it("should error with non-function middleware", function() {
