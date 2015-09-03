@@ -14,11 +14,28 @@ describe("Utils", function() {
             testToArray(1, 2, 3, 4, 5);
         });
     });
-
+    describe("isArray", function () {
+        it("should return true for empty array", function() {
+            assert.ok(utils.isArray([]));
+        });
+        it("should return true for 1 element array", function() {
+            assert.ok(utils.isArray([1]));
+        });
+        it("should return true for 2 element array", function() {
+            assert.ok(utils.isArray([1, 2]));
+        });
+        it("should return false for null", function() {
+            assert.ok(!utils.isArray(null));
+        });
+        it("should return false for no argument", function() {
+            assert.ok(!utils.isArray());
+        });
+    });
+    // TODO: rename these tests to the "should..." format
     describe("chain", function () {
         it("single success", function(done) {
             utils.chain([
-                function(callback) { 
+                function(callback) {
                     callback(null, 1);
                 },
                 function(val, callback) {
@@ -36,7 +53,7 @@ describe("Utils", function() {
         });
         it("flat single success", function(done) {
             utils.chain(
-                function(callback) { 
+                function(callback) {
                     callback(null, 1);
                 },
                 function(val, callback) {
@@ -54,7 +71,7 @@ describe("Utils", function() {
         });
         it("flat multiple success", function(done) {
             utils.chain(
-                function(callback) { 
+                function(callback) {
                     callback(null, 1, 2);
                 },
                 function(val1, val2, callback) {
@@ -73,7 +90,7 @@ describe("Utils", function() {
         });
         it("flat add args success", function(done) {
             utils.chain(
-                function(callback) { 
+                function(callback) {
                     callback(null, 1, 2);
                 },
                 function(val1, val2, callback) {
@@ -92,7 +109,7 @@ describe("Utils", function() {
         });
         it("error", function(done) {
             utils.chain([
-                function(callback) { 
+                function(callback) {
                     callback(null, 1, 2);
                 },
                 function(val1, val2, callback) {
@@ -125,7 +142,7 @@ describe("Utils", function() {
         });
         it("no final callback", function(done) {
             utils.chain([
-                function(callback) { 
+                function(callback) {
                     callback("err");
                 }],
                 function(err) {
