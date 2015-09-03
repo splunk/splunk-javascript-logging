@@ -10,6 +10,13 @@ utils.toArray = function(iterable) {
 
 /**
  * TODO: docs
+ */
+utils.isArray = function(obj) {
+     return Object.prototype.toString.call(obj) === '[object Array]';
+};
+
+/**
+ * TODO: docs
  * Run async function in a chain, like Async.waterfall
  */
 utils.chain = function(tasks, callback) {

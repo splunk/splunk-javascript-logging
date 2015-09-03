@@ -10,21 +10,168 @@ var assert = require("assert");
  */
 var configurationFile = require("./config.json");
 
-var invalidTokenBody = {
-    text: "Invalid token",
-    code: 4
-};
-
 var successBody = {
     text: "Success",
     code: 0
 };
 
+var invalidTokenBody = {
+    text: "Invalid token",
+    code: 4
+};
+
+var noDataBody = {
+    text: "No data",
+    code: 5
+};
+
+describe("SplunkLogger _makedata", function() {
+    it("should error with no args", function() {
+        try {
+            SplunkLogger.prototype._makeBody();
+            assert.ok(false, "Expected an error.");
+        }
+        catch(err) {
+            assert.ok(err);
+            assert.strictEqual(err.message, "Context parameter is required.");
+        }
+    });
+    it("should objectify data as string, with default severity", function() {
+        var context = {
+            data: "something"
+        };
+        var body = SplunkLogger.prototype._makeBody(context);
+        
+        assert.ok(body);
+        assert.ok(body.hasOwnProperty("event"));
+        assert.strictEqual(Object.keys(body).length, 1);
+        assert.ok(body.event.hasOwnProperty("message"));
+        assert.strictEqual(body.event.message, context.data);
+        assert.strictEqual(body.event.severity, "info");
+    });
+    it("should objectify data as array, without severity param", function() {
+        var context = {
+            data: ["something"]
+        };
+        var body = SplunkLogger.prototype._makeBody(context);
+        
+        assert.ok(body);
+        assert.ok(body.hasOwnProperty("event"));
+        assert.strictEqual(Object.keys(body).length, 1);
+        assert.ok(body.event.hasOwnProperty("message"));
+        assert.strictEqual(body.event.message, context.data);
+        assert.strictEqual(body.event.severity, "info");
+    });
+    it("should objectify data as object, without severity param", function() {
+        var context = {
+            data: {
+                prop: "something"
+            }
+        };
+        var body = SplunkLogger.prototype._makeBody(context);
+        
+        assert.ok(body);
+        assert.ok(body.hasOwnProperty("event"));
+        assert.strictEqual(Object.keys(body).length, 1);
+        assert.ok(body.event.hasOwnProperty("message"));
+        assert.strictEqual(body.event.message, context.data);
+        assert.strictEqual(body.event.message.prop, "something");
+        assert.strictEqual(body.event.severity, "info");
+    });
+    it("should objectify data as string, with severity param", function() {
+        var context = {
+            data: "something",
+            severity: "urgent"
+        };
+        var body = SplunkLogger.prototype._makeBody(context);
+        
+        assert.ok(body);
+        assert.ok(body.hasOwnProperty("event"));
+        assert.strictEqual(Object.keys(body).length, 1);
+        assert.ok(body.event.hasOwnProperty("message"));
+        assert.strictEqual(body.event.message, context.data);
+        assert.strictEqual(body.event.severity, "urgent");
+    });
+    it("should objectify data as array, with severity param", function() {
+        var context = {
+            data: ["something"],
+            severity: "urgent"
+        };
+        var body = SplunkLogger.prototype._makeBody(context);
+        
+        assert.ok(body);
+        assert.ok(body.hasOwnProperty("event"));
+        assert.strictEqual(Object.keys(body).length, 1);
+        assert.ok(body.event.hasOwnProperty("message"));
+        assert.strictEqual(body.event.message, context.data);
+        assert.strictEqual(body.event.severity, "urgent");
+    });
+    it("should objectify data as object, with severity param", function() {
+        var context = {
+            data: {
+                prop: "something"
+            },
+            severity: "urgent"
+        };
+        var body = SplunkLogger.prototype._makeBody(context);
+        
+        assert.ok(body);
+        assert.ok(body.hasOwnProperty("event"));
+        assert.strictEqual(Object.keys(body).length, 1);
+        assert.ok(body.event.hasOwnProperty("message"));
+        assert.strictEqual(body.event.message, context.data);
+        assert.strictEqual(body.event.message.prop, "something");
+        assert.strictEqual(body.event.severity, "urgent");
+    });
+});
 describe("SplunkLogger send", function() {
     describe("using default middleware (integration tests)", function () {
         it("should error with bad token", function(done) {
             var config = {
                 token: "token-goes-here"
+            };
+
+            var logger = new SplunkLogger(config);
+
+            var data = "something";
+            var context = {
+                config: config,
+                data: data
+            };
+
+            logger.send(context, function(err, resp, body) {
+                assert.ok(!err);
+                assert.strictEqual(resp.headers["content-type"], "application/json; charset=UTF-8");
+                assert.strictEqual(resp.body, body);
+                assert.strictEqual(body.text, invalidTokenBody.text);
+                assert.strictEqual(body.code, invalidTokenBody.code);
+                done();
+            });
+        });
+        it("should send without callback", function(done) {
+            var config = {
+                token: configurationFile.token
+            };
+
+            var logger = new SplunkLogger(config);
+
+            var data = "something";
+
+            var context = {
+                config: config,
+                data: data
+            };
+
+            assert.strictEqual(logger.contextQueue.length, 0);
+            logger.send(context);
+            setTimeout(function() {
+                assert.strictEqual(logger.contextQueue.length, 0);
+                done();
+            }, 500);
+        });
+        it("should succeed with valid token", function(done) {
+            var config = {
+                token: configurationFile.token
             };
 
             var logger = new SplunkLogger(config);
@@ -40,8 +187,32 @@ describe("SplunkLogger send", function() {
                 assert.ok(!err);
                 assert.strictEqual(resp.headers["content-type"], "application/json; charset=UTF-8");
                 assert.strictEqual(resp.body, body);
-                assert.strictEqual(body.text, invalidTokenBody.text);
-                assert.strictEqual(body.code, invalidTokenBody.code);
+                assert.strictEqual(body.text, successBody.text);
+                assert.strictEqual(body.code, successBody.code);
+                done();
+            });
+        });
+        it("should succeed with different valid token passed through context", function(done) {
+            var config = {
+                token: "invalid-token"
+            };
+
+            var logger = new SplunkLogger(config);
+
+            var data = "something";
+
+            config.token = configurationFile.token;
+            var context = {
+                config: config,
+                data: data
+            };
+
+            logger.send(context, function(err, resp, body) {
+                assert.ok(!err);
+                assert.strictEqual(resp.headers["content-type"], "application/json; charset=UTF-8");
+                assert.strictEqual(resp.body, body);
+                assert.strictEqual(body.text, successBody.text);
+                assert.strictEqual(body.code, successBody.code);
                 done();
             });
         });
@@ -161,6 +332,125 @@ describe("SplunkLogger send", function() {
                 done();
             });
         });
+        it("should send 2 events with valid token, w/o callbacks", function(done) {
+            var config = {
+                token: configurationFile.token
+            };
+
+            var logger = new SplunkLogger(config);
+
+            var data = "batched event";
+            var context = {
+                config: config,
+                data: data
+            };
+            
+            var sent = 0;
+
+            // Wrap sendevents to ensure it gets called
+            logger._sendEvents = function(cont, cb) {
+                sent++;
+                SplunkLogger.prototype._sendEvents(cont, cb);
+            };
+
+            logger.send(context);
+            logger.send(context);
+
+            setTimeout(function() {
+                assert.strictEqual(logger.contextQueue.length, 0);
+                assert.strictEqual(sent, 2);
+                done();
+            }, 1000);
+        });
+    });
+    describe("using batching (integration tests)", function () {
+        it("should get no data response when flushing empty batch with valid token", function(done) {
+            var config = {
+                token: configurationFile.token,
+                batching: "manual"
+            };
+
+            var logger = new SplunkLogger(config);
+
+            assert.strictEqual(logger.contextQueue.length, 0);
+            logger.flush(function(err, resp, body) {
+                assert.ok(!err);
+                assert.strictEqual(resp.headers["content-type"], "application/json; charset=UTF-8");
+                assert.strictEqual(resp.body, body);
+                assert.strictEqual(body.text, noDataBody.text);
+                assert.strictEqual(body.code, noDataBody.code);
+                assert.strictEqual(logger.contextQueue.length, 0);
+                done();
+            });
+        });
+        it("should be noop when flushing empty batch, without callback, with valid token", function() {
+            var config = {
+                token: configurationFile.token,
+                batching: "manual"
+            };
+
+            var logger = new SplunkLogger(config);
+
+            // Nothing should be sent if queue is empty
+            assert.strictEqual(logger.contextQueue.length, 0);
+            logger.flush();
+            assert.strictEqual(logger.contextQueue.length, 0);
+        });
+        it("should flush a batch of 1 event with valid token", function(done) {
+            var config = {
+                token: configurationFile.token,
+                batching: "manual"
+            };
+
+            var logger = new SplunkLogger(config);
+
+            var data = "batched event 1";
+            var context = {
+                config: config,
+                data: data
+            };
+        
+            logger.send(context);
+
+            assert.strictEqual(logger.contextQueue.length, 1);
+            logger.flush(function(err, resp, body) {
+                assert.ok(!err);
+                assert.strictEqual(resp.headers["content-type"], "application/json; charset=UTF-8");
+                assert.strictEqual(resp.body, body);
+                assert.strictEqual(body.text, successBody.text);
+                assert.strictEqual(body.code, successBody.code);
+                assert.strictEqual(logger.contextQueue.length, 0);
+                done();
+            });
+        });
+        it("should flush a batch of 2 events with valid token", function(done) {
+            var config = {
+                token: configurationFile.token,
+                batching: "manual"
+            };
+
+            var logger = new SplunkLogger(config);
+
+            var data = "batched event";
+            var context = {
+                config: config,
+                data: data
+            };
+
+            logger.send(context);
+            logger.send(context);
+
+            assert.strictEqual(logger.contextQueue.length, 2);
+            logger.flush(function(err, resp, body) {
+                assert.ok(!err);
+                assert.strictEqual(resp.headers["content-type"], "application/json; charset=UTF-8");
+                assert.strictEqual(resp.body, body);
+                assert.strictEqual(body.text, successBody.text);
+                assert.strictEqual(body.code, successBody.code);
+                assert.strictEqual(logger.contextQueue.length, 0);
+                done();
+            });
+        });
     });
     describe("using custom middleware", function() {
         it("should error with non-function middleware", function() {
@@ -229,7 +519,7 @@ describe("SplunkLogger send", function() {
             function middleware(context, callback) {
                 middlewareCount++;
                 assert.strictEqual(context.data, "somet??hing");
-                context.data = encodeURIComponent("somet??hing");
+                context.data = encodeURIComponent(context.data);
                 callback(null, context);
             }
 
@@ -280,7 +570,7 @@ describe("SplunkLogger send", function() {
             function middleware(context, next) {
                 middlewareCount++;
                 assert.strictEqual(context.data, "somet??hing");
-                context.data = encodeURIComponent("somet??hing");
+                context.data = encodeURIComponent(context.data);
                 next(null, context);
             }
 
@@ -419,7 +709,7 @@ describe("SplunkLogger send", function() {
         });
     });
     describe("error handlers", function() {
-        it("default error handler", function(done) {
+        it("should use default error handler", function(done) {
             var config = {
                 token: "token-goes-here"
             };

@@ -1,4 +1,5 @@
 var SplunkLogger = require("../index");
+var utils = require("../utils");
 var assert = require("assert");
 
 describe("SplunkLogger", function() {
@@ -235,7 +236,7 @@ describe("SplunkLogger", function() {
                 assert.strictEqual(err.message, "Config is required.");
             }
         });
-        it("should error with non-string config", function() {
+        it("should error with string config", function() {
             try {
                 SplunkLogger.prototype._initializeConfig("not an object");
                 assert.ok(false, "Expected an error.");
@@ -483,7 +484,7 @@ describe("SplunkLogger", function() {
             assert.ok(options.headers.hasOwnProperty("Authorization"));
             assert.ok(options.headers.Authorization, "Splunk " + config.token);
             assert.strictEqual(options.json, true);
-            assert.strictEqual(options.strictSSL, false); 
+            assert.strictEqual(options.strictSSL, false);
         });
         it("should create options with full config, empty options", function() {
             var config = {
@@ -502,7 +503,7 @@ describe("SplunkLogger", function() {
             assert.ok(options.headers.hasOwnProperty("Authorization"));
             assert.ok(options.headers.Authorization, "Splunk " + config.token);
             assert.strictEqual(options.json, true);
-            assert.strictEqual(options.strictSSL, false); 
+            assert.strictEqual(options.strictSSL, false);
         });
 
         it("should create options with full config, & full options", function() {
@@ -534,7 +535,7 @@ describe("SplunkLogger", function() {
             assert.ok(options.headers.hasOwnProperty("Authorization"));
             assert.ok(options.headers.Authorization, "Splunk " + config.token);
             assert.strictEqual(options.json, false);
-            assert.strictEqual(options.strictSSL, true); 
+            assert.strictEqual(options.strictSSL, true);
         });
         it("should create default options with token in config", function() {
             Object.prototype.someproperty = "ignore";
@@ -553,6 +554,24 @@ describe("SplunkLogger", function() {
             assert.ok(options.headers.Authorization, "Splunk " + config.token);
             assert.strictEqual(options.json, true);
             assert.strictEqual(options.strictSSL, false);
+        });
+    });
+    describe("_initializeData", function() {
+        it("should error with no args", function() {
+            try {
+                SplunkLogger.prototype._initializeData();
+                assert.ok(false, "Expected an error.");
+            }
+            catch (err) {
+                assert.ok(err);
+                assert.strictEqual(err.message, "Data argument is required.");
+            }
+        });
+        it("should leave string intact", function() {
+            var initialData = "something";
+            var data = SplunkLogger.prototype._initializeData(initialData);
+            assert.ok(data);
+            assert.strictEqual(data, initialData);
         });
     });
     describe("_initializeContext", function() {
