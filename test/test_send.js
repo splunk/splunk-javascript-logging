@@ -25,6 +25,24 @@ var noDataBody = {
     code: 5
 };
 
+// Backup console.log so we can restore it later
+var ___log = console.log;
+/**
+ * Silences console.log
+ * Undo this effect by calling unmute().
+ */
+function mute() {
+    console.log = function(){};
+}
+
+/**
+ * Un-silences console.log
+ */
+function unmute() {
+    console.log = ___log;
+}
+
+
 describe("SplunkLogger _makedata", function() {
     it("should error with no args", function() {
         try {
@@ -709,7 +727,55 @@ describe("SplunkLogger send", function() {
         });
     });
     describe("error handlers", function() {
-        it("should use default error handler", function(done) {
+        it("should get error and context using default error handler, without passing context to next()", function(done) {
+            var config = {
+                token: "token-goes-here"
+            };
+
+            var middlewareCount = 0;
+
+            function middleware(context, next) {
+                middlewareCount++;
+                assert.strictEqual(context.data, "something");
+                context.data = "something else";
+                next(new Error("error!"));
+            }
+
+            var logger = new SplunkLogger(config);
+            logger.use(middleware);
+
+            var initialData = "something";
+            var initialContext = {
+                config: config,
+                data: initialData
+            };
+
+            var run = false;
+
+            mute();
+
+            // Wrap the default error callback for code coverage
+            var errCallback = logger.error;
+            logger.error = function(err, context) {
+                run = true;
+                assert.ok(err);
+                assert.ok(context);
+                assert.strictEqual(err.message, "error!");
+                initialContext.data = "something else";
+                assert.strictEqual(context, initialContext);
+                errCallback(err, context);
+                
+                unmute();
+                done();
+            };
+
+            // Fire & forget, the callback won't be called anyways due to the error
+            logger.send(initialContext);
+
+            assert.ok(run);
+            assert.strictEqual(middlewareCount, 1);
+        });
+        it("should get error and context using default error handler", function(done) {
             var config = {
                 token: "token-goes-here"
             };
@@ -734,9 +800,7 @@ describe("SplunkLogger send", function() {
 
             var run = false;
 
-            // Suppress console.log
-            var log = console.log;
-            console.log = function(msg){};
+            mute();
 
             // Wrap the default error callback for code coverage
             var errCallback = logger.error;
@@ -748,8 +812,8 @@ describe("SplunkLogger send", function() {
                 initialContext.data = "something else";
                 assert.strictEqual(context, initialContext);
                 errCallback(err, context);
-                // Restore console.log
-                console.log = log;
+                
+                unmute();
                 done();
             };
 
@@ -759,5 +823,74 @@ describe("SplunkLogger send", function() {
             assert.ok(run);
             assert.strictEqual(middlewareCount, 1);
         });
+        it("should get error and context sending twice using default error handler", function(done) {
+            var config = {
+                token: "token-goes-here"
+            };
+
+            var middlewareCount = 0;
+
+            function middleware(context, next) {
+                middlewareCount++;
+                assert.strictEqual(context.data, "something");
+                context.data = "something else";
+                next(new Error("error!"), context);
+            }
+
+            var logger = new SplunkLogger(config);
+            logger.use(middleware);
+
+            var initialData = "something";
+            var context1 = {
+                config: config,
+                data: initialData
+            };
+
+            mute();
+
+            // Wrap the default error callback for code coverage
+            var errCallback = logger.error;
+            logger.error = function(err, context) {
+                assert.ok(err);
+                assert.strictEqual(err.message, "error!");
+                assert.ok(context);
+                assert.strictEqual(context.data, "something else");
+
+                var comparing = context1;
+                if (middlewareCount === 2) {
+                    comparing = context2;
+                }
+                assert.strictEqual(context.severity, comparing.severity);
+                assert.strictEqual(context.config, comparing.config);
+                assert.strictEqual(context.requestOptions, comparing.requestOptions);
+                
+                errCallback(err, context);
+                if (middlewareCount === 2) {
+                    unmute();
+                    done();
+                }
+            };
+
+            // Fire & forget, the callback won't be called anyways due to the error
+            logger.send(context1);
+            // Reset the data, hopefully this doesn't explode
+            var context2 = JSON.parse(JSON.stringify(context1));
+            context2.data = "something";
+            logger.send(context2);
+
+            assert.strictEqual(middlewareCount, 2);
+        });
+        // TODO: add a test without the context in middleware
+        // TODO: test this scenario...
+        /**
+         * logger.config.batching = false;
+         * logger.send(); // really slow, changes the context
+         * logger.send(); // really fast, errors out
+         * 
+         * when the 2nd send calls flush, which context does it get?
+         * ie: does 
+         * 
+         *
+         */
     });
 });

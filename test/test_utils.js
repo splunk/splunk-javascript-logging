@@ -14,23 +14,6 @@ describe("Utils", function() {
             testToArray(1, 2, 3, 4, 5);
         });
     });
-    describe("isArray", function () {
-        it("should return true for empty array", function() {
-            assert.ok(utils.isArray([]));
-        });
-        it("should return true for 1 element array", function() {
-            assert.ok(utils.isArray([1]));
-        });
-        it("should return true for 2 element array", function() {
-            assert.ok(utils.isArray([1, 2]));
-        });
-        it("should return false for null", function() {
-            assert.ok(!utils.isArray(null));
-        });
-        it("should return false for no argument", function() {
-            assert.ok(!utils.isArray());
-        });
-    });
     // TODO: rename these tests to the "should..." format
     describe("chain", function () {
         it("single success", function(done) {

@@ -59,6 +59,7 @@ var defaultConfig = {
     batching: SplunkLogger.prototype.batchingModes.off
 };
 
+// TODO: add useragent header
 var defaultRequestOptions = {
     json: true, // Sets the content-type header to application/json
     strictSSL: false,
@@ -259,24 +260,15 @@ SplunkLogger.prototype._sendEvents = function(context, callback) {
         case SplunkLogger.prototype.batchingModes.manual:
             // Don't run _makeBody since we've already done that
             context.requestOptions.body = context.data;
-            // Don't set the Content-Type to application/json
-            context.requestOptions.json = false;
-
-            request.post(context.requestOptions, function(err, resp, body) {
-                // Since json is false here, manually parse the stringified JSON
-                /* istanbul ignore else */
-                if (typeof body === "string") {
-                    body = JSON.parse(body);
-                    resp.body = body;
-                }
-                callback(err, resp, body);
-            });
+            // Manually set the content-type header for batching, default is application/json
+            // since json is set to true.
+            context.requestOptions.headers["content-type"] = "application/x-www-form-urlencoded";
             break;
         default:
             context.requestOptions.body = this._makeBody(context);
-            request.post(context.requestOptions, callback);
             break;
     }
+    request.post(context.requestOptions, callback);
 };
 
 /**
@@ -349,12 +341,16 @@ SplunkLogger.prototype.flush = function (callback) {
 
     // After running all, if any, middlewares send the events
     var that = this;
-    utils.chain(callbacks, function(err) {
+    utils.chain(callbacks, function(err, passedContext) {
         // Errors from any of the middleware callbacks will fall through to here
+        // If the context is modified at any point the error callback will get it also
+        // event if next("error"); is called w/o the context parameter!
+        // This works because context inside & outside the scope of this function
+        // point to the same memory block.
+        // The passedContext parameter could be named context to
+        // do this automatically, but the || notation adds a bit of clarity.
         if (err) {
-            // TODO: extract the context from a middleware?
-            //       probably need to inline utils.chain and make some changes
-            that.error(err, context);
+            that.error(err, passedContext || context);
         }
         else {
             that._sendEvents(context, callback);
