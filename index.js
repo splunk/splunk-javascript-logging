@@ -189,7 +189,7 @@ SplunkLogger.prototype._initializeContext = function(context) {
         throw new Error("Context argument must be an object.");
     }
     else if (!context.hasOwnProperty("data")) {
-           throw new Error("Context argument must have the data property set.");
+        throw new Error("Context argument must have the data property set.");
     }
 
     // _initializeConfig will throw an error config or this.config is
