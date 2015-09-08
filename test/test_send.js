@@ -527,6 +527,49 @@ describe("SplunkLogger send", function() {
                 done();
             });
         });
+        it("should succeed using non-default middleware, without passing the context through", function(done) {
+            var config = {
+                token: "token-goes-here"
+            };
+
+            var middlewareCount = 0;
+
+            function middleware(context, next) {
+                middlewareCount++;
+                assert.strictEqual(context.data, "something");
+                next(null);
+            }
+
+            var logger = new SplunkLogger(config);
+            logger.use(middleware);
+
+            logger._sendEvents = function(context, next) {
+                assert.strictEqual(context, initialContext);
+                var response = {
+                    headers: {
+                        "content-type": "application/json; charset=UTF-8",
+                        isCustom: true
+                    },
+                    body: successBody
+                };
+                next(null, response, successBody);
+            };
+
+            var initialData = "something";
+            var initialContext = {
+                config: config,
+                data: initialData
+            };
+
+            logger.send(initialContext, function(err, resp, body) {
+                assert.ok(!err);
+                assert.strictEqual(resp.body, body);
+                assert.strictEqual(body.code, successBody.code);
+                assert.strictEqual(body.text, successBody.text);
+                assert.strictEqual(middlewareCount, 1);
+                done();
+            });
+        });
         it("should succeed using 2 middlewares", function(done) {
             var config = {
                 token: "token-goes-here"
@@ -880,9 +923,7 @@ describe("SplunkLogger send", function() {
 
             assert.strictEqual(middlewareCount, 2);
         });
-        // TODO: add a test without the context in middleware
-        // TODO: test this scenario...
-        /**
+        /** TODO: test this scenario...
          * logger.config.batching = false;
          * logger.send(); // really slow, changes the context
          * logger.send(); // really fast, errors out

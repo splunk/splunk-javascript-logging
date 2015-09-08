@@ -209,7 +209,7 @@ SplunkLogger.prototype._initializeContext = function(context) {
  * TODO: docs
  * Takes anything and puts it in a JS object for the event/1.0 EC format
  *
- * TODO: add metadata to the JSON body
+ * TODO: add metadata to the JSON body: time, host, source, sourcetype, index
  */
 SplunkLogger.prototype._makeBody = function(context) {
     // TODO: add time to the metadata
