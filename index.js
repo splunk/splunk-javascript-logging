@@ -29,7 +29,7 @@ var SplunkLogger = function(config) {
 };
 
 /**
- * TODO: docs, do we want to add other levels?
+ * TODO: docs, do we want to add other levels from bunyan logger?
  * 
  */
 SplunkLogger.prototype.levels = {
@@ -277,8 +277,9 @@ SplunkLogger.prototype._sendEvents = function(context, callback) {
  * 
  */
 SplunkLogger.prototype.send = function (context, callback) {
-    context = this._initializeContext(context);
     callback = callback || function(){};
+    context = this._initializeContext(context);
+    
     this.contextQueue.push(context);
 
     switch(context.config.batching) {
