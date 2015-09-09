@@ -3,7 +3,7 @@ var utils = {};
 /**
  * TODO: docs
  *
- * returns a number of epoch seconds
+ * returns epoch time in seconds
  */
 utils.formatTime = function(time) {
     var cleanTime;

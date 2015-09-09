@@ -265,6 +265,7 @@ describe("SplunkLogger send", function() {
                 done();
             });
         });
+        // TODO: add a test successfully sending data to a different index (needs to be set during token creation)
         it("should succeed with valid token, changing source", function(done) {
             var config = {
                 token: configurationFile.token
