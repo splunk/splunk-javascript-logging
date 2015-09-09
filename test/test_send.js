@@ -25,6 +25,12 @@ var noDataBody = {
     code: 5
 };
 
+var incorrectIndexBody = {
+    text: "Incorrect index",
+    code: 7,
+    "invalid-event-number": 1
+};
+
 // Backup console.log so we can restore it later
 var ___log = console.log;
 /**
@@ -62,7 +68,7 @@ describe("SplunkLogger _makedata", function() {
         
         assert.ok(body);
         assert.ok(body.hasOwnProperty("event"));
-        assert.strictEqual(Object.keys(body).length, 1);
+        assert.strictEqual(Object.keys(body).length, 2);
         assert.ok(body.event.hasOwnProperty("message"));
         assert.strictEqual(body.event.message, context.data);
         assert.strictEqual(body.event.severity, "info");
@@ -75,7 +81,7 @@ describe("SplunkLogger _makedata", function() {
         
         assert.ok(body);
         assert.ok(body.hasOwnProperty("event"));
-        assert.strictEqual(Object.keys(body).length, 1);
+        assert.strictEqual(Object.keys(body).length, 2);
         assert.ok(body.event.hasOwnProperty("message"));
         assert.strictEqual(body.event.message, context.data);
         assert.strictEqual(body.event.severity, "info");
@@ -90,7 +96,7 @@ describe("SplunkLogger _makedata", function() {
         
         assert.ok(body);
         assert.ok(body.hasOwnProperty("event"));
-        assert.strictEqual(Object.keys(body).length, 1);
+        assert.strictEqual(Object.keys(body).length, 2);
         assert.ok(body.event.hasOwnProperty("message"));
         assert.strictEqual(body.event.message, context.data);
         assert.strictEqual(body.event.message.prop, "something");
@@ -105,7 +111,7 @@ describe("SplunkLogger _makedata", function() {
         
         assert.ok(body);
         assert.ok(body.hasOwnProperty("event"));
-        assert.strictEqual(Object.keys(body).length, 1);
+        assert.strictEqual(Object.keys(body).length, 2);
         assert.ok(body.event.hasOwnProperty("message"));
         assert.strictEqual(body.event.message, context.data);
         assert.strictEqual(body.event.severity, "urgent");
@@ -119,7 +125,7 @@ describe("SplunkLogger _makedata", function() {
         
         assert.ok(body);
         assert.ok(body.hasOwnProperty("event"));
-        assert.strictEqual(Object.keys(body).length, 1);
+        assert.strictEqual(Object.keys(body).length, 2);
         assert.ok(body.event.hasOwnProperty("message"));
         assert.strictEqual(body.event.message, context.data);
         assert.strictEqual(body.event.severity, "urgent");
@@ -135,7 +141,7 @@ describe("SplunkLogger _makedata", function() {
         
         assert.ok(body);
         assert.ok(body.hasOwnProperty("event"));
-        assert.strictEqual(Object.keys(body).length, 1);
+        assert.strictEqual(Object.keys(body).length, 2);
         assert.ok(body.event.hasOwnProperty("message"));
         assert.strictEqual(body.event.message, context.data);
         assert.strictEqual(body.event.message.prop, "something");
@@ -210,6 +216,127 @@ describe("SplunkLogger send", function() {
                 done();
             });
         });
+        it("should succeed with valid token, using custom time", function(done) {
+            var config = {
+                token: configurationFile.token
+            };
+
+            var logger = new SplunkLogger(config);
+
+            var data = "something else";
+
+            var context = {
+                config: config,
+                data: data,
+                time: new Date("January 1, 2015")
+            };
+
+            logger.send(context, function(err, resp, body) {
+                assert.ok(!err);
+                assert.strictEqual(resp.headers["content-type"], "application/json; charset=UTF-8");
+                assert.strictEqual(resp.body, body);
+                assert.strictEqual(body.text, successBody.text);
+                assert.strictEqual(body.code, successBody.code);
+                done();
+            });
+        });
+        it("should error with valid token, sending to the wrong index", function(done) {
+            var config = {
+                token: configurationFile.token
+            };
+
+            var logger = new SplunkLogger(config);
+
+            var data = "something else";
+
+            var context = {
+                config: config,
+                data: data,
+                index: "_____bad___index______"
+            };
+
+            logger.send(context, function(err, resp, body) {
+                assert.ok(!err);
+                assert.strictEqual(resp.headers["content-type"], "application/json; charset=UTF-8");
+                assert.strictEqual(resp.body, body);
+                assert.strictEqual(body.text, incorrectIndexBody.text);
+                assert.strictEqual(body.code, incorrectIndexBody.code);
+                assert.strictEqual(body["invalid-event-number"], incorrectIndexBody["invalid-event-number"]);
+                done();
+            });
+        });
+        it("should succeed with valid token, changing source", function(done) {
+            var config = {
+                token: configurationFile.token
+            };
+
+            var logger = new SplunkLogger(config);
+
+            var data = "something else";
+
+            var context = {
+                config: config,
+                data: data,
+                source: "_____new____source"
+            };
+
+            logger.send(context, function(err, resp, body) {
+                assert.ok(!err);
+                assert.strictEqual(resp.headers["content-type"], "application/json; charset=UTF-8");
+                assert.strictEqual(resp.body, body);
+                assert.strictEqual(body.text, successBody.text);
+                assert.strictEqual(body.code, successBody.code);
+                done();
+            });
+        });
+        it("should succeed with valid token, changing sourcetype", function(done) {
+            var config = {
+                token: configurationFile.token
+            };
+
+            var logger = new SplunkLogger(config);
+
+            var data = "something else";
+
+            var context = {
+                config: config,
+                data: data,
+                sourcetype: "_____new____sourcetype"
+            };
+
+            logger.send(context, function(err, resp, body) {
+                assert.ok(!err);
+                assert.strictEqual(resp.headers["content-type"], "application/json; charset=UTF-8");
+                assert.strictEqual(resp.body, body);
+                assert.strictEqual(body.text, successBody.text);
+                assert.strictEqual(body.code, successBody.code);
+                done();
+            });
+        });
+        it("should succeed with valid token, changing host", function(done) {
+            var config = {
+                token: configurationFile.token
+            };
+
+            var logger = new SplunkLogger(config);
+
+            var data = "something else";
+
+            var context = {
+                config: logger.config,
+                data: data,
+                host: "some.other.host"
+            };
+
+            logger.send(context, function(err, resp, body) {
+                assert.ok(!err);
+                assert.strictEqual(resp.headers["content-type"], "application/json; charset=UTF-8");
+                assert.strictEqual(resp.body, body);
+                assert.strictEqual(body.text, successBody.text);
+                assert.strictEqual(body.code, successBody.code);
+                done();
+            });
+        });
         it("should succeed with different valid token passed through context", function(done) {
             var config = {
                 token: "invalid-token"
@@ -266,7 +393,6 @@ describe("SplunkLogger send", function() {
             assert.strictEqual(logger.config.token, config.token);
 
             var data = "something";
-
 
             var context = {
                 config: {},
@@ -923,15 +1049,5 @@ describe("SplunkLogger send", function() {
 
             assert.strictEqual(middlewareCount, 2);
         });
-        /** TODO: test this scenario...
-         * logger.config.batching = false;
-         * logger.send(); // really slow, changes the context
-         * logger.send(); // really fast, errors out
-         * 
-         * when the 2nd send calls flush, which context does it get?
-         * ie: does 
-         * 
-         *
-         */
     });
 });

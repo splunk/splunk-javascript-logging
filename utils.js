@@ -2,6 +2,50 @@ var utils = {};
 
 /**
  * TODO: docs
+ *
+ * returns a number of epoch seconds
+ */
+utils.formatTime = function(time) {
+    var cleanTime;
+    
+    // If time is a Date object, return its value.
+    if (time instanceof Date) {
+        time = time.valueOf();
+    }
+
+    if (!time || time === null) {
+        return null;
+    }
+
+    // Values with decimals
+    if (time.toString().indexOf(".") !== -1) {
+        cleanTime = parseFloat(time).toFixed(3); // Clean up the extra decimals right away.
+
+        // A perfect time in milliseconds, with the decimal in the right spot.
+        if (cleanTime.toString().indexOf(".") >= 10) {
+            cleanTime = parseFloat(cleanTime.toString().substring(0,14)).toFixed(3);
+        }
+    }
+    // Values without decimals
+    else {
+        // A time in milliseconds, no decimal (ex: Date.now()).
+        if (time.toString().length === 13) {
+            cleanTime = (parseFloat(time)/1000).toFixed(3);
+        }
+        // A time with fewer than expected digits.
+        else if (time.toString().length <= 12) {
+            cleanTime = parseFloat(time).toFixed(3);
+        }
+        // Any other value has more digits than the expected time format, get the first 14.
+        else {
+            cleanTime = parseFloat(time.toString().substring(0, 13)/1000).toFixed(3);
+        }
+    }
+    return cleanTime;
+};
+
+/**
+ * TODO: docs
  * Converts an iterable to an array
  */
 utils.toArray = function(iterable) {

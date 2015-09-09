@@ -59,7 +59,7 @@ var defaultConfig = {
     batching: SplunkLogger.prototype.batchingModes.off
 };
 
-// TODO: add useragent header
+// TODO: add useragent header?
 var defaultRequestOptions = {
     json: true, // Sets the content-type header to application/json
     strictSSL: false,
@@ -207,24 +207,44 @@ SplunkLogger.prototype._initializeContext = function(context) {
 
 /**
  * TODO: docs
- * Takes anything and puts it in a JS object for the event/1.0 EC format
  *
- * TODO: add metadata to the JSON body: time, host, source, sourcetype, index
+ * Takes anything and puts it in a JS object for the event/1.0 EC format
+ * If context has any of the following properties set, they will overwrite the token's settings
+ *
+ *  - host
+ *  - source
+ *  - sourcetype
+ *  - index (TODO: can index by changed on the fly?)
  */
 SplunkLogger.prototype._makeBody = function(context) {
-    // TODO: add time to the metadata
-
     if (!context) {
         throw new Error("Context parameter is required.");
     }
+
+    var time = utils.formatTime(context.time || Date.now());
     
     var body = {
+        time: time.toString(),
         // Here, we force the data into an object under the message property
         event: {
             message: context.data,
             severity: context.severity || SplunkLogger.prototype.levels.info
         }
     };
+
+    // If these properties aren't set, let Splunk set them
+    if (context.host) {
+        body.host = context.host;
+    }
+    if (context.source) {
+        body.source = context.source;
+    }
+    if (context.sourcetype) {
+        body.sourcetype = context.sourcetype;
+    }
+    if (context.index) {
+        body.index = context.index;
+    }
     
     return body;
 };
@@ -252,6 +272,7 @@ SplunkLogger.prototype.use = function(middleware) {
  */
 SplunkLogger.prototype._sendEvents = function(context, callback) {
     callback = callback || /* istanbul ignore next*/ function(){};
+
     // Validate the context again, right before using it
     context = this._initializeContext(context);
     context.requestOptions.headers["Authorization"] = "Splunk " + context.config.token;
@@ -321,7 +342,7 @@ SplunkLogger.prototype.flush = function (callback) {
             break;
 
         default:
-            // TODO: handle case of multiple events with batching off
+            // TODO: handle case of multiple events with batching off, flushing fast
             context = this.contextQueue.pop();
             break;
     }

@@ -127,6 +127,24 @@ describe("SplunkLogger", function() {
             assert.strictEqual(logger.levels.info, logger.config.level);
             assert.strictEqual(8088, logger.config.port);
         });
+        it("should set remaining defaults when setting config with token, batching, & level", function() {
+            var config = {
+                token: "a-token-goes-here-usually",
+                level: "important",
+                batching: "manual"
+            };
+            var logger = new SplunkLogger(config);
+
+            assert.ok(logger);
+            assert.strictEqual(config.token, logger.config.token);
+            assert.strictEqual("splunk-javascript-logging/0.8.0", logger.config.name);
+            assert.strictEqual("localhost", logger.config.host);
+            assert.strictEqual("/services/collector/event/1.0", logger.config.path);
+            assert.strictEqual("https", logger.config.protocol);
+            assert.strictEqual("important", logger.config.level);
+            assert.strictEqual("manual", logger.config.batching);
+            assert.strictEqual(8088, logger.config.port);
+        });
         it("should set non-default boolean config values", function() {
             var config = {
                 token: "a-token-goes-here-usually",
@@ -222,6 +240,7 @@ describe("SplunkLogger", function() {
             assert.strictEqual("/services/collector/event/1.0", logger.config.path);
             assert.strictEqual("https", logger.config.protocol);
             assert.strictEqual("info", logger.config.level);
+            assert.strictEqual("off", logger.config.batching);
             assert.strictEqual(8088, logger.config.port);
         });
     });
