@@ -1,4 +1,4 @@
-var SplunkLogger = require("../index");
+var SplunkLogger = require("../index").Logger;
 var assert = require("assert");
 
 /**

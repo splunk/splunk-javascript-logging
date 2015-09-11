@@ -54,8 +54,8 @@ var defaultConfig = {
     host: "localhost",
     path: "/services/collector/event/1.0",
     protocol: "https",
-    level: SplunkLogger.prototype.levels.info,
     port: 8088,
+    level: SplunkLogger.prototype.levels.info,
     batching: SplunkLogger.prototype.batchingModes.off
 };
 
@@ -380,4 +380,7 @@ SplunkLogger.prototype.flush = function (callback) {
     });
 };
 
-module.exports = SplunkLogger;
+module.exports = {
+    Logger: SplunkLogger, // TODO: should SplunkLogger be moved to it's own file?
+    utils: utils
+};

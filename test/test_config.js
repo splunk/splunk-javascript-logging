@@ -1,4 +1,4 @@
-var SplunkLogger = require("../index");
+var SplunkLogger = require("../index").Logger;
 var utils = require("../utils");
 var assert = require("assert");
 
@@ -143,6 +143,7 @@ describe("SplunkLogger", function() {
             assert.strictEqual("https", logger.config.protocol);
             assert.strictEqual("important", logger.config.level);
             assert.strictEqual("manual", logger.config.batching);
+            assert.strictEqual(logger.batchingModes.manual, logger.config.batching);
             assert.strictEqual(8088, logger.config.port);
         });
         it("should set non-default boolean config values", function() {

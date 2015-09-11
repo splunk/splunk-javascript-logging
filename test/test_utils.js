@@ -1,5 +1,5 @@
 var assert = require("assert");
-var utils = require("../utils");
+var utils = require("../index").utils;
 
 describe("Utils", function() {
     describe("formatTime", function () {
