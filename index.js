@@ -33,7 +33,10 @@ var SplunkLogger = function(config) {
  * 
  */
 SplunkLogger.prototype.levels = {
-    info: "info"
+    DEBUG: "debug",
+    INFO: "info",
+    WARN: "warn",
+    ERROR: "error"
 };
 
 /**
@@ -45,8 +48,8 @@ SplunkLogger.prototype.levels = {
  * 
  */
 SplunkLogger.prototype.batchingModes = {
-    off: "off",
-    manual: "manual"
+    OFF: "off",
+    MANUAL: "manual"
 };
 
 var defaultConfig = {
@@ -55,8 +58,8 @@ var defaultConfig = {
     path: "/services/collector/event/1.0",
     protocol: "https",
     port: 8088,
-    level: SplunkLogger.prototype.levels.info,
-    batching: SplunkLogger.prototype.batchingModes.off
+    level: SplunkLogger.prototype.levels.INFO,
+    batching: SplunkLogger.prototype.batchingModes.OFF
 };
 
 // TODO: add useragent header?
@@ -200,7 +203,7 @@ SplunkLogger.prototype._initializeContext = function(context) {
 
     context.data = this._initializeData(context.data);
 
-    context.severity = context.severity || SplunkLogger.prototype.levels.info;
+    context.severity = context.severity || SplunkLogger.prototype.levels.INFO;
 
     return context;
 };
@@ -228,7 +231,7 @@ SplunkLogger.prototype._makeBody = function(context) {
         // Here, we force the data into an object under the message property
         event: {
             message: context.data,
-            severity: context.severity || SplunkLogger.prototype.levels.info
+            severity: context.severity || SplunkLogger.prototype.levels.INFO
         }
     };
 
@@ -278,7 +281,7 @@ SplunkLogger.prototype._sendEvents = function(context, callback) {
     context.requestOptions.headers["Authorization"] = "Splunk " + context.config.token;
 
     switch(context.config.batching) {
-        case SplunkLogger.prototype.batchingModes.manual:
+        case SplunkLogger.prototype.batchingModes.MANUAL:
             // Don't run _makeBody since we've already done that
             context.requestOptions.body = context.data;
             // Manually set the content-type header for batching, default is application/json
@@ -304,7 +307,7 @@ SplunkLogger.prototype.send = function (context, callback) {
     this.contextQueue.push(context);
 
     switch(context.config.batching) {
-        case SplunkLogger.prototype.batchingModes.manual:
+        case SplunkLogger.prototype.batchingModes.MANUAL:
             // If batching, this is noop
             callback(null);
             break;
@@ -330,7 +333,7 @@ SplunkLogger.prototype.flush = function (callback) {
 
     // Use the batching setting from this.config
     switch(this.config.batching) {
-        case SplunkLogger.prototype.batchingModes.manual:
+        case SplunkLogger.prototype.batchingModes.MANUAL:
             // Empty the event queue
             var queue = this.contextQueue;
             this.contextQueue = [];
