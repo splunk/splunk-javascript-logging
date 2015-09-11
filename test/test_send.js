@@ -427,6 +427,8 @@ describe("SplunkLogger send", function() {
                 assert.ok(err);
                 assert.strictEqual(err.message, "socket hang up");
                 assert.strictEqual(err.code, "ECONNRESET");
+                assert.ok(!resp);
+                assert.ok(!body);
                 done();
             });
         });

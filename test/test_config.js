@@ -1,5 +1,4 @@
 var SplunkLogger = require("../index").Logger;
-var utils = require("../utils");
 var assert = require("assert");
 
 describe("SplunkLogger", function() {
@@ -7,7 +6,7 @@ describe("SplunkLogger", function() {
         it("should error without config", function() {
             try {
                 var logger = new SplunkLogger();
-                assert.fail(false, "Expected an error.");
+                assert.fail(!logger, "Expected an error.");
             }
             catch (err) {
                 assert.ok(err);
@@ -18,7 +17,7 @@ describe("SplunkLogger", function() {
             var config;
             try {
                 var logger = new SplunkLogger(config);
-                assert.fail(false, "Expected an error.");
+                assert.fail(!logger, "Expected an error.");
             }
             catch (err) {
                 assert.ok(err);
@@ -29,7 +28,7 @@ describe("SplunkLogger", function() {
             var config = null;
             try {
                 var logger = new SplunkLogger(config);
-                assert.fail(false, "Expected an error.");
+                assert.fail(!logger, "Expected an error.");
             }
             catch (err) {
                 assert.ok(err);
@@ -40,7 +39,7 @@ describe("SplunkLogger", function() {
             var config = "this is not an object";
             try {
                 var logger = new SplunkLogger(config);
-                assert.fail(false, "Expected an error.");
+                assert.fail(!logger, "Expected an error.");
             }
             catch (err) {
                 assert.ok(err);
@@ -53,7 +52,7 @@ describe("SplunkLogger", function() {
             };
             try {
                 var logger = new SplunkLogger(config);
-                assert.fail(false, "Expected an error.");
+                assert.fail(!logger, "Expected an error.");
             }
             catch (err) {
                 assert.ok(err);
@@ -66,7 +65,7 @@ describe("SplunkLogger", function() {
             };
             try {
                 var logger = new SplunkLogger(config);
-                assert.fail(false, "Expected an error.");
+                assert.fail(!logger, "Expected an error.");
             }
             catch (err) {
                 assert.ok(err);
@@ -81,7 +80,7 @@ describe("SplunkLogger", function() {
 
             try {
                 var logger = new SplunkLogger(config);
-                assert.fail(false, "Expected an error.");
+                assert.fail(!logger, "Expected an error.");
             }
             catch (err) {
                 assert.ok(err);
@@ -104,7 +103,7 @@ describe("SplunkLogger", function() {
             };
             try {
                 var logger = new SplunkLogger(config);
-                assert.fail(false, "Expected an error.");
+                assert.fail(!logger, "Expected an error.");
             }
             catch (err) {
                 assert.ok(err);
