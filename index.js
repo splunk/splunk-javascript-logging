@@ -3,34 +3,69 @@ var request = require("request");
 var url = require("url");
 
 /**
- * TODO: docs
- * default error handler
+ * Default error handler for <code>SplunkLogger</code>.
+ * Prints the <code>err</code> and <code>context</code> to console.
+ *
+ * @param {Error|string} err - The error message, or an <code>Error</code> object.
+ * @param {object} [context] - The <code>context</code> of an event.
+ * @private
  */
 function _err(err, context) {
     console.log("ERROR:", err, " CONTEXT", context);
 }
 
 /**
- * TODO: docs
+ * Constructs a SplunkLogger, to send events to Splunk via the HTTP Event Collector.
+ * See <code>defaultConfig</code> for default configuration settings.
  *
- * Constructor
+ * @example
+ * var SplunkLogger = require("splunk-logging").Logger;
  *
- * Takes an object with keys:
- *     token (required)
- *     host (optional, defaults to localhost)
- *     name (optional, defaults to splunk-javascript-logging)
- *     etc.
+ * var config = {
+ *     token: "your-token-here",
+ *     name: "my application",
+ *     host: "splunk.local",
+ *     batching: SplunkLogging.Logger.batchingModes.MANUAL
+ * };
+ *
+ * var logger = new SplunkLogger(config);
+ *
+ * @property {object} config - Configuration settings for this <code>SplunkLogger</code> instance.
+ * @property {function[]} middlewares - Middleware functions to run before sending data to Splunk. See {@link SplunkLogger#use}
+ * @property {object[]} contextQueue - Queue of <code>context</code> objects to be sent to Splunk.
+ * @property {function} error - A callback function for errors: <code>function(err, context)</code>.
+ * Defaults to <code>console.log</code> both values;
+ *
+ * @param {object} config - Configuration settings for a new [SplunkLogger]{@link SplunkLogger}.
+ * @param {string} config.token - Splunk HTTP Event Collector token, required.
+ * @param {string} [config.name=splunk-javascript-logging/0.8.0] - Name for this logger.
+ * @param {string} [config.host=localhost] - Hostname or IP address of Splunk server.
+ * @param {string} [config.path=/services/collector/event/1.0] - URL path to send data to on the Splunk server.
+ * @param {string} [config.protocol=https] - Protocol used to communicate with the Splunk server, <code>http</code> or <code>https</code>.
+ * @param {number} [config.port=8088] - HTTP Event Collector port on the Splunk server.
+ * @param {string} [config.url] - URL string to pass to {@link https://nodejs.org/api/url.html#url_url_parsing|url.parse}. This will try to set
+ * <code>host</code>, <code>path</code>, <code>protocol</code>, <code>port</code>, <code>url</code>. Any of these values will be overwritten if 
+ * the corresponding property is set on <code>config</code>.
+ * @param {string} [config.level=info] - Logging level to use, will show up as the <code>severity</code> field of an event, see
+ *  [SplunkLogger.levels]{@link SplunkLogger#levels} for common levels.
+ * @param {string} [config.batching=off] - Batching mode for sending events, see [SplunkLogger.batchingModes]{@link SplunkLogger#batchingModes}
+ *  for valid modes.
+ * @constructor
+ * @throws Will throw an error if the <code>config</code> parameter is malformed.
  */
 var SplunkLogger = function(config) {
     this.config = this._initializeConfig(config);
-    this.middlewares = []; // Array of callbacks to run between send and _sendEvents
-    this.contextQueue = []; // Queue of contexts
+    this.middlewares = [];
+    this.contextQueue = [];
     this.error = _err;
 };
 
 /**
- * TODO: docs, do we want to add other levels from bunyan logger?
- * 
+ * Enum for common logging levels.
+ *
+ * @default info
+ * @readonly
+ * @enum {string}
  */
 SplunkLogger.prototype.levels = {
     DEBUG: "debug",
@@ -40,15 +75,16 @@ SplunkLogger.prototype.levels = {
 };
 
 /**
- * TODO: add other batching modes
+ * Enum for batching modes.
  *
- * Modes
- *  - off: no batching (default)
- *  - manual: must call flush manually to actually send events
- * 
+ * @default off
+ * @readonly
+ * @enum {string}
  */
 SplunkLogger.prototype.batchingModes = {
+    /** No batching. Make a request to Splunk every time <code>send()</code> is called. */
     OFF: "off",
+    /** Events are manually batched. Invoke <code>flush()</code> manually to send all queued events in 1 request. */
     MANUAL: "manual"
 };
 
@@ -70,9 +106,12 @@ var defaultRequestOptions = {
 };
 
 /**
- * TODO: docs
- * 
- * validates the config, throwing an error if it's horribly wrong
+ * Sets up the <code>config</code> with any default properties, and/or
+ * config properties set on <code>this.config</code>.
+ *
+ * @return {object} config
+ * @private
+ * @throws Will throw an error if the <code>config</code> parameter is malformed.
  */
 SplunkLogger.prototype._initializeConfig = function(config) {
     // Copy over the instance config
@@ -141,9 +180,13 @@ SplunkLogger.prototype._initializeConfig = function(config) {
 };
 
 /**
- * TODO: docs
- * 
- * NOTE: This function calls _initializeConfig
+ * Initializes request options.
+ *
+ * @param {object} config
+ * @param {object} options - Options to pass to <code>{@link https://github.com/request/request#requestpost|request.post()}</code>.
+ * See the {@link http://github.com/request/request|request documentation} for all available options.
+ * @returns {object} requestOptions
+ * @private
  */
 SplunkLogger.prototype._initializeRequestOptions = function(config, options) {
     var ret = {};
@@ -168,8 +211,10 @@ SplunkLogger.prototype._initializeRequestOptions = function(config, options) {
 };
 
 /**
- * TODO: docs
+ * Throws an error if data is <code>undefined</code> or <code>null</code>.
  *
+ * @private
+ * @throws Will throw an error if the <code>data</code> parameter is malformed.
  */
 SplunkLogger.prototype._initializeData = function(data) {
     if (typeof data === "undefined" || data === null) {
@@ -179,10 +224,12 @@ SplunkLogger.prototype._initializeData = function(data) {
 };
 
 /**
- * TODO: docs
- * 
- * Takes the context object & tries to initialize the
- * config and request options.
+ * Initializes a context.
+ *
+ * @param context
+ * @returns {object} context
+ * @throws Will throw an error if the <code>context</code> parameter is malformed.
+ * @private
  */
 SplunkLogger.prototype._initializeContext = function(context) {
     if (!context) {
@@ -209,15 +256,12 @@ SplunkLogger.prototype._initializeContext = function(context) {
 };
 
 /**
- * TODO: docs
+ * Takes anything and puts it in a JS object for the event/1.0 Splunk HTTP Event Collector format.
  *
- * Takes anything and puts it in a JS object for the event/1.0 EC format
- * If context has any of the following properties set, they will overwrite the token's settings
- *
- *  - host
- *  - source
- *  - sourcetype
- *  - index (TODO: can index by changed on the fly?)
+ * @param {object} context
+ * @returns {{time: string, event: {message: *, severity: (string|SplunkLogger.levels)}}}
+ * @private
+ * @throws Will throw an error if the <code>context</code> parameter is malformed.
  */
 SplunkLogger.prototype._makeBody = function(context) {
     if (!context) {
@@ -253,10 +297,26 @@ SplunkLogger.prototype._makeBody = function(context) {
 };
 
 /**
- * TODO: docs
- * 
- * Adds a middleware function to run before sending the
+ * Adds an express-like middleware function to run before sending the
  * data to Splunk.
+ * Multiple middleware functions can be used, they will be executed
+ * in the order they are added.
+ *
+ * This function is a wrapper around <code>this.middlewares.push()</code>.
+ *
+ * @example
+ * var SplunkLogger = require("splunk-logging").Logger;
+ *
+ * var Logger = new SplunkLogger({token: "your-token-here"});
+ * Logger.use(function(context, next) {
+ *     context.data.additionalProperty = "Add this before sending the data";
+ *     next(null, context);
+ * });
+ *
+ * @param {function} middleware - A middleware function: <code>function(context, next){}</code>.
+ * It must call <code>next(error, context)</code> to continue.
+ * @public
+ * @throws Will throw an error if <code>middleware</code> is not a <code>function</code>.
  */
 SplunkLogger.prototype.use = function(middleware) {
     if (!middleware || typeof middleware !== "function") {
@@ -268,10 +328,11 @@ SplunkLogger.prototype.use = function(middleware) {
 };
 
 /**
- * TODO: docs
- *
  * Makes an HTTP POST to the configured server.
- * Any config not specified will be set to the default configuration.
+ *
+ * @param context
+ * @param {function} callback - A callback function: <code>function(err, response, body)</code>
+ * @private
  */
 SplunkLogger.prototype._sendEvents = function(context, callback) {
     callback = callback || /* istanbul ignore next*/ function(){};
@@ -296,9 +357,51 @@ SplunkLogger.prototype._sendEvents = function(context, callback) {
 };
 
 /**
- * TODO: docs
- * Takes config context, anything, & a callback(err, resp, body)
+ * Sends or queues data to be sent based on <code>context.config.batching</code>.
+ * Default behavior is to send immediately.
+ *
+ * @example
+ * var SplunkLogger = require("splunk-logging").Logger;
+ * var config = {
+ *     token: "your-token-here"
+ * }; 
  * 
+ * var logger = new SplunkLogger(config);
+ *
+ * // Payload to send to Splunk's Event Collector
+ * var payload = {
+ *     data: {
+ *         temperature: "70F",
+ *         chickenCount: 500
+ *     },
+ *     source: "chicken coop",
+ *     sourcetype: "chicken feeder",
+ *     index: "main",
+ *     host: "farm.local",
+ *     severity: "info"
+ * }; 
+ *
+ * logger.send(payload, function(err, resp, body) {
+ *     if (err) {
+ *         console.log("error:", err);
+ *     }
+ *     console.log("body", body); // body { text: 'Success', code: 0 }
+ * });
+ *
+ * @param {object} context - An object with at least the <code>data</code> property.
+ * @param {(object|string|Array|number|bool)} context.data - Data to send to Splunk.
+ * @param {object} [context.requestOptions] - Additional options to pass to <code>{@link https://github.com/request/request#requestpost|request.post()}</code>.
+ * See the {@link http://github.com/request/request|request documentation} for all available options.
+ * @param {string} [context.severity=info] - Severity level of this event.
+ * @param {object} [context.config] - See {@link SplunkLogger} for default values.
+ * @param {string} [context.host] - If not specified, Splunk will decide the value.
+ * @param {string} [context.index] - The token set in <code>config.token</code> must be configured to send to this <code>index</code>.
+ * If not specified, Splunk will decide the value.
+ * @param {string} [context.source] - If not specified, Splunk will decide the value.
+ * @param {string} [context.sourcetype] - If not specified, Splunk will decide the value.
+ * @param {function} [callback] - A callback function: <code>function(err, response, body)</code>.
+ * @throws Will throw an error if the <code>context</code> parameter is malformed.
+ * @public
  */
 SplunkLogger.prototype.send = function (context, callback) {
     callback = callback || function(){};
@@ -319,12 +422,13 @@ SplunkLogger.prototype.send = function (context, callback) {
 };
 
 /**
- * TODO: docs
+ * Manually send events in <code>this.contextQueue</code> to Splunk, after
+ * chaining any <code>functions</code> in <code>this.middlewares</code>.
+ * Batching settings will be used from <code>this.config.batching</code>,
+ * ignoring batching settings every on every <code>context</code> in <code>this.contextQueue</code>.
  *
- * Batching settings will be used from this.config.batching,
- * ignoring any possible this.contextQueue[i].config.batching
- * values.
- * 
+ * @param {function} [callback] - A callback function: <code>function(err, response, body)</code>.
+ * @public
  */
 SplunkLogger.prototype.flush = function (callback) {
     callback = callback || function(){};
