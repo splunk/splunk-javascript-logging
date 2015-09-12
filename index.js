@@ -25,7 +25,7 @@ function _err(err, context) {
  *     token: "your-token-here",
  *     name: "my application",
  *     host: "splunk.local",
- *     batching: SplunkLogging.Logger.batchingModes.MANUAL
+ *     autoFlush: false
  * };
  *
  * var logger = new SplunkLogger(config);
@@ -48,8 +48,7 @@ function _err(err, context) {
  * the corresponding property is set on <code>config</code>.
  * @param {string} [config.level=info] - Logging level to use, will show up as the <code>severity</code> field of an event, see
  *  [SplunkLogger.levels]{@link SplunkLogger#levels} for common levels.
- * @param {string} [config.batching=off] - Batching mode for sending events, see [SplunkLogger.batchingModes]{@link SplunkLogger#batchingModes}
- *  for valid modes.
+ * @param {bool} [config.autoFlush=true] - Send events immediately or not.
  * @constructor
  * @throws Will throw an error if the <code>config</code> parameter is malformed.
  */
@@ -74,20 +73,6 @@ SplunkLogger.prototype.levels = {
     ERROR: "error"
 };
 
-/**
- * Enum for batching modes.
- *
- * @default off
- * @readonly
- * @enum {string}
- */
-SplunkLogger.prototype.batchingModes = {
-    /** No batching. Make a request to Splunk every time <code>send()</code> is called. */
-    OFF: "off",
-    /** Events are manually batched. Invoke <code>flush()</code> manually to send all queued events in 1 request. */
-    MANUAL: "manual"
-};
-
 var defaultConfig = {
     name: "splunk-javascript-logging/0.8.0",
     host: "localhost",
@@ -95,10 +80,9 @@ var defaultConfig = {
     protocol: "https",
     port: 8088,
     level: SplunkLogger.prototype.levels.INFO,
-    batching: SplunkLogger.prototype.batchingModes.OFF
+    autoFlush: true
 };
 
-// TODO: add useragent header?
 var defaultRequestOptions = {
     json: true, // Sets the content-type header to application/json
     strictSSL: false,
@@ -161,7 +145,17 @@ SplunkLogger.prototype._initializeConfig = function(config) {
         ret.path = config.path || ret.path || defaultConfig.path;
         ret.protocol = config.protocol || ret.protocol || defaultConfig.protocol;
         ret.level = config.level || ret.level || defaultConfig.level;
-        ret.batching = config.batching || ret.batching || defaultConfig.batching;
+
+        // Start with the default autoFlush value
+        ret.autoFlush = defaultConfig.autoFlush;
+        // Then check this.config.autoFlush
+        if (this.hasOwnProperty("config") && this.config.hasOwnProperty("autoFlush")) {
+            ret.autoFlush = ret.autoFlush;
+        }
+        // Then check the config.autoFlush, the function argument
+        if (config.hasOwnProperty("autoFlush")) {
+            ret.autoFlush = config.autoFlush;
+        }
 
         if (!config.hasOwnProperty("port")) {
             ret.port = ret.port || defaultConfig.port;
@@ -211,16 +205,16 @@ SplunkLogger.prototype._initializeRequestOptions = function(config, options) {
 };
 
 /**
- * Throws an error if data is <code>undefined</code> or <code>null</code>.
+ * Throws an error if message is <code>undefined</code> or <code>null</code>.
  *
  * @private
- * @throws Will throw an error if the <code>data</code> parameter is malformed.
+ * @throws Will throw an error if the <code>message</code> parameter is malformed.
  */
-SplunkLogger.prototype._initializeData = function(data) {
-    if (typeof data === "undefined" || data === null) {
-        throw new Error("Data argument is required.");
+SplunkLogger.prototype._initializeMessage = function(message) {
+    if (typeof message === "undefined" || message === null) {
+        throw new Error("Message argument is required.");
     }
-    return data;
+    return message;
 };
 
 /**
@@ -238,8 +232,8 @@ SplunkLogger.prototype._initializeContext = function(context) {
     else if (typeof context !== "object") {
         throw new Error("Context argument must be an object.");
     }
-    else if (!context.hasOwnProperty("data")) {
-        throw new Error("Context argument must have the data property set.");
+    else if (!context.hasOwnProperty("message")) {
+        throw new Error("Context argument must have the message property set.");
     }
 
     // _initializeConfig will throw an error config or this.config is
@@ -248,7 +242,7 @@ SplunkLogger.prototype._initializeContext = function(context) {
 
     context.requestOptions = this._initializeRequestOptions(context.config, context.requestOptions);
 
-    context.data = this._initializeData(context.data);
+    context.message = this._initializeMessage(context.message);
 
     context.severity = context.severity || SplunkLogger.prototype.levels.INFO;
 
@@ -256,10 +250,40 @@ SplunkLogger.prototype._initializeContext = function(context) {
 };
 
 /**
+ * Initialized metadata, if <code>context.metadata</code> is falsey or empty,
+ * return an empty object;
+ *
+ * @param {object} context
+ * @returns {object} metadata
+ * @private
+ */
+SplunkLogger.prototype._initializeMetadata = function(context) {
+    var metadata = {};
+    if (context.hasOwnProperty("metadata")) {
+        if (context.metadata.hasOwnProperty("time")) {
+            metadata.time = context.metadata.time;
+        }
+        if (context.metadata.hasOwnProperty("host")) {
+            metadata.host = context.metadata.host;
+        }
+        if (context.metadata.hasOwnProperty("source")) {
+            metadata.source = context.metadata.source;
+        }
+        if (context.metadata.hasOwnProperty("sourcetype")) {
+            metadata.sourcetype = context.metadata.sourcetype;
+        }
+        if (context.metadata.hasOwnProperty("index")) {
+            metadata.index = context.metadata.index;
+        }
+    }
+    return metadata;
+};
+
+/**
  * Takes anything and puts it in a JS object for the event/1.0 Splunk HTTP Event Collector format.
  *
  * @param {object} context
- * @returns {{time: string, event: {message: *, severity: (string|SplunkLogger.levels)}}}
+ * @returns {object}
  * @private
  * @throws Will throw an error if the <code>context</code> parameter is malformed.
  */
@@ -268,31 +292,14 @@ SplunkLogger.prototype._makeBody = function(context) {
         throw new Error("Context parameter is required.");
     }
 
-    var time = utils.formatTime(context.time || Date.now());
-    
-    var body = {
-        time: time.toString(),
-        // Here, we force the data into an object under the message property
-        event: {
-            message: context.data,
-            severity: context.severity || SplunkLogger.prototype.levels.INFO
-        }
+    var body = this._initializeMetadata(context);
+    var time = utils.formatTime(body.time || Date.now());
+    body.time = time.toString();
+    body.event = {
+        message: context.message,
+        severity: context.severity || SplunkLogger.prototype.levels.INFO
     };
-
-    // If these properties aren't set, let Splunk set them
-    if (context.host) {
-        body.host = context.host;
-    }
-    if (context.source) {
-        body.source = context.source;
-    }
-    if (context.sourcetype) {
-        body.sourcetype = context.sourcetype;
-    }
-    if (context.index) {
-        body.index = context.index;
-    }
-    
+        
     return body;
 };
 
@@ -309,7 +316,7 @@ SplunkLogger.prototype._makeBody = function(context) {
  *
  * var Logger = new SplunkLogger({token: "your-token-here"});
  * Logger.use(function(context, next) {
- *     context.data.additionalProperty = "Add this before sending the data";
+ *     context.message.additionalProperty = "Add this before sending the data";
  *     next(null, context);
  * });
  *
@@ -341,23 +348,21 @@ SplunkLogger.prototype._sendEvents = function(context, callback) {
     context = this._initializeContext(context);
     context.requestOptions.headers["Authorization"] = "Splunk " + context.config.token;
 
-    switch(context.config.batching) {
-        case SplunkLogger.prototype.batchingModes.MANUAL:
-            // Don't run _makeBody since we've already done that
-            context.requestOptions.body = context.data;
-            // Manually set the content-type header for batching, default is application/json
-            // since json is set to true.
-            context.requestOptions.headers["content-type"] = "application/x-www-form-urlencoded";
-            break;
-        default:
-            context.requestOptions.body = this._makeBody(context);
-            break;
+    if (context.config.autoFlush) {
+        context.requestOptions.body = this._makeBody(context);
+    }
+    else {
+        // Don't run _makeBody since we've already done that
+        context.requestOptions.body = context.message;
+        // Manually set the content-type header for batched requests, default is application/json
+        // since json is set to true.
+        context.requestOptions.headers["content-type"] = "application/x-www-form-urlencoded";
     }
     request.post(context.requestOptions, callback);
 };
 
 /**
- * Sends or queues data to be sent based on <code>context.config.batching</code>.
+ * Sends or queues data to be sent based on <code>context.config.autoFlush</code>.
  * Default behavior is to send immediately.
  *
  * @example
@@ -370,15 +375,17 @@ SplunkLogger.prototype._sendEvents = function(context, callback) {
  *
  * // Payload to send to Splunk's Event Collector
  * var payload = {
- *     data: {
+ *     message: {
  *         temperature: "70F",
  *         chickenCount: 500
  *     },
- *     source: "chicken coop",
- *     sourcetype: "chicken feeder",
- *     index: "main",
- *     host: "farm.local",
- *     severity: "info"
+ *     severity: "info",
+ *     {
+ *         source: "chicken coop",
+ *         sourcetype: "chicken feeder",
+ *         index: "main",
+ *         host: "farm.local",
+ *     }
  * }; 
  *
  * logger.send(payload, function(err, resp, body) {
@@ -389,16 +396,18 @@ SplunkLogger.prototype._sendEvents = function(context, callback) {
  * });
  *
  * @param {object} context - An object with at least the <code>data</code> property.
- * @param {(object|string|Array|number|bool)} context.data - Data to send to Splunk.
- * @param {object} [context.requestOptions] - Additional options to pass to <code>{@link https://github.com/request/request#requestpost|request.post()}</code>.
+ * @param {(object|string|Array|number|bool)} context.message - Data to send to Splunk.
+ * @param {object} [context.requestOptions] - Defaults are <code>{json:true, strictSSL:false}</code>. Additional
+ * options to pass to <code>{@link https://github.com/request/request#requestpost|request.post()}</code>.
  * See the {@link http://github.com/request/request|request documentation} for all available options.
- * @param {string} [context.severity=info] - Severity level of this event.
  * @param {object} [context.config] - See {@link SplunkLogger} for default values.
- * @param {string} [context.host] - If not specified, Splunk will decide the value.
- * @param {string} [context.index] - The token set in <code>config.token</code> must be configured to send to this <code>index</code>.
+ * @param {string} [context.severity=info] - Severity level of this event.
+ * @param {object} [context.metadata] - Metadata for this event.
+ * @param {string} [context.metadata.host] - If not specified, Splunk will decide the value.
+ * @param {string} [context.metadata.index] - The Splunk index to send data to.
  * If not specified, Splunk will decide the value.
- * @param {string} [context.source] - If not specified, Splunk will decide the value.
- * @param {string} [context.sourcetype] - If not specified, Splunk will decide the value.
+ * @param {string} [context.metadata.source] - If not specified, Splunk will decide the value.
+ * @param {string} [context.metadata.sourcetype] - If not specified, Splunk will decide the value.
  * @param {function} [callback] - A callback function: <code>function(err, response, body)</code>.
  * @throws Will throw an error if the <code>context</code> parameter is malformed.
  * @public
@@ -409,23 +418,19 @@ SplunkLogger.prototype.send = function (context, callback) {
     
     this.contextQueue.push(context);
 
-    switch(context.config.batching) {
-        case SplunkLogger.prototype.batchingModes.MANUAL:
-            // If batching, this is noop
-            callback(null);
-            break;
-        default:
-            // Only send immediately if batching is off
-            this.flush(callback);
-            break;
+    if (context.config.autoFlush) {
+        this.flush(callback);
+    }
+    else {
+        callback();
     }
 };
 
 /**
  * Manually send events in <code>this.contextQueue</code> to Splunk, after
  * chaining any <code>functions</code> in <code>this.middlewares</code>.
- * Batching settings will be used from <code>this.config.batching</code>,
- * ignoring batching settings every on every <code>context</code> in <code>this.contextQueue</code>.
+ * Auto flush settings will be used from <code>this.config.autoFlush</code>,
+ * ignoring auto flush settings every on every <code>context</code> in <code>this.contextQueue</code>.
  *
  * @param {function} [callback] - A callback function: <code>function(err, response, body)</code>.
  * @public
@@ -436,22 +441,20 @@ SplunkLogger.prototype.flush = function (callback) {
     var context = {};
 
     // Use the batching setting from this.config
-    switch(this.config.batching) {
-        case SplunkLogger.prototype.batchingModes.MANUAL:
-            // Empty the event queue
-            var queue = this.contextQueue;
-            this.contextQueue = [];
-            var data = "";
-            for (var i = 0; i < queue.length; i++) {
-                data += JSON.stringify(this._makeBody(queue[i]));
-            }
-            context.data = data;
-            break;
-
-        default:
-            // TODO: handle case of multiple events with batching off, flushing fast
-            context = this.contextQueue.pop();
-            break;
+    if (this.config.autoFlush) {
+        // TODO: handle case of multiple events with autoFlush off, flushing fast
+        // Just take the oldest event in the queue
+        context = this.contextQueue.pop();
+    }
+    else {
+        // Empty the event queue
+        var queue = this.contextQueue;
+        this.contextQueue = [];
+        var data = "";
+        for (var i = 0; i < queue.length; i++) {
+            data += JSON.stringify(this._makeBody(queue[i]));
+        }
+        context.message = data;
     }
     
     // Initialize the context, then manually set the data
@@ -488,6 +491,6 @@ SplunkLogger.prototype.flush = function (callback) {
 };
 
 module.exports = {
-    Logger: SplunkLogger, // TODO: should SplunkLogger be moved to it's own file?
+    Logger: SplunkLogger, // TODO: move SplunkLogger its own file
     utils: utils
 };

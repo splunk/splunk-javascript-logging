@@ -126,11 +126,11 @@ describe("SplunkLogger", function() {
             assert.strictEqual(logger.levels.INFO, logger.config.level);
             assert.strictEqual(8088, logger.config.port);
         });
-        it("should set remaining defaults when setting config with token, batching, & level", function() {
+        it("should set remaining defaults when setting config with token, autoFlush off, & level", function() {
             var config = {
                 token: "a-token-goes-here-usually",
                 level: "important",
-                batching: "manual"
+                autoFlush: false
             };
             var logger = new SplunkLogger(config);
 
@@ -141,8 +141,7 @@ describe("SplunkLogger", function() {
             assert.strictEqual("/services/collector/event/1.0", logger.config.path);
             assert.strictEqual("https", logger.config.protocol);
             assert.strictEqual("important", logger.config.level);
-            assert.strictEqual("manual", logger.config.batching);
-            assert.strictEqual(logger.batchingModes.MANUAL, logger.config.batching);
+            assert.strictEqual(false, logger.config.autoFlush);
             assert.strictEqual(8088, logger.config.port);
         });
         it("should set non-default boolean config values", function() {
@@ -240,7 +239,7 @@ describe("SplunkLogger", function() {
             assert.strictEqual("/services/collector/event/1.0", logger.config.path);
             assert.strictEqual("https", logger.config.protocol);
             assert.strictEqual("info", logger.config.level);
-            assert.strictEqual("off", logger.config.batching);
+            assert.strictEqual(true, logger.config.autoFlush);
             assert.strictEqual(8088, logger.config.port);
         });
     });
@@ -575,22 +574,22 @@ describe("SplunkLogger", function() {
             assert.strictEqual(options.strictSSL, false);
         });
     });
-    describe("_initializeData", function() {
+    describe("_initializeMessage", function() {
         it("should error with no args", function() {
             try {
-                SplunkLogger.prototype._initializeData();
+                SplunkLogger.prototype._initializeMessage();
                 assert.ok(false, "Expected an error.");
             }
             catch (err) {
                 assert.ok(err);
-                assert.strictEqual(err.message, "Data argument is required.");
+                assert.strictEqual(err.message, "Message argument is required.");
             }
         });
         it("should leave string intact", function() {
-            var initialData = "something";
-            var data = SplunkLogger.prototype._initializeData(initialData);
-            assert.ok(data);
-            assert.strictEqual(data, initialData);
+            var beforeMessage = "something";
+            var afterMessage = SplunkLogger.prototype._initializeMessage(beforeMessage);
+            assert.ok(afterMessage);
+            assert.strictEqual(afterMessage, beforeMessage);
         });
     });
     describe("_initializeContext", function() {
@@ -621,13 +620,13 @@ describe("SplunkLogger", function() {
             }
             catch(err) {
                 assert.ok(err);
-                assert.strictEqual(err.message, "Context argument must have the data property set.");
+                assert.strictEqual(err.message, "Context argument must have the message property set.");
             }
         });
         it("should error with data only", function() {
             try {
                 var context = {
-                    data: "something"
+                    message: "something"
                 };
                 SplunkLogger.prototype._initializeContext(context);
                 assert.ok(false, "Expected an error.");
@@ -639,20 +638,20 @@ describe("SplunkLogger", function() {
         });
         it("should succeed with default context, specifying data & config token", function() {
             var context = {
-                data: "some data",
+                message: "some data",
                 config: {
                     token: "a-token-goes-here-usually"
                 }
             };
 
             var initialized = SplunkLogger.prototype._initializeContext(context);
-            var data = initialized.data;
+            var data = initialized.message;
             var config = initialized.config;
             var requestOptions = initialized.requestOptions;
 
             assert.ok(initialized);
             assert.ok(data);
-            assert.strictEqual(data, context.data);
+            assert.strictEqual(data, context.message);
 
             assert.ok(config);
             assert.strictEqual(config.token, context.config.token);
