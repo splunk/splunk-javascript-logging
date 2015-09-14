@@ -218,6 +218,36 @@ SplunkLogger.prototype._initializeMessage = function(message) {
 };
 
 /**
+ * Initialized metadata, if <code>context.metadata</code> is falsey or empty,
+ * return an empty object;
+ *
+ * @param {object} context
+ * @returns {object} metadata
+ * @private
+ */
+SplunkLogger.prototype._initializeMetadata = function(context) {
+    var metadata = {};
+    if (context.hasOwnProperty("metadata")) {
+        if (context.metadata.hasOwnProperty("time")) {
+            metadata.time = context.metadata.time;
+        }
+        if (context.metadata.hasOwnProperty("host")) {
+            metadata.host = context.metadata.host;
+        }
+        if (context.metadata.hasOwnProperty("source")) {
+            metadata.source = context.metadata.source;
+        }
+        if (context.metadata.hasOwnProperty("sourcetype")) {
+            metadata.sourcetype = context.metadata.sourcetype;
+        }
+        if (context.metadata.hasOwnProperty("index")) {
+            metadata.index = context.metadata.index;
+        }
+    }
+    return metadata;
+};
+
+/**
  * Initializes a context.
  *
  * @param context
@@ -246,37 +276,9 @@ SplunkLogger.prototype._initializeContext = function(context) {
 
     context.severity = context.severity || SplunkLogger.prototype.levels.INFO;
 
-    return context;
-};
+    context.metadata = context.metadata || this._initializeMetadata(context);
 
-/**
- * Initialized metadata, if <code>context.metadata</code> is falsey or empty,
- * return an empty object;
- *
- * @param {object} context
- * @returns {object} metadata
- * @private
- */
-SplunkLogger.prototype._initializeMetadata = function(context) {
-    var metadata = {};
-    if (context.hasOwnProperty("metadata")) {
-        if (context.metadata.hasOwnProperty("time")) {
-            metadata.time = context.metadata.time;
-        }
-        if (context.metadata.hasOwnProperty("host")) {
-            metadata.host = context.metadata.host;
-        }
-        if (context.metadata.hasOwnProperty("source")) {
-            metadata.source = context.metadata.source;
-        }
-        if (context.metadata.hasOwnProperty("sourcetype")) {
-            metadata.sourcetype = context.metadata.sourcetype;
-        }
-        if (context.metadata.hasOwnProperty("index")) {
-            metadata.index = context.metadata.index;
-        }
-    }
-    return metadata;
+    return context;
 };
 
 /**
