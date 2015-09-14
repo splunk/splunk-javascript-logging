@@ -69,6 +69,7 @@
     "sub"           : true,     // Tolerate all forms of subscript notation besides dot notation e.g. `dict['key']` instead of `dict.key`.
     "trailing"      : true,     // Prohibit trailing whitespaces. // TODO
     "white"         : false,    // Check against strict whitespace and indentation rules.
+    "unused"        : true,
 
     "globals"   : {
         /* Mocha */

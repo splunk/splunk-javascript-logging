@@ -1,9 +1,15 @@
+/**
+ * Utility functions.
+ * @exports utils
+ */
 var utils = {};
 
 /**
- * TODO: docs
+ * Formats the time for Splunk as a the epoch time in seconds.
  *
- * returns epoch time in seconds
+ * @param {(string|number|date)} time - A date string, timestamp, or <code>Date</code> object.
+ * @returns {number|null} Epoch time in seconds, or <code>null</code> if <code>time</code> is malformed.
+ * @static
  */
 utils.formatTime = function(time) {
     var cleanTime;
@@ -23,14 +29,14 @@ utils.formatTime = function(time) {
 
         // A perfect time in milliseconds, with the decimal in the right spot.
         if (cleanTime.toString().indexOf(".") >= 10) {
-            cleanTime = parseFloat(cleanTime.toString().substring(0,14)).toFixed(3);
+            cleanTime = parseFloat(cleanTime.toString().substring(0, 14)).toFixed(3);
         }
     }
     // Values without decimals
     else {
         // A time in milliseconds, no decimal (ex: Date.now()).
         if (time.toString().length === 13) {
-            cleanTime = (parseFloat(time)/1000).toFixed(3);
+            cleanTime = (parseFloat(time) / 1000).toFixed(3);
         }
         // A time with fewer than expected digits.
         else if (time.toString().length <= 12) {
@@ -45,16 +51,22 @@ utils.formatTime = function(time) {
 };
 
 /**
- * TODO: docs
- * Converts an iterable to an array
+ * Converts an iterable into to an array.
+ *
+ * @param {(Array|Object)} iterable - Thing to convert to an <code>Array</code>.
+ * @returns {Array}
+ * @static
  */
 utils.toArray = function(iterable) {
     return Array.prototype.slice.call(iterable);
 };
 
 /**
- * TODO: docs
- * Run async function in a chain, like Async.waterfall
+ * Run async function in a chain, like {@link https://github.com/caolan/async#waterfall|Async.waterfall}.
+ *
+ * @param {(function[]|function)} tasks - <code>Array</code> of callback functions.
+ * @param {function} [callback] - Final callback.
+ * @static
  */
 utils.chain = function(tasks, callback) {
     // Allow for just a list of functions
