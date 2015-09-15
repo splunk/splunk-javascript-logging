@@ -225,6 +225,38 @@ describe("SplunkLogger", function() {
             assert.strictEqual("info", logger.config.level);
             assert.strictEqual(8088, logger.config.port);
         });
+        it("should set everything but path from url property", function() {
+            var config = {
+                token: "a-token-goes-here-usually",
+                url: "http://splunk.local:9088"
+            };
+            var logger = new SplunkLogger(config);
+
+            assert.ok(logger);
+            assert.strictEqual(config.token, logger.config.token);
+            assert.strictEqual("splunk-javascript-logging/0.8.0", logger.config.name);
+            assert.strictEqual("splunk.local", logger.config.host);
+            assert.strictEqual("/services/collector/event/1.0", logger.config.path);
+            assert.strictEqual("http", logger.config.protocol);
+            assert.strictEqual("info", logger.config.level);
+            assert.strictEqual(9088, logger.config.port);
+        });
+        it("should set everything but path from url property with trailing slash", function() {
+            var config = {
+                token: "a-token-goes-here-usually",
+                url: "http://splunk.local:9088/"
+            };
+            var logger = new SplunkLogger(config);
+
+            assert.ok(logger);
+            assert.strictEqual(config.token, logger.config.token);
+            assert.strictEqual("splunk-javascript-logging/0.8.0", logger.config.name);
+            assert.strictEqual("splunk.local", logger.config.host);
+            assert.strictEqual("/services/collector/event/1.0", logger.config.path);
+            assert.strictEqual("http", logger.config.protocol);
+            assert.strictEqual("info", logger.config.level);
+            assert.strictEqual(9088, logger.config.port);
+        });
         it("should set host from url property with host only", function() {
             var config = {
                 token: "a-token-goes-here-usually",
