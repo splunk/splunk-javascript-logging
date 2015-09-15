@@ -253,7 +253,7 @@ describe("SplunkLogger send", function() {
                 done();
             });
         });
-        // TODO: is this test correct, at all? Shouldn't all indexes be default?
+        // TODO: test successfully sending to another index
         it("should error with valid token, sending to a different index", function(done) {
             var config = {
                 token: configurationFile.token
