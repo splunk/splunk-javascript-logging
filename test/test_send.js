@@ -162,8 +162,20 @@ describe("SplunkLogger send", function() {
                 message: data
             };
 
+            var run = false;
+
+            logger.error = function(err, errContext) {
+                run = true;
+                assert.ok(err);
+                assert.strictEqual(err.message, invalidTokenBody.text);
+                assert.strictEqual(err.code, invalidTokenBody.code);
+                assert.ok(errContext);
+                assert.strictEqual(errContext, context);
+            };
+
             logger.send(context, function(err, resp, body) {
                 assert.ok(!err);
+                assert.ok(run);
                 assert.strictEqual(resp.headers["content-type"], "application/json; charset=UTF-8");
                 assert.strictEqual(resp.body, body);
                 assert.strictEqual(body.text, invalidTokenBody.text);
@@ -241,7 +253,8 @@ describe("SplunkLogger send", function() {
                 done();
             });
         });
-        it("should succed with valid token, sending to a different index", function(done) {
+        // TODO: is this test correct, at all? Shouldn't all indexes be default?
+        it("should error with valid token, sending to a different index", function(done) {
             var config = {
                 token: configurationFile.token
             };
@@ -258,8 +271,20 @@ describe("SplunkLogger send", function() {
                 }
             };
 
+            var run = false;
+
+            logger.error = function(err, errContext) {
+                run = true;
+                assert.ok(err);
+                assert.strictEqual(err.message, incorrectIndexBody.text);
+                assert.strictEqual(err.code, incorrectIndexBody.code);
+                assert.ok(errContext);
+                assert.strictEqual(errContext, context);
+            };
+
             logger.send(context, function(err, resp, body) {
                 assert.ok(!err);
+                assert.ok(run);
                 assert.strictEqual(resp.headers["content-type"], "application/json; charset=UTF-8");
                 assert.strictEqual(resp.body, body);
                 assert.strictEqual(body.text, incorrectIndexBody.text);
@@ -431,8 +456,20 @@ describe("SplunkLogger send", function() {
                 message: data
             };
 
+            var run = false;
+
+            logger.error = function(err, errContext) {
+                run = true;
+                assert.ok(err);
+                assert.strictEqual(err.message, "socket hang up");
+                assert.strictEqual(err.code, "ECONNRESET");
+                assert.ok(errContext);
+                assert.strictEqual(errContext, context);
+            };
+
             logger.send(context, function(err, resp, body) {
                 assert.ok(err);
+                assert.ok(run);
                 assert.strictEqual(err.message, "socket hang up");
                 assert.strictEqual(err.code, "ECONNRESET");
                 assert.ok(!resp);
@@ -479,8 +516,19 @@ describe("SplunkLogger send", function() {
                 }
             };
 
+            var run = false;
+
+            logger.error = function(err, errContext) {
+                run = true;
+                assert.ok(err);
+                assert.strictEqual(err.message, "SELF_SIGNED_CERT_IN_CHAIN");
+                assert.ok(errContext);
+                assert.strictEqual(errContext, context);
+            };
+
             logger.send(context, function(err, resp, body) {
                 assert.ok(err);
+                assert.ok(run);
                 assert.strictEqual(err.message, "SELF_SIGNED_CERT_IN_CHAIN");
                 assert.ok(!resp);
                 assert.ok(!body);
@@ -527,9 +575,20 @@ describe("SplunkLogger send", function() {
 
             var logger = new SplunkLogger(config);
 
+            var run = false;
+
+            logger.error = function(err, errContext) {
+                run = true;
+                assert.ok(err);
+                assert.strictEqual(err.message, noDataBody.text);
+                assert.strictEqual(err.code, noDataBody.code);
+                assert.ok(errContext);
+            };
+
             assert.strictEqual(logger.contextQueue.length, 0);
             logger.flush(function(err, resp, body) {
                 assert.ok(!err);
+                assert.ok(run);
                 assert.strictEqual(resp.headers["content-type"], "application/json; charset=UTF-8");
                 assert.strictEqual(resp.body, body);
                 assert.strictEqual(body.text, noDataBody.text);
@@ -538,13 +597,21 @@ describe("SplunkLogger send", function() {
                 done();
             });
         });
-        it("should be noop when flushing empty batch, without callback, with valid token", function() {
+        it("should be noop when flushing empty batch, without callback, with valid token", function(done) {
             var config = {
                 token: configurationFile.token,
                 autoFlush: false
             };
 
             var logger = new SplunkLogger(config);
+
+            logger.error = function(err, errContext) {
+                assert.ok(err);
+                assert.strictEqual(err.message, noDataBody.text);
+                assert.strictEqual(err.code, noDataBody.code);
+                assert.ok(errContext);
+                done();
+            };
 
             // Nothing should be sent if queue is empty
             assert.strictEqual(logger.contextQueue.length, 0);
@@ -932,8 +999,6 @@ describe("SplunkLogger send", function() {
 
             var run = false;
 
-            mute();
-
             // Wrap the default error callback for code coverage
             var errCallback = logger.error;
             logger.error = function(err, context) {
@@ -943,9 +1008,11 @@ describe("SplunkLogger send", function() {
                 assert.strictEqual(err.message, "error!");
                 initialContext.message = "something else";
                 assert.strictEqual(context, initialContext);
-                errCallback(err, context);
                 
+                mute();
+                errCallback(err, context);
                 unmute();
+
                 done();
             };
 
@@ -980,8 +1047,6 @@ describe("SplunkLogger send", function() {
 
             var run = false;
 
-            mute();
-
             // Wrap the default error callback for code coverage
             var errCallback = logger.error;
             logger.error = function(err, context) {
@@ -991,9 +1056,11 @@ describe("SplunkLogger send", function() {
                 assert.strictEqual(err.message, "error!");
                 initialContext.message = "something else";
                 assert.strictEqual(context, initialContext);
+
+                mute();
                 errCallback(err, context);
-                
                 unmute();
+
                 done();
             };
 
@@ -1026,8 +1093,6 @@ describe("SplunkLogger send", function() {
                 message: initialData
             };
 
-            mute();
-
             // Wrap the default error callback for code coverage
             var errCallback = logger.error;
             logger.error = function(err, context) {
@@ -1044,9 +1109,11 @@ describe("SplunkLogger send", function() {
                 assert.strictEqual(context.config, comparing.config);
                 assert.strictEqual(context.requestOptions, comparing.requestOptions);
                 
+                mute();
                 errCallback(err, context);
+                unmute();
+
                 if (middlewareCount === 2) {
-                    unmute();
                     done();
                 }
             };

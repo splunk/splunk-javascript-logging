@@ -367,7 +367,20 @@ SplunkLogger.prototype._sendEvents = function(context, callback) {
         // since json is set to true.
         context.requestOptions.headers["content-type"] = "application/x-www-form-urlencoded";
     }
-    request.post(context.requestOptions, callback);
+    var that = this;
+    request.post(context.requestOptions, function(err, resp, body) {
+        // Call error() if error, or body isn't success
+        var error = err;
+        // Assume this is a non-success response from Splunk, build the error accordingly
+        if (!err && body && body.code.toString() !== "0") {
+            error = new Error(body.text);
+            error.code = body.code;
+        }
+        if (error) {
+            that.error(error, context);
+        }
+        callback(err, resp, body);
+    });
 };
 
 /**
