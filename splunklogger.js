@@ -32,7 +32,7 @@ function _err(err, context) {
  * var logger = new SplunkLogger(config);
  *
  * @property {object} config - Configuration settings for this <code>SplunkLogger</code> instance.
- * @property {function[]} middlewares - Middleware functions to run before sending data to Splunk. See {@link SplunkLogger#use} TODO: is this link good?
+ * @property {function[]} middlewares - Middleware functions to run before sending data to Splunk.
  * @property {object[]} contextQueue - Queue of <code>context</code> objects to be sent to Splunk.
  * @property {function} error - A callback function for errors: <code>function(err, context)</code>.
  * Defaults to <code>console.log</code> both values;
