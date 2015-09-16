@@ -141,7 +141,7 @@ SplunkLogger.prototype._initializeConfig = function(config) {
             var parsed = url.parse(config.url);
 
             // Ignore the path if it's just "/"
-            var pathIsSlash = parsed.path && parsed.path !== "/";
+            var pathIsNotSlash = parsed.path && parsed.path !== "/";
 
             if (parsed.protocol) {
                 config.protocol = parsed.protocol.replace(":", "");
@@ -151,11 +151,11 @@ SplunkLogger.prototype._initializeConfig = function(config) {
             }
             if (parsed.hostname && parsed.path) {
                 config.host = parsed.hostname;
-                if (pathIsSlash) {
+                if (pathIsNotSlash) {
                     config.path = parsed.path;
                 }
             }
-            else if (pathIsSlash) {
+            else if (pathIsNotSlash) {
                 // If hostname isn't set, but path is assume path is the host
                 config.host = parsed.path;
             }
