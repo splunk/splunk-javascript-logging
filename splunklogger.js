@@ -345,7 +345,7 @@ SplunkLogger.prototype._makeBody = function(context) {
  *     next(null, context);
  * });
  *
- * @param {function} middleware - A middleware function: <code>function(context, next){}</code>.
+ * @param {function} middleware - A middleware function: <code>function(context, next)</code>.
  * It must call <code>next(error, context)</code> to continue.
  * @public
  * @throws Will throw an error if <code>middleware</code> is not a <code>function</code>.
@@ -420,7 +420,7 @@ SplunkLogger.prototype._sendEvents = function(context, callback) {
  *     severity: "info",
  *     {
  *         source: "chicken coop",
- *         sourcetype: "chicken feeder",
+ *         sourcetype: "httpevent",
  *         index: "main",
  *         host: "farm.local",
  *     }
@@ -430,7 +430,8 @@ SplunkLogger.prototype._sendEvents = function(context, callback) {
  *     if (err) {
  *         console.log("error:", err);
  *     }
- *     console.log("body", body); // body { text: 'Success', code: 0 }
+ *     // If successful, body will be { text: 'Success', code: 0 }
+ *     console.log("body", body);
  * });
  *
  * @param {object} context - An object with at least the <code>data</code> property.
