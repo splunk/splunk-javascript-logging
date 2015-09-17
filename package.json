@@ -5,7 +5,7 @@
   "homepage": "http://dev.splunk.com",
   "main": "index.js",
   "scripts": {
-    "pretest": "jshint *.js test && jsdoc -d docs .",
+    "pretest": "jshint *.js test examples && jsdoc -d docs .",
     "test": "istanbul cover _mocha -- -R spec"
   },
   "repository": {
