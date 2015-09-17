@@ -30,7 +30,7 @@ var SplunkLogger = require("../index").Logger;
  * "https://localhost:8088/services/collector/event/1.0"
  */
 var config = {
-    token: "your-token-here", // TODO: remove the token
+    token: "your-token-here",
     host: "localhost",
     path: "/services/collector/event/1.0",
     protocol: "https",
