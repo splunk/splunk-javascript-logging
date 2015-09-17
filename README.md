@@ -7,8 +7,8 @@ This project provides a simple interface for logging to Splunk's Event Collector
 ## Requirements
 
 * Splunk 6.3+.
-* Node.js v0.10+.
 * An HTTP Event Collector token from your Splunk server.
+* Node.js v0.10+.
 
 ## Installation
 
