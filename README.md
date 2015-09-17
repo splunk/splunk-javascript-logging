@@ -39,9 +39,7 @@ var payload = {
     message: {
         temperature: "70F",
         chickenCount: 500
-    },
-    // Severity is also optional
-    severity: "info"
+    }
 };
 
 console.log("Sending payload", payload);
