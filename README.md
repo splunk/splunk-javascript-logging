@@ -88,5 +88,5 @@ You can reach the Developer Platform team at _devinfo@splunk.com_.
 
 ## License
 
-The Splunk JavaScript Software Development Kit is licensed under the Apache
+The Splunk Logging Library for JavaScript is licensed under the Apache
 License 2.0. Details can be found in the LICENSE file.
