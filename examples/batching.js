@@ -78,7 +78,7 @@ var payload2 = {
     message: {
         temperature: "75F",
         chickenCount: 600,
-        note: "New chickens have arrived!"
+        note: "New chickens have arrived"
     },
     metadata: payload.metadata
 };
