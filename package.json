@@ -1,0 +1,41 @@
+{
+  "name": "splunk-logging",
+  "version": "0.8.0",
+  "description": "Splunk HTTP Event Collector logging interface",
+  "homepage": "http://dev.splunk.com",
+  "main": "index.js",
+  "scripts": {
+    "pretest": "jshint *.js test examples && jsdoc -d docs .",
+    "test": "istanbul cover _mocha -- -R spec"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/splunk/splunk-javascript-logging.git"
+  },
+  "keywords": [
+    "splunk",
+    "HTTP",
+    "event",
+    "collector",
+    "logging",
+    "stream"
+  ],
+  "author": {
+    "name": "Splunk",
+    "email": "devinfo@splunk.com",
+    "url": "http://dev.splunk.com"
+  },
+  "license": "Apache-2.0",
+  "engine": {
+    "node": ">=0.10.0"
+  },
+  "dependencies": {
+    "request": "2.61.0"
+  },
+  "devDependencies": {
+    "istanbul": "0.3.17",
+    "jsdoc": "3.3.2",
+    "jshint": "<2.5.0",
+    "mocha": "2.2.5"
+  }
+}

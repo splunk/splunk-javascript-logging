@@ -61,12 +61,23 @@
 
     // Personal styling prefrences.
     "newcap"        : true,     // Require capitalization of all constructor functions e.g. `new F()`.
-    "noempty"       : true,     // Prohipit use of empty blocks.
+    "noempty"       : true,     // Prohibit use of empty blocks.
     "nonew"         : true,     // Prohibit use of constructors for side-effects.
     "nomen"         : false,    // Prohibit use of initial or trailing underbars in names.
     "onevar"        : false,    // Allow only one `var` statement per function.
     "plusplus"      : false,    // Prohibit use of `++` & `--`.
     "sub"           : true,     // Tolerate all forms of subscript notation besides dot notation e.g. `dict['key']` instead of `dict.key`.
-    "trailing"      : false,    // Prohibit trailing whitespaces. // TODO
-    "white"         : false     // Check against strict whitespace and indentation rules.
+    "trailing"      : true,     // Prohibit trailing whitespaces. // TODO
+    "white"         : false,    // Check against strict whitespace and indentation rules.
+    "unused"        : true,
+
+    "globals"   : {
+        /* Mocha */
+        "describe"   : false,
+        "it"         : false,
+        "before"     : false,
+        "beforeEach" : false,
+        "after"      : false,
+        "afterEach"  : false
+    }
 }
