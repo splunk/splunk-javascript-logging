@@ -41,11 +41,12 @@ var noDataBody = {
     code: 5
 };
 
-var incorrectIndexBody = {
-    text: "Incorrect index",
-    code: 7,
-    "invalid-event-number": 1
-};
+// TODO: add a test that gets this response
+// var incorrectIndexBody = {
+//     text: "Incorrect index",
+//     code: 7,
+//     "invalid-event-number": 1
+// };
 
 // Backup console.log so we can restore it later
 var ___log = console.log;
@@ -269,8 +270,8 @@ describe("SplunkLogger send", function() {
                 done();
             });
         });
-        // TODO: test successfully sending to another index
-        it("should error with valid token, sending to a different index", function(done) {
+        // TODO: test unsuccessfully sending to another index with specific index token settings
+        it("should succeed with valid token, sending to a different index", function(done) {
             var config = {
                 token: configurationFile.token
             };
@@ -287,25 +288,16 @@ describe("SplunkLogger send", function() {
                 }
             };
 
-            var run = false;
-
-            logger.error = function(err, errContext) {
-                run = true;
-                assert.ok(err);
-                assert.strictEqual(err.message, incorrectIndexBody.text);
-                assert.strictEqual(err.code, incorrectIndexBody.code);
-                assert.ok(errContext);
-                assert.strictEqual(errContext, context);
+            logger.error = function() {
+                assert.ok(false);
             };
 
             logger.send(context, function(err, resp, body) {
                 assert.ok(!err);
-                assert.ok(run);
                 assert.strictEqual(resp.headers["content-type"], "application/json; charset=UTF-8");
                 assert.strictEqual(resp.body, body);
-                assert.strictEqual(body.text, incorrectIndexBody.text);
-                assert.strictEqual(body.code, incorrectIndexBody.code);
-                assert.strictEqual(body["invalid-event-number"], incorrectIndexBody["invalid-event-number"]);
+                assert.strictEqual(body.text, successBody.text);
+                assert.strictEqual(body.code, successBody.code);
                 done();
             });
         });
