@@ -128,4 +128,29 @@ utils.chain = function(tasks, callback) {
     }
 };
 
+/**
+ * Asynchronous while loop.
+ */
+utils.whilst = function (condition, body, callback) {
+    condition = condition || function() { return false; };
+    body = body || function(done){ done(); };
+    callback = callback || function() {};
+
+    var wrappedCallback = function(err) {
+        if (err) {
+            callback(err);
+        }
+        else {
+            utils.whilst(condition, body, callback);
+        }
+    };
+
+    if (condition()) {
+        body(wrappedCallback);
+    }
+    else {
+        callback(null);
+    }
+};
+
 module.exports = utils;

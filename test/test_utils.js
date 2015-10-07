@@ -161,9 +161,8 @@ describe("Utils", function() {
             testToArray(1, 2, 3, 4, 5);
         });
     });
-    // TODO: rename these tests to the "should..." format
     describe("chain", function () {
-        it("single success", function(done) {
+        it("should succeed with 3 callbacks, passing a single argument through the chain", function(done) {
             utils.chain([
                 function(callback) {
                     callback(null, 1);
@@ -181,7 +180,7 @@ describe("Utils", function() {
                 }
             );
         });
-        it("flat single success", function(done) {
+        it("should succeed with flat callbacks, passing a single argument through the chain", function(done) {
             utils.chain(
                 function(callback) {
                     callback(null, 1);
@@ -199,7 +198,7 @@ describe("Utils", function() {
                 }
             );
         });
-        it("flat multiple success", function(done) {
+        it("should succeed with flat callbacks, passing multiple arguments through the chain", function(done) {
             utils.chain(
                 function(callback) {
                     callback(null, 1, 2);
@@ -218,7 +217,7 @@ describe("Utils", function() {
                 }
             );
         });
-        it("flat add args success", function(done) {
+        it("should succeed with flat callbacks, appending an argument in the middle of the chain", function(done) {
             utils.chain(
                 function(callback) {
                     callback(null, 1, 2);
@@ -237,7 +236,7 @@ describe("Utils", function() {
                 }
             );
         });
-        it("error", function(done) {
+        it("should surface error from middle of the chain", function(done) {
             utils.chain([
                 function(callback) {
                     callback(null, 1, 2);
@@ -257,7 +256,7 @@ describe("Utils", function() {
                 }
             );
         });
-        it("no tasks", function(done) {
+        it("should be noop without task callbacks", function(done) {
             utils.chain([],
                 function(err, val1, val2) {
                     assert.ok(!err);
@@ -267,10 +266,10 @@ describe("Utils", function() {
                 }
             );
         });
-        it("no args", function() {
+        it("should be noop without args", function() {
             utils.chain();
         });
-        it("no final callback", function(done) {
+        it("should surface error from first callback in the chain", function(done) {
             utils.chain([
                 function(callback) {
                     callback("err");
@@ -280,6 +279,99 @@ describe("Utils", function() {
                     done();
                 }
             );
+        });
+    });
+    describe("whilst", function() {
+        it("should succeed with short counting loop", function(done) {
+            var i = 0;
+            utils.whilst(
+                function() { return i++ < 3; },
+                function(callback) {
+                    setTimeout(function() { callback(); }, 0);
+                },
+                function(err) {
+                    assert.ok(!err);
+                    assert.strictEqual(i, 4);
+                    done();
+                }
+            );
+        });
+        it("should succeed with long counting loop", function(done) {
+            var i = 0;
+            utils.whilst(
+                function() { return i++ < 1000; },
+                function(callback) {
+                    setTimeout(function() { callback(); }, 0);
+                },
+                function(err) {
+                    assert.ok(!err);
+                    assert.strictEqual(i, 1001);
+                    done();
+                }
+            );
+        });
+        it("should pass error to callback function", function(done) {
+            var i = 0;
+            utils.whilst(
+                function() { return i++ < 1000; },
+                function(callback) {
+                    setTimeout(function() { callback(i === 1000 ? 1 : null); }, 0);
+                },
+                function(err) {
+                    assert.ok(err);
+                    assert.strictEqual(err, 1);
+                    // Don't execute condition function 1 extra time like above
+                    assert.strictEqual(i, 1000);
+                    done();
+                }
+            );
+        });
+        it("should never enter loop body when condition loop returns false (default)", function(done) {
+            var i = false;
+            utils.whilst(
+                undefined,
+                function(callback) { i = true; callback(); },
+                function(err) {
+                    assert.ok(!err);
+                    assert.strictEqual(i, false);
+                    done();
+                }
+            );
+        });
+        it("should be noop with noop loop body", function(done) {
+            var i = true;
+            utils.whilst(
+                function() {
+                    if (i) {
+                        i = false;
+                        return true;
+                    }
+                    else {
+                        return i;
+                    }
+                },
+                undefined,
+                function (err) {
+                    assert.ok(!err);
+                    done();
+                }
+            );
+        });
+        it("should succeed with short counting loop, without done callback", function(done) {
+            var i = 0;
+            utils.whilst(
+                function() { return i++ < 3; },
+                function(callback) {
+                    setTimeout(function() { callback(); }, 0);
+                }
+            );
+
+            setTimeout(function(){
+                if (i !== 4) {
+                    assert.ok(false, "test timed out");
+                }
+                done();
+            }, 10);
         });
     });
 });
