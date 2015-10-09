@@ -36,7 +36,8 @@ var config = {
     protocol: "https",
     port: 8088,
     level: "info",
-    autoFlush: true
+    autoFlush: true,
+    maxRetries: 0
 };
 
 // Create a new logger

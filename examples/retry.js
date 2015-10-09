@@ -23,20 +23,16 @@ var SplunkLogger = require("../index").Logger;
 
 /**
  * Only the token property is required.
- * Defaults are listed explicitly.
  *
- * Alternatively, specify config.url like so:
- *
- * "https://localhost:8088/services/collector/event/1.0"
+ * Here we've set maxRetries to 5,
+ * If there are any connection errors the request
+ * to Splunk will be retried up to 5 times.
+ * The default is 0.
  */
 var config = {
     token: "your-token-here",
-    host: "localhost",
-    path: "/services/collector/event/1.0",
-    protocol: "https",
-    port: 8088,
+    url: "https://localhost:8088",
     level: "info",
-    autoFlush: true,
     maxRetries: 5
 };
 
