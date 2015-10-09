@@ -44,7 +44,6 @@ describe("Utils", function() {
             var otherFound = utils.formatTime(other);
             assert.strictEqual(otherFound, otherExpected);
         });
-        // TODO: change these to be strictequal?
         it("should correctly handle Strings", function() {
             // Test time in seconds
             var stringTime = "1372187084";
@@ -373,5 +372,84 @@ describe("Utils", function() {
                 done();
             }, 10);
         });
+    });
+    describe("expBackoff", function() {
+        it("should error with bad param", function(done) {
+            utils.expBackoff(null, function(err, timeout) {
+                assert.ok(err);
+                assert.strictEqual(err.message, "Must send opts as an object.");
+                assert.ok(!timeout);
+                done();
+            });
+        });
+        it("should error with missing opts.attempt", function(done) {
+            utils.expBackoff({foo: 123}, function(err, timeout) {
+                assert.ok(err);
+                assert.strictEqual(err.message, "Must set opts.attempt.");
+                assert.ok(!timeout);
+                done();
+            });
+        });
+        it("should have backoff in [20, 40]ms, attempt = 1", function(done) {
+            utils.expBackoff({attempt: 1}, function(err, timeout) {
+                assert.ok(!err);
+                assert.ok(20 <= timeout && timeout <= 40);
+                done();
+            });
+        });
+        it("should have backoff in [40, 80]ms, attempt = 2", function(done) {
+            utils.expBackoff({attempt:  2}, function(err, timeout) {
+                assert.ok(!err);
+                assert.ok(40 <= timeout && timeout <= 80);
+                done();
+            });
+        });
+        it("should have backoff in [80, 160]ms, attempt = 3", function(done) {
+            utils.expBackoff({attempt: 3}, function(err, timeout) {
+                assert.ok(!err);
+                assert.ok(80 <= timeout && timeout <= 160);
+                done();
+            });
+        });
+        it("should have backoff in [160, 320]ms, attempt = 4", function(done) {
+            utils.expBackoff({attempt: 4}, function(err, timeout) {
+                assert.ok(!err);
+                assert.ok(160 <= timeout && timeout <= 320);
+                done();
+            });
+        });
+        it("should have backoff in [320, 640]ms, attempt = 5", function(done) {
+            utils.expBackoff({attempt: 5}, function(err, timeout) {
+                assert.ok(!err);
+                assert.ok(320 <= timeout && timeout <= 640);
+                done();
+            });
+        });
+        it("should have backoff of 40ms, attempt = 2, rand = 0", function(done) {
+            utils.expBackoff({attempt: 2, rand: 0}, function(err, timeout) {
+                assert.ok(!err);
+                assert.strictEqual(40, timeout);
+                done();
+            });
+        });
+        it("should have backoff of 80ms, attempt = 2, rand = 1", function(done) {
+            utils.expBackoff({attempt: 2, rand: 1}, function(err, timeout) {
+                assert.ok(!err);
+                assert.strictEqual(80, timeout);
+                done();
+            });
+        });
+        it("should have backoff of 80ms, attempt = 2, rand = 1 - no done callback", function(done) {
+            utils.expBackoff({attempt: 2, rand: 1});
+            setTimeout(done, 80);
+        });
+        // TODO: this test is takes 2 minutes, rest of the tests take 7s combined...
+        // it("should have maximum backoff of 2m (slow running test)", function(done) {
+        //     this.timeout(1000 * 60 * 2 + 500);
+        //     utils.expBackoff({attempt: 100, rand: 0}, function(err, timeout) {
+        //         assert.strictEqual(120000, timeout);
+        //         done();
+        //     });
+        // });
     });
 });

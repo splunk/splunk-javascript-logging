@@ -130,6 +130,11 @@ utils.chain = function(tasks, callback) {
 
 /**
  * Asynchronous while loop.
+ *
+ * @param {function} [condition] - A function returning a boolean, the loop condition.
+ * @param {function} [body] - A function, the loop body.
+ * @param {function} [callback] - Final callback.
+ * @static
  */
 utils.whilst = function (condition, body, callback) {
     condition = condition || function() { return false; };
@@ -139,6 +144,8 @@ utils.whilst = function (condition, body, callback) {
     var wrappedCallback = function(err) {
         if (err) {
             callback(err);
+            // callback.apply(callback, arguments);
+            // TODO: would this ever work or be useful? callback.apply(callback, arguments);
         }
         else {
             utils.whilst(condition, body, callback);
@@ -150,6 +157,43 @@ utils.whilst = function (condition, body, callback) {
     }
     else {
         callback(null);
+    }
+};
+
+/**
+ * Waits using exponential backoff.
+ *
+ * @param {object} [opts] - Settings for this function. Expected keys: attempt, rand.
+ * @param {function} [callback] - A callback function: <code>function(err, timeout)</code>.
+ */
+utils.expBackoff = function(opts, callback) {
+    callback = callback || function(){};
+    if (!opts || typeof opts !== "object") {
+        callback(new Error("Must send opts as an object."));
+    }
+    else if (opts && !opts.hasOwnProperty("attempt")) {
+        callback(new Error("Must set opts.attempt."));
+    }
+    else {
+
+        var min = 10;
+        var max = 1000 * 60 * 2; // TODO: is 2 minutes a reasonable max timeout?
+
+        var rand = Math.random();
+        if (opts.hasOwnProperty("rand")) {
+            rand = opts.rand;
+        }
+        rand++;
+
+        var timeout = Math.round(rand * min * Math.pow(2, opts.attempt));
+
+        timeout = Math.min(timeout, max);
+        setTimeout(
+            function() {
+                callback(null, timeout);
+            },
+            timeout
+        );
     }
 };
 
