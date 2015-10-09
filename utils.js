@@ -144,8 +144,6 @@ utils.whilst = function (condition, body, callback) {
     var wrappedCallback = function(err) {
         if (err) {
             callback(err);
-            // callback.apply(callback, arguments);
-            // TODO: would this ever work or be useful? callback.apply(callback, arguments);
         }
         else {
             utils.whilst(condition, body, callback);

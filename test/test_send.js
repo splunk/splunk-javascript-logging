@@ -485,6 +485,42 @@ describe("SplunkLogger send", function() {
                 done();
             });
         });
+        it("should fail on wrong Splunk server", function(done) {
+            var config = {
+                token: configurationFile.token,
+                url: "https://something-so-invalid-that-it-should-never-exist.xyz:12345/junk"
+            };
+
+            var logger = new SplunkLogger(config);
+
+            var data = "something";
+            var context = {
+                config: config,
+                message: data
+            };
+
+            var run = false;
+
+            logger.error = function(err, errContext) {
+                // TODO: the resp.statusCode is what we want, but can't access here!
+                run = true;
+                assert.ok(err);
+                assert.strictEqual(err.message, "getaddrinfo ENOTFOUND");
+                assert.strictEqual(err.code, "ENOTFOUND");
+                assert.ok(errContext);
+                assert.strictEqual(errContext, context);
+            };
+
+            logger.send(context, function(err, resp, body) {
+                assert.ok(err);
+                assert.ok(run);
+                assert.strictEqual(err.message, "getaddrinfo ENOTFOUND");
+                assert.strictEqual(err.code, "ENOTFOUND");
+                assert.ok(!resp);
+                assert.ok(!body);
+                done();
+            });
+        });
         it("should succeed with valid token, using non-default url", function(done) {
             var config = {
                 token: configurationFile.token,
@@ -1134,6 +1170,437 @@ describe("SplunkLogger send", function() {
             logger.send(context2);
 
             assert.strictEqual(middlewareCount, 2);
+        });
+    });
+    describe("using retry", function() {
+        it("should retry exactly 0 times (send once only)", function(done) {
+            var config = {
+                token: configurationFile.token,
+                maxRetries: 0
+            };
+            var logger = new SplunkLogger(config);
+
+            var retryCount = 0;
+
+            // Wrap the _post so we can verify retries
+            var post = logger._post;
+            logger._post = function(requestOptions, callback) {
+                retryCount++;
+                if (retryCount === config.maxRetries + 1) {
+                    post(requestOptions, callback);
+                }
+                else {
+                    callback(new Error(), {body: invalidTokenBody}, invalidTokenBody);
+                }
+            };
+            
+            var payload = {
+                message: "something"
+            };
+            logger.send(payload, function(err, resp, body) {
+                assert.ok(!err);
+                assert.ok(resp);
+                assert.ok(body);
+                assert.strictEqual(body.code, successBody.code);
+                assert.strictEqual(body.text, successBody.text);
+                assert.strictEqual(retryCount, config.maxRetries + 1);
+                done();
+            });
+        });
+        it("should retry exactly once", function(done) {
+            var config = {
+                token: configurationFile.token,
+                maxRetries: 1
+            };
+            var logger = new SplunkLogger(config);
+
+            var retryCount = 0;
+
+            // Wrap the _post so we can verify retries
+            var post = logger._post;
+            logger._post = function(requestOptions, callback) {
+                retryCount++;
+                if (retryCount === config.maxRetries + 1) {
+                    post(requestOptions, callback);
+                }
+                else {
+                    callback(new Error(), {body: invalidTokenBody}, invalidTokenBody);
+                }
+            };
+            
+            var payload = {
+                message: "something"
+            };
+            logger.send(payload, function(err, resp, body) {
+                assert.ok(!err);
+                assert.ok(resp);
+                assert.ok(body);
+                assert.strictEqual(body.code, successBody.code);
+                assert.strictEqual(body.text, successBody.text);
+                assert.strictEqual(retryCount, config.maxRetries + 1);
+                done();
+            });
+        });
+        it("should retry exactly twice", function(done) {
+            var config = {
+                token: configurationFile.token,
+                maxRetries: 2
+            };
+            var logger = new SplunkLogger(config);
+
+            var retryCount = 0;
+
+            // Wrap the _post so we can verify retries
+            var post = logger._post;
+            logger._post = function(requestOptions, callback) {
+                retryCount++;
+                if (retryCount === config.maxRetries + 1) {
+                    post(requestOptions, callback);
+                }
+                else {
+                    callback(new Error(), {body: invalidTokenBody}, invalidTokenBody);
+                }
+            };
+            
+            var payload = {
+                message: "something"
+            };
+            logger.send(payload, function(err, resp, body) {
+                assert.ok(!err);
+                assert.ok(resp);
+                assert.ok(body);
+                assert.strictEqual(body.code, successBody.code);
+                assert.strictEqual(body.text, successBody.text);
+                assert.strictEqual(retryCount, config.maxRetries + 1);
+                done();
+            });
+        });
+        it("should retry exactly 5 times", function(done) {
+            var config = {
+                token: configurationFile.token,
+                maxRetries: 5
+            };
+            var logger = new SplunkLogger(config);
+
+            var retryCount = 0;
+
+            // Wrap the _post so we can verify retries
+            var post = logger._post;
+            logger._post = function(requestOptions, callback) {
+                retryCount++;
+                if (retryCount === config.maxRetries + 1) {
+                    post(requestOptions, callback);
+                }
+                else {
+                    callback(new Error(), {body: invalidTokenBody}, invalidTokenBody);
+                }
+            };
+            
+            var payload = {
+                message: "something"
+            };
+            logger.send(payload, function(err, resp, body) {
+                assert.ok(!err);
+                assert.ok(resp);
+                assert.ok(body);
+                assert.strictEqual(body.code, successBody.code);
+                assert.strictEqual(body.text, successBody.text);
+                assert.strictEqual(retryCount, config.maxRetries + 1);
+                done();
+            });
+        });
+        it("should not retry on initial success when maxRetries=1", function(done) {
+            var config = {
+                token: configurationFile.token,
+                maxRetries: 1
+            };
+            var logger = new SplunkLogger(config);
+
+            var retryCount = 0;
+
+            // Wrap the _post so we can verify retries
+            var post = logger._post;
+            logger._post = function(requestOptions, callback) {
+                retryCount++;
+                if (retryCount === 1) {
+                    post(requestOptions, callback);
+                }
+                else {
+                    callback(new Error(), {body: invalidTokenBody}, invalidTokenBody);
+                }
+            };
+            
+            var payload = {
+                message: "something"
+            };
+            logger.send(payload, function(err, resp, body) {
+                assert.ok(!err);
+                assert.ok(resp);
+                assert.ok(body);
+                assert.strictEqual(body.code, successBody.code);
+                assert.strictEqual(body.text, successBody.text);
+                assert.strictEqual(retryCount, 1);
+                done();
+            });
+        });
+        it("should retry once when maxRetries=10", function(done) {
+            var config = {
+                token: configurationFile.token,
+                maxRetries: 10
+            };
+            var logger = new SplunkLogger(config);
+
+            var retryCount = 0;
+
+            // Wrap the _post so we can verify retries
+            var post = logger._post;
+            logger._post = function(requestOptions, callback) {
+                retryCount++;
+                if (retryCount === 2) {
+                    post(requestOptions, callback);
+                }
+                else {
+                    callback(new Error(), {body: invalidTokenBody}, invalidTokenBody);
+                }
+            };
+            
+            var payload = {
+                message: "something"
+            };
+            logger.send(payload, function(err, resp, body) {
+                assert.ok(!err);
+                assert.ok(resp);
+                assert.ok(body);
+                assert.strictEqual(body.code, successBody.code);
+                assert.strictEqual(body.text, successBody.text);
+                assert.strictEqual(retryCount, 2);
+                done();
+            });
+        });
+        it("should retry on request error when maxRetries=0", function(done) {
+            var config = {
+                token: configurationFile.token,
+                maxRetries: 0,
+                host: "bad-hostname.invalid"
+            };
+            var logger = new SplunkLogger(config);
+
+            var retryCount = 0;
+
+            // Wrap the _post so we can verify retries
+            var post = logger._post;
+            logger._post = function(requestOptions, callback) {
+                retryCount++;
+                post(requestOptions, callback);
+            };
+
+            var run = false;
+            logger.error = function(err, context) {
+                assert.ok(err);
+                assert.ok(context);
+                run = true;
+            };
+            
+            var payload = {
+                message: "something"
+            };
+            logger.send(payload, function(err, resp, body) {
+                assert.ok(err);
+                assert.ok(!resp);
+                assert.ok(!body);
+                
+                assert.strictEqual(config.maxRetries + 1, retryCount);
+                assert.ok(run);
+                done();
+            });
+        });
+        it("should retry on request error when maxRetries=1", function(done) {
+            var config = {
+                token: configurationFile.token,
+                maxRetries: 1,
+                host: "bad-hostname.invalid"
+            };
+            var logger = new SplunkLogger(config);
+
+            var retryCount = 0;
+
+            // Wrap the _post so we can verify retries
+            var post = logger._post;
+            logger._post = function(requestOptions, callback) {
+                retryCount++;
+                post(requestOptions, callback);
+            };
+
+            var run = false;
+            logger.error = function(err, context) {
+                assert.ok(err);
+                assert.ok(context);
+                run = true;
+            };
+            
+            var payload = {
+                message: "something"
+            };
+            logger.send(payload, function(err, resp, body) {
+                assert.ok(err);
+                assert.ok(!resp);
+                assert.ok(!body);
+                
+                assert.strictEqual(config.maxRetries + 1, retryCount);
+                assert.ok(run);
+                done();
+            });
+        });
+        it("should retry on request error when maxRetries=5", function(done) {
+            var config = {
+                token: configurationFile.token,
+                maxRetries: 5,
+                host: "bad-hostname.invalid"
+            };
+            var logger = new SplunkLogger(config);
+
+            var retryCount = 0;
+
+            // Wrap the _post so we can verify retries
+            var post = logger._post;
+            logger._post = function(requestOptions, callback) {
+                retryCount++;
+                post(requestOptions, callback);
+            };
+
+            var run = false;
+            logger.error = function(err, context) {
+                assert.ok(err);
+                assert.ok(context);
+                run = true;
+            };
+            
+            var payload = {
+                message: "something"
+            };
+            logger.send(payload, function(err, resp, body) {
+                assert.ok(err);
+                assert.ok(!resp);
+                assert.ok(!body);
+                
+                assert.strictEqual(config.maxRetries + 1, retryCount);
+                assert.ok(run);
+                done();
+            });
+        });
+        it("should not retry on Splunk error when maxRetries=0", function(done) {
+            var config = {
+                token: "invalid-token",
+                maxRetries: 0
+            };
+            var logger = new SplunkLogger(config);
+
+            var retryCount = 0;
+
+            // Wrap the _post so we can verify retries
+            var post = logger._post;
+            logger._post = function(requestOptions, callback) {
+                retryCount++;
+                post(requestOptions, callback);
+            };
+
+            var run = false;
+            logger.error = function(err, context) {
+                assert.ok(err);
+                assert.ok(context);
+                run = true;
+            };
+            
+            var payload = {
+                message: "something"
+            };
+            logger.send(payload, function(err, resp, body) {
+                assert.ok(!err);
+                assert.ok(resp);
+                assert.ok(body);
+                assert.strictEqual(invalidTokenBody.code, body.code);
+                assert.strictEqual(invalidTokenBody.text, body.text);
+                
+                assert.strictEqual(1, retryCount);
+                assert.ok(run);
+                done();
+            });
+        });
+        it("should not retry on Splunk error when maxRetries=1", function(done) {
+            var config = {
+                token: "invalid-token",
+                maxRetries: 1
+            };
+            var logger = new SplunkLogger(config);
+
+            var retryCount = 0;
+
+            // Wrap the _post so we can verify retries
+            var post = logger._post;
+            logger._post = function(requestOptions, callback) {
+                retryCount++;
+                post(requestOptions, callback);
+            };
+
+            var run = false;
+            logger.error = function(err, context) {
+                assert.ok(err);
+                assert.ok(context);
+                run = true;
+            };
+            
+            var payload = {
+                message: "something"
+            };
+            logger.send(payload, function(err, resp, body) {
+                assert.ok(!err);
+                assert.ok(resp);
+                assert.ok(body);
+                assert.strictEqual(invalidTokenBody.code, body.code);
+                assert.strictEqual(invalidTokenBody.text, body.text);
+                
+                assert.strictEqual(1, retryCount);
+                assert.ok(run);
+                done();
+            });
+        });
+        it("should not retry on Splunk error when maxRetries=5", function(done) {
+            var config = {
+                token: "invalid-token",
+                maxRetries: 5
+            };
+            var logger = new SplunkLogger(config);
+
+            var retryCount = 0;
+
+            // Wrap the _post so we can verify retries
+            var post = logger._post;
+            logger._post = function(requestOptions, callback) {
+                retryCount++;
+                post(requestOptions, callback);
+            };
+
+            var run = false;
+            logger.error = function(err, context) {
+                assert.ok(err);
+                assert.ok(context);
+                run = true;
+            };
+            
+            var payload = {
+                message: "something"
+            };
+            logger.send(payload, function(err, resp, body) {
+                assert.ok(!err);
+                assert.ok(resp);
+                assert.ok(body);
+                assert.strictEqual(invalidTokenBody.code, body.code);
+                assert.strictEqual(invalidTokenBody.text, body.text);
+                
+                assert.strictEqual(1, retryCount);
+                assert.ok(run);
+                done();
+            });
         });
     });
 });

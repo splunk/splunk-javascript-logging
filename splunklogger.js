@@ -57,6 +57,7 @@ function _err(err, context) {
  * @param {string} config.token - Splunk HTTP Event Collector token, required.
  * @param {string} [config.name=splunk-javascript-logging/0.8.0] - Name for this logger.
  * @param {string} [config.host=localhost] - Hostname or IP address of Splunk server.
+ * @param {string} [config.maxRetries=0] - How many times to retry when HTTP POST to Splunk fails.
  * @param {string} [config.path=/services/collector/event/1.0] - URL path to send data to on the Splunk server.
  * @param {string} [config.protocol=https] - Protocol used to communicate with the Splunk server, <code>http</code> or <code>https</code>.
  * @param {number} [config.port=8088] - HTTP Event Collector port on the Splunk server.
@@ -97,7 +98,8 @@ var defaultConfig = {
     protocol: "https",
     port: 8088,
     level: SplunkLogger.prototype.levels.INFO,
-    autoFlush: true
+    autoFlush: true,
+    maxRetries: 0
 };
 
 var defaultRequestOptions = {
@@ -168,6 +170,15 @@ SplunkLogger.prototype._initializeConfig = function(config) {
         ret.path = config.path || ret.path || defaultConfig.path;
         ret.protocol = config.protocol || ret.protocol || defaultConfig.protocol;
         ret.level = config.level || ret.level || defaultConfig.level;
+
+        ret.maxRetries = config.maxRetries || ret.maxRetries || defaultConfig.maxRetries;
+        ret.maxRetries = parseInt(ret.maxRetries, 10);
+        if (isNaN(ret.maxRetries)) {
+            throw new Error("Max retries must be a number, found: " + ret.maxRetries);
+        }
+        else if (ret.maxRetries < 0) {
+            throw new Error("Max retries must be a positive number, found: " + ret.maxRetries);
+        }
 
         // Start with the default autoFlush value
         ret.autoFlush = defaultConfig.autoFlush;
@@ -362,6 +373,17 @@ SplunkLogger.prototype.use = function(middleware) {
 /**
  * Makes an HTTP POST to the configured server.
  *
+ * @param requestOptions
+ * @param {function} callback = A callback function: <code>function(err, response, body)</code>.
+ * @private
+ */
+SplunkLogger.prototype._post = function(requestOptions, callback) {
+    request.post(requestOptions, callback);
+};
+
+/**
+ * Sends events to Splunk, optionally with retries on non-Splunk errors.
+ *
  * @param context
  * @param {function} callback - A callback function: <code>function(err, response, body)</code>
  * @private
@@ -383,20 +405,56 @@ SplunkLogger.prototype._sendEvents = function(context, callback) {
         // since json is set to true.
         context.requestOptions.headers["content-type"] = "application/x-www-form-urlencoded";
     }
+
     var that = this;
-    request.post(context.requestOptions, function(err, resp, body) {
-        // Call error() if error, or body isn't success
-        var error = err;
-        // Assume this is a non-success response from Splunk, build the error accordingly
-        if (!err && body && body.code.toString() !== "0") {
-            error = new Error(body.text);
-            error.code = body.code;
+
+    var splunkError = null; // Errors returned by Splunk
+    var requestError = null; // Any non-Splunk errors
+
+    // References so we don't have to deal with callback parameters
+    var _response = null;
+    var _body = null;
+
+    var numRetries = 0;
+
+    utils.whilst(
+        function() {
+            // Continue if we can (re)try
+            return numRetries++ <= context.config.maxRetries;
+        },
+        function(done) {
+            that._post(context.requestOptions, function(err, resp, body) {
+                // Store the latest error, response & body
+                splunkError = null;
+                requestError = err;
+                _response = resp;
+                _body = body;
+
+                // Try to parse an error response from Splunk
+                if (!requestError && body && body.code.toString() !== "0") {
+                    splunkError = new Error(body.text);
+                    splunkError.code = body.code;
+                }
+
+                // Request error (non-200), retry if numRetries hasn't exceeded the limit
+                if (requestError && numRetries <= context.config.maxRetries) {
+                    utils.expBackoff({attempt: numRetries}, done);
+                }
+                else {
+                    // Stop iterating
+                    done(true);
+                }
+            });
+        },
+        function() {
+            // Call error() for a request error or Splunk error
+            if (requestError || splunkError) {
+                that.error(requestError || splunkError, context);
+            }
+
+            callback(requestError, _response, _body);
         }
-        if (error) {
-            that.error(error, context);
-        }
-        callback(err, resp, body);
-    });
+    );
 };
 
 /**

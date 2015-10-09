@@ -141,6 +141,7 @@ describe("SplunkLogger", function() {
             assert.strictEqual("info", logger.config.level);
             assert.strictEqual(logger.levels.INFO, logger.config.level);
             assert.strictEqual(8088, logger.config.port);
+            assert.strictEqual(0, logger.config.maxRetries);
         });
         it("should set remaining defaults when setting config with token, autoFlush off, & level", function() {
             var config = {
@@ -159,6 +160,7 @@ describe("SplunkLogger", function() {
             assert.strictEqual("important", logger.config.level);
             assert.strictEqual(false, logger.config.autoFlush);
             assert.strictEqual(8088, logger.config.port);
+            assert.strictEqual(0, logger.config.maxRetries);
         });
         it("should set non-default boolean config values", function() {
             var config = {
@@ -176,6 +178,7 @@ describe("SplunkLogger", function() {
             assert.strictEqual("http", logger.config.protocol);
             assert.strictEqual("info", logger.config.level);
             assert.strictEqual(8088, logger.config.port);
+            assert.strictEqual(0, logger.config.maxRetries);
         });
         it("should set non-default path", function() {
             var config = {
@@ -192,6 +195,7 @@ describe("SplunkLogger", function() {
             assert.strictEqual("https", logger.config.protocol);
             assert.strictEqual("info", logger.config.level);
             assert.strictEqual(8088, logger.config.port);
+            assert.strictEqual(0, logger.config.maxRetries);
         });
         it("should set non-default port", function() {
             var config = {
@@ -208,6 +212,7 @@ describe("SplunkLogger", function() {
             assert.strictEqual("https", logger.config.protocol);
             assert.strictEqual("info", logger.config.level);
             assert.strictEqual(config.port, logger.config.port);
+            assert.strictEqual(0, logger.config.maxRetries);
         });
         it("should set protocol, host, port & path from url property", function() {
             var config = {
@@ -224,6 +229,7 @@ describe("SplunkLogger", function() {
             assert.strictEqual("http", logger.config.protocol);
             assert.strictEqual("info", logger.config.level);
             assert.strictEqual(9088, logger.config.port);
+            assert.strictEqual(0, logger.config.maxRetries);
         });
         it("should set protocol from url property", function() {
             var config = {
@@ -240,6 +246,7 @@ describe("SplunkLogger", function() {
             assert.strictEqual("http", logger.config.protocol);
             assert.strictEqual("info", logger.config.level);
             assert.strictEqual(8088, logger.config.port);
+            assert.strictEqual(0, logger.config.maxRetries);
         });
         it("should set everything but path from url property", function() {
             var config = {
@@ -256,6 +263,7 @@ describe("SplunkLogger", function() {
             assert.strictEqual("http", logger.config.protocol);
             assert.strictEqual("info", logger.config.level);
             assert.strictEqual(9088, logger.config.port);
+            assert.strictEqual(0, logger.config.maxRetries);
         });
         it("should set everything but path from url property with trailing slash", function() {
             var config = {
@@ -272,6 +280,7 @@ describe("SplunkLogger", function() {
             assert.strictEqual("http", logger.config.protocol);
             assert.strictEqual("info", logger.config.level);
             assert.strictEqual(9088, logger.config.port);
+            assert.strictEqual(0, logger.config.maxRetries);
         });
         it("should set host from url property with host only", function() {
             var config = {
@@ -289,6 +298,25 @@ describe("SplunkLogger", function() {
             assert.strictEqual("info", logger.config.level);
             assert.strictEqual(true, logger.config.autoFlush);
             assert.strictEqual(8088, logger.config.port);
+            assert.strictEqual(0, logger.config.maxRetries);
+        });
+        it("should set maxRetries", function() {
+            var config = {
+                token: "a-token-goes-here-usually",
+                maxRetries: 10
+            };
+            var logger = new SplunkLogger(config);
+
+            assert.ok(logger);
+            assert.strictEqual(config.token, logger.config.token);
+            assert.strictEqual("splunk-javascript-logging/0.8.0", logger.config.name);
+            assert.strictEqual("localhost", logger.config.host);
+            assert.strictEqual("/services/collector/event/1.0", logger.config.path);
+            assert.strictEqual("https", logger.config.protocol);
+            assert.strictEqual("info", logger.config.level);
+            assert.strictEqual(true, logger.config.autoFlush);
+            assert.strictEqual(8088, logger.config.port);
+            assert.strictEqual(10, logger.config.maxRetries);
         });
     });
     describe("_initializeConfig", function() {
@@ -336,6 +364,36 @@ describe("SplunkLogger", function() {
             catch(err) {
                 assert.ok(err);
                 assert.strictEqual(err.message, "Config token must be a string.");
+            }
+        });
+        it("should error with NaN maxRetries", function() {
+            var config = {
+                token: "a-token-goes-here-usually",
+                maxRetries: "this isn't a number"
+            };
+
+            try {
+                SplunkLogger.prototype._initializeConfig(config);
+                assert.fail(false, "Expected an error.");
+            }
+            catch (err) {
+                assert.ok(err);
+                assert.strictEqual(err.message, "Max retries must be a number, found: NaN");
+            }
+        });
+        it("should error with negative maxRetries", function() {
+            var config = {
+                token: "a-token-goes-here-usually",
+                maxRetries: -1
+            };
+
+            try {
+                SplunkLogger.prototype._initializeConfig(config);
+                assert.fail(false, "Expected an error.");
+            }
+            catch (err) {
+                assert.ok(err);
+                assert.strictEqual(err.message, "Max retries must be a positive number, found: -1");
             }
         });
         it("should error with NaN port", function() {
@@ -390,6 +448,7 @@ describe("SplunkLogger", function() {
             assert.strictEqual("https", loggerConfig.protocol);
             assert.strictEqual("info", loggerConfig.level);
             assert.strictEqual(8088, loggerConfig.port);
+            assert.strictEqual(0, loggerConfig.maxRetries);
         });
         it("should set non-default boolean config values", function() {
             var config = {
@@ -406,6 +465,7 @@ describe("SplunkLogger", function() {
             assert.strictEqual("http", loggerConfig.protocol);
             assert.strictEqual("info", loggerConfig.level);
             assert.strictEqual(8088, loggerConfig.port);
+            assert.strictEqual(0, loggerConfig.maxRetries);
         });
         it("should set non-default path", function() {
             var config = {
@@ -422,6 +482,7 @@ describe("SplunkLogger", function() {
             assert.strictEqual("https", loggerConfig.protocol);
             assert.strictEqual("info", loggerConfig.level);
             assert.strictEqual(8088, loggerConfig.port);
+            assert.strictEqual(0, loggerConfig.maxRetries);
         });
         it("should set non-default port", function() {
             var config = {
@@ -438,6 +499,7 @@ describe("SplunkLogger", function() {
             assert.strictEqual("https", loggerConfig.protocol);
             assert.strictEqual("info", loggerConfig.level);
             assert.strictEqual(config.port, loggerConfig.port);
+            assert.strictEqual(0, loggerConfig.maxRetries);
         });
         it("should set protocol, host, port & path from url property", function() {
             var config = {
@@ -454,6 +516,7 @@ describe("SplunkLogger", function() {
             assert.strictEqual("http", loggerConfig.protocol);
             assert.strictEqual("info", loggerConfig.level);
             assert.strictEqual(9088, loggerConfig.port);
+            assert.strictEqual(0, loggerConfig.maxRetries);
         });
         it("should set protocol from url property", function() {
             var config = {
@@ -470,6 +533,7 @@ describe("SplunkLogger", function() {
             assert.strictEqual("http", loggerConfig.protocol);
             assert.strictEqual("info", loggerConfig.level);
             assert.strictEqual(8088, loggerConfig.port);
+            assert.strictEqual(0, loggerConfig.maxRetries);
         });
         it("should set host from url property with host only", function() {
             var config = {
@@ -486,6 +550,7 @@ describe("SplunkLogger", function() {
             assert.strictEqual("https", loggerConfig.protocol);
             assert.strictEqual("info", loggerConfig.level);
             assert.strictEqual(8088, loggerConfig.port);
+            assert.strictEqual(0, loggerConfig.maxRetries);
         });
         it("should ignore prototype values", function() {
             Object.prototype.something = "ignore";
@@ -504,6 +569,7 @@ describe("SplunkLogger", function() {
             assert.strictEqual("https", loggerConfig.protocol);
             assert.strictEqual("info", loggerConfig.level);
             assert.strictEqual(8088, loggerConfig.port);
+            assert.strictEqual(0, loggerConfig.maxRetries);
         });
     });
     describe("_initializeRequestOptions", function() {
