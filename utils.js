@@ -175,7 +175,7 @@ utils.expBackoff = function(opts, callback) {
     else {
 
         var min = 10;
-        var max = 1000 * 60 * 2; // TODO: is 2 minutes a reasonable max timeout?
+        var max = 1000 * 60 * 2; // 2 minutes is a reasonable max delay
 
         var rand = Math.random();
         if (opts.hasOwnProperty("rand")) {
@@ -193,6 +193,16 @@ utils.expBackoff = function(opts, callback) {
             timeout
         );
     }
+};
+
+/**
+ * TODO: docs + tests
+ * Binds a function to an instance of an object.
+ */
+utils.bind = function(self, fn) {
+    return function () {
+        return fn.apply(self, arguments);
+    };
 };
 
 module.exports = utils;

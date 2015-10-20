@@ -162,6 +162,116 @@ describe("SplunkLogger", function() {
             assert.strictEqual(8088, logger.config.port);
             assert.strictEqual(0, logger.config.maxRetries);
         });
+        it("should error when _enableInterval(NaN)", function() {
+            var config = {
+                token: "a-token-goes-here-usually"
+            };
+
+            try {
+                var logger = new SplunkLogger(config);
+                logger._enableTimer("not a number");
+                assert.fail(!logger, "Expected an error.");
+            }
+            catch (err) {
+                assert.ok(err);
+                assert.strictEqual("Batch interval must be a number, found: not a number", err.message);
+            }
+        });
+        it("should error when batchInterval=NaN", function() {
+            var config = {
+                token: "a-token-goes-here-usually",
+                batchInterval: "not a number",
+            };
+
+            try {
+                var logger = new SplunkLogger(config);
+                assert.fail(!logger, "Expected an error.");
+            }
+            catch (err) {
+                assert.ok(err);
+                assert.strictEqual("Batch interval must be a number, found: NaN", err.message);
+            }
+        });
+        it("should error when batchInterval is negative", function() {
+            var config = {
+                token: "a-token-goes-here-usually",
+                batchInterval: -1,
+            };
+
+            try {
+                var logger = new SplunkLogger(config);
+                assert.fail(!logger, "Expected an error.");
+            }
+            catch (err) {
+                assert.ok(err);
+                assert.strictEqual("Batch interval must be a positive number, found: -1", err.message);
+            }
+        });
+        it("should set a batch interval timer with autoFlush on, & batchInterval set", function() {
+            var config = {
+                token: "a-token-goes-here-usually",
+                batchInterval: 100,
+                autoFlush: true
+            };
+            var logger = new SplunkLogger(config);
+
+            assert.ok(logger);
+            assert.ok(logger._timerID);
+
+            assert.strictEqual(config.token, logger.config.token);
+            assert.strictEqual("splunk-javascript-logging/0.8.0", logger.config.name);
+            assert.strictEqual("localhost", logger.config.host);
+            assert.strictEqual("/services/collector/event/1.0", logger.config.path);
+            assert.strictEqual("https", logger.config.protocol);
+            assert.strictEqual("info", logger.config.level);
+            assert.strictEqual(true, logger.config.autoFlush);
+            assert.strictEqual(100, logger.config.batchInterval);
+            assert.strictEqual(8088, logger.config.port);
+            assert.strictEqual(0, logger.config.maxRetries);
+        });
+        it("should not set a batch interval timer with autoFlush on, & default batchInterval", function() {
+            var config = {
+                token: "a-token-goes-here-usually",
+                autoFlush: true
+            };
+            var logger = new SplunkLogger(config);
+
+            assert.ok(logger);
+            assert.ok(!logger._timerID);
+
+            assert.strictEqual(config.token, logger.config.token);
+            assert.strictEqual("splunk-javascript-logging/0.8.0", logger.config.name);
+            assert.strictEqual("localhost", logger.config.host);
+            assert.strictEqual("/services/collector/event/1.0", logger.config.path);
+            assert.strictEqual("https", logger.config.protocol);
+            assert.strictEqual("info", logger.config.level);
+            assert.strictEqual(true, logger.config.autoFlush);
+            assert.strictEqual(0, logger.config.batchInterval);
+            assert.strictEqual(8088, logger.config.port);
+            assert.strictEqual(0, logger.config.maxRetries);
+        });
+        it("should not set a batch interval timer with autoFlush off, & batchInterval set", function() {
+            var config = {
+                token: "a-token-goes-here-usually",
+                batchInterval: 100,
+                autoFlush: false
+            };
+            var logger = new SplunkLogger(config);
+
+            assert.ok(logger);
+            assert.ok(!logger._timerID);
+
+            assert.strictEqual(config.token, logger.config.token);
+            assert.strictEqual("splunk-javascript-logging/0.8.0", logger.config.name);
+            assert.strictEqual("localhost", logger.config.host);
+            assert.strictEqual("/services/collector/event/1.0", logger.config.path);
+            assert.strictEqual("https", logger.config.protocol);
+            assert.strictEqual("info", logger.config.level);
+            assert.strictEqual(false, logger.config.autoFlush);
+            assert.strictEqual(100, logger.config.batchInterval);
+            assert.strictEqual(8088, logger.config.port);
+            assert.strictEqual(0, logger.config.maxRetries);
+        });
         it("should set non-default boolean config values", function() {
             var config = {
                 token: "a-token-goes-here-usually",
@@ -171,6 +281,8 @@ describe("SplunkLogger", function() {
             var logger = new SplunkLogger(config);
 
             assert.ok(logger);
+            assert.ok(!logger._timerID);
+
             assert.strictEqual(config.token, logger.config.token);
             assert.strictEqual("splunk-javascript-logging/0.8.0", logger.config.name);
             assert.strictEqual("localhost", logger.config.host);

@@ -164,8 +164,8 @@ describe("SplunkLogger _makedata", function() {
         assert.strictEqual(body.event.severity, "urgent");
     });
 });
-describe("SplunkLogger send", function() {
-    describe("using default middleware (integration tests)", function () {
+describe("SplunkLogger send (integration tests)", function() {
+    describe("using default middleware ", function () {
         it("should error with bad token", function(done) {
             var config = {
                 token: "token-goes-here"
@@ -610,7 +610,7 @@ describe("SplunkLogger send", function() {
             }, 1000);
         });
     });
-    describe("without autoFlush (integration tests)", function () {
+    describe("without autoFlush", function () {
         it("should get no data response when flushing empty batch with valid token", function(done) {
             var config = {
                 token: configurationFile.token,
@@ -1601,6 +1601,411 @@ describe("SplunkLogger send", function() {
                 assert.ok(run);
                 done();
             });
+        });
+    });
+    describe("using batch interval", function() {
+        it("should only not make a POST request if contextQueue is always empty", function(done) {
+            var config = {
+                token: configurationFile.token,
+                autoFlush: true,
+                batchInterval: 100
+            };
+            var logger = new SplunkLogger(config);
+
+            var posts = 0;
+
+            // Wrap _post so we can verify how many times we called it
+            var _post = logger._post;
+            logger._post = function(context, callback) {
+                _post(context, function(err, resp, body) {
+                    posts++;
+                    assert.ok(!err);
+                    assert.strictEqual(body.code, successBody.code);
+                    assert.strictEqual(body.text, successBody.text);
+                    callback(err, resp, body);
+                });
+            };
+
+            setTimeout(function() {
+                assert.strictEqual(logger._timerDuration, 100);
+                assert.strictEqual(0, posts);
+                assert.strictEqual(0, logger.contextQueue.length);
+
+                // Clean up the timer
+                logger._disableTimer();
+                done();
+            }, 500);
+        });
+        it("should only make 1 POST request for 1 event", function(done) {
+            var config = {
+                token: configurationFile.token,
+                autoFlush: true,
+                batchInterval: 100
+            };
+            var logger = new SplunkLogger(config);
+
+            var posts = 0;
+
+            // Wrap _post so we can verify how many times we called it
+            var _post = logger._post;
+            logger._post = function(context, callback) {
+                _post(context, function(err, resp, body) {
+                    posts++;
+                    assert.ok(!err);
+                    assert.strictEqual(body.code, successBody.code);
+                    assert.strictEqual(body.text, successBody.text);
+                    callback(err, resp, body);
+                });
+            };
+            
+            var payload = {
+                message: "something"
+            };
+            logger.send(payload);
+
+            setTimeout(function() {
+                assert.strictEqual(logger._timerDuration, 100);
+                assert.strictEqual(1, posts);
+                assert.strictEqual(0, logger.contextQueue.length);
+
+                // Clean up the timer
+                logger._disableTimer();
+                done();
+            }, 500);
+        });
+        it("should only make 1 POST request for 2 events", function(done) {
+            var config = {
+                token: configurationFile.token,
+                autoFlush: true,
+                batchInterval: 100
+            };
+            var logger = new SplunkLogger(config);
+
+            var posts = 0;
+
+            // Wrap _post so we can verify how many times we called it
+            var _post = logger._post;
+            logger._post = function(context, callback) {
+                _post(context, function(err, resp, body) {
+                    posts++;
+                    assert.ok(!err);
+                    assert.strictEqual(body.code, successBody.code);
+                    assert.strictEqual(body.text, successBody.text);
+                    callback(err, resp, body);
+                });
+            };
+            
+            var payload = {
+                message: "something"
+            };
+            var payload2 = {
+                message: "something 2"
+            };
+            logger.send(payload);
+            logger.send(payload2);
+
+            setTimeout(function() {
+                assert.strictEqual(logger._timerDuration, 100);
+                assert.strictEqual(1, posts);
+                assert.strictEqual(0, logger.contextQueue.length);
+
+                // Clean up the timer
+                logger._disableTimer();
+                done();
+            }, 500);
+        });
+        it("should only make 1 POST request for 5 events", function(done) {
+            var config = {
+                token: configurationFile.token,
+                autoFlush: true,
+                batchInterval: 100
+            };
+            var logger = new SplunkLogger(config);
+
+            var posts = 0;
+
+            // Wrap _post so we can verify how many times we called it
+            var _post = logger._post;
+            logger._post = function(context, callback) {
+                _post(context, function(err, resp, body) {
+                    posts++;
+                    assert.ok(!err);
+                    assert.strictEqual(body.code, successBody.code);
+                    assert.strictEqual(body.text, successBody.text);
+                    callback(err, resp, body);
+                });
+            };
+            
+            var payload = {
+                message: "something"
+            };
+            logger.send(payload);
+            logger.send(payload);
+            logger.send(payload);
+            logger.send(payload);
+            logger.send(payload);
+
+            setTimeout(function() {
+                assert.strictEqual(logger._timerDuration, 100);
+                assert.strictEqual(1, posts);
+                assert.strictEqual(0, logger.contextQueue.length);
+
+                // Clean up the timer
+                logger._disableTimer();
+                done();
+            }, 500);
+        });
+        it("should flush a stale event after enabling autoFlush and batchInterval", function(done) {
+            var config = {
+                token: configurationFile.token,
+                autoFlush: false
+            };
+            var logger = new SplunkLogger(config);
+
+            var posts = 0;
+
+            // Wrap _post so we can verify how many times we called it
+            var _post = logger._post;
+            logger._post = function(context, callback) {
+                _post(context, function(err, resp, body) {
+                    posts++;
+                    assert.ok(!err);
+                    assert.strictEqual(body.code, successBody.code);
+                    assert.strictEqual(body.text, successBody.text);
+                    callback(err, resp, body);
+                });
+            };
+            
+            var payload = {
+                message: "something"
+            };
+            logger.send(payload);
+            assert.strictEqual(logger._timerDuration, 0);
+            
+            logger.config.autoFlush = true;
+            logger.config.batchInterval = 100;
+
+            var payload2 = {
+                message: "something else"
+            };
+            logger.send(payload2);
+
+            setTimeout(function() {
+                assert.strictEqual(1, posts);
+                assert.strictEqual(0, logger.contextQueue.length);
+
+                // Clean up the timer
+                logger._disableTimer();
+                done();
+            }, 500);
+        });
+        it("should flush an event with batchInterval, then disable autoFlush for manual batching", function(done) {
+            var config = {
+                token: configurationFile.token,
+                autoFlush: true,
+                batchInterval: 100
+            };
+            var logger = new SplunkLogger(config);
+
+            var posts = 0;
+
+            // Wrap _post so we can verify how many times we called it
+            var _post = logger._post;
+            logger._post = function(context, callback) {
+                _post(context, function(err, resp, body) {
+                    posts++;
+                    assert.ok(!err);
+                    assert.strictEqual(body.code, successBody.code);
+                    assert.strictEqual(body.text, successBody.text);
+                    callback(err, resp, body);
+                });
+            };
+            
+            var payload = {
+                message: "something"
+            };
+            logger.send(payload);
+
+            var run = false;
+            setTimeout(function() {
+                logger.config.autoFlush = false;
+
+                var payload2 = {
+                    message: "something else"
+                };
+                logger.send(payload2);
+
+                assert.strictEqual(logger.contextQueue.length, 1);
+                logger.flush();
+                run = true;
+            }, 150);
+
+            setTimeout(function() {
+                assert.ok(run);
+                assert.strictEqual(2, posts);
+                assert.strictEqual(0, logger.contextQueue.length);
+
+                // Clean up the timer
+                logger._disableTimer();
+                done();
+            }, 500);
+        });
+        it("should flush an event with batchInterval, then set batchInterval=0 for manual batching", function(done) {
+            var config = {
+                token: configurationFile.token,
+                autoFlush: true,
+                batchInterval: 100
+            };
+            var logger = new SplunkLogger(config);
+
+            var posts = 0;
+
+            // Wrap _post so we can verify how many times we called it
+            var _post = logger._post;
+            logger._post = function(context, callback) {
+                _post(context, function(err, resp, body) {
+                    posts++;
+                    assert.ok(!err);
+                    assert.strictEqual(body.code, successBody.code);
+                    assert.strictEqual(body.text, successBody.text);
+                    callback(err, resp, body);
+                });
+            };
+            
+            var payload = {
+                message: "something"
+            };
+            logger.send(payload);
+
+            var run = false;
+            setTimeout(function() {
+                logger.config.batchInterval = 0;
+
+                var payload2 = {
+                    message: "something else"
+                };
+                logger.send(payload2);
+
+                assert.strictEqual(logger.contextQueue.length, 1);
+                logger.flush();
+                run = true;
+            }, 150);
+
+            setTimeout(function() {
+                assert.ok(run);
+                assert.strictEqual(2, posts);
+                assert.strictEqual(0, logger.contextQueue.length);
+
+                // Clean up the timer
+                logger._disableTimer();
+                done();
+            }, 500);
+        });
+        it("should autoFlush an event at batchInterval, then again when batchInterval has changed", function(done) {
+            var config = {
+                token: configurationFile.token,
+                autoFlush: true,
+                batchInterval: 500
+            };
+            var logger = new SplunkLogger(config);
+
+            var posts = 0;
+
+            // Wrap _post so we can verify how many times we called it
+            var _post = logger._post;
+            logger._post = function(context, callback) {
+                _post(context, function(err, resp, body) {
+                    posts++;
+                    assert.ok(!err);
+                    assert.strictEqual(body.code, successBody.code);
+                    assert.strictEqual(body.text, successBody.text);
+                    callback(err, resp, body);
+                });
+            };
+            
+            var payload = {
+                message: "something"
+            };
+            logger.send(payload);
+            
+            setTimeout(function() {
+                assert.strictEqual(0, logger.contextQueue.length);
+
+                if (posts === 1) {
+                    assert.strictEqual(logger._timerDuration, 500);
+                    logger.config.autoFlush = true;
+                    logger.config.batchInterval = 100;
+                    var payload2 = {
+                        message: "something else"
+                    };
+                    logger.send(payload2);
+                    assert.strictEqual(logger._timerDuration, 100);
+                }
+                else {
+                    assert.fail(); // TODO:
+                }
+            }, 550);
+
+
+            setTimeout(function() {
+                assert.strictEqual(2, posts);
+                assert.strictEqual(0, logger.contextQueue.length);
+
+                // Clean up the timer
+                logger._disableTimer();
+                done();
+            }, 700);
+        });
+        it("should flush an event with batchInterval, then set batchInterval=0 for manual batching", function(done) {
+            var config = {
+                token: configurationFile.token,
+                autoFlush: true,
+                batchInterval: 100
+            };
+            var logger = new SplunkLogger(config);
+
+            var posts = 0;
+
+            // Wrap _post so we can verify how many times we called it
+            var _post = logger._post;
+            logger._post = function(context, callback) {
+                _post(context, function(err, resp, body) {
+                    posts++;
+                    assert.ok(!err);
+                    assert.strictEqual(body.code, successBody.code);
+                    assert.strictEqual(body.text, successBody.text);
+                    callback(err, resp, body);
+                });
+            };
+            
+            var payload = {
+                message: "something"
+            };
+            logger.send(payload);
+
+            var run = false;
+            setTimeout(function() {
+                logger.config.batchInterval = 100;
+
+                var payload2 = {
+                    message: "something else"
+                };
+                logger.send(payload2);
+
+                assert.strictEqual(logger.contextQueue.length, 1);
+                run = true;
+            }, 150);
+
+
+            setTimeout(function() {
+                assert.ok(run);
+                assert.strictEqual(2, posts);
+                assert.strictEqual(0, logger.contextQueue.length);
+
+                // Clean up the timer
+                logger._disableTimer();
+                done();
+            }, 300);
         });
     });
 });

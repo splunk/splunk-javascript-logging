@@ -42,7 +42,7 @@ function _err(err, context) {
  *     token: "your-token-here",
  *     name: "my application",
  *     host: "splunk.local",
- *     autoFlush: false
+ *     autoFlush: true
  * };
  *
  * var logger = new SplunkLogger(config);
@@ -67,14 +67,32 @@ function _err(err, context) {
  * @param {string} [config.level=info] - Logging level to use, will show up as the <code>severity</code> field of an event, see
  *  [SplunkLogger.levels]{@link SplunkLogger#levels} for common levels.
  * @param {bool} [config.autoFlush=true] - Send events immediately or not.
+ * @param {bool} [config.batchInterval=0] - If <code>config.autoFlush === true</code>, automatically flush events after this many milliseconds.
+ * When set to a non-positive value, events will be sent one by one.
  * @constructor
  * @throws Will throw an error if the <code>config</code> parameter is malformed.
  */
 var SplunkLogger = function(config) {
+    this._timerID = null;
+    this._timerDuration = 0;
     this.config = this._initializeConfig(config);
     this.middlewares = [];
     this.contextQueue = [];
     this.error = _err;
+
+    this._enableTimer = utils.bind(this, this._enableTimer);
+    this._disableTimer = utils.bind(this, this._disableTimer);
+    this._initializeConfig = utils.bind(this, this._initializeConfig);
+    this._initializeRequestOptions = utils.bind(this, this._initializeRequestOptions);
+    this._initializeMessage = utils.bind(this, this._initializeMessage);
+    this._initializeMetadata = utils.bind(this, this._initializeMetadata);
+    this._initializeContext = utils.bind(this, this._initializeContext);
+    this._makeBody = utils.bind(this, this._makeBody);
+    this.use = utils.bind(this, this.use);
+    this._post = utils.bind(this, this._post);
+    this._sendEvents = utils.bind(this, this._sendEvents);
+    this.send = utils.bind(this, this.send);
+    this.flush = utils.bind(this, this.flush);
 };
 
 /**
@@ -99,13 +117,59 @@ var defaultConfig = {
     port: 8088,
     level: SplunkLogger.prototype.levels.INFO,
     autoFlush: true,
-    maxRetries: 0
+    maxRetries: 0,
+    batchInterval: 0
 };
 
 var defaultRequestOptions = {
     json: true, // Sets the content-type header to application/json
     strictSSL: false,
     url: defaultConfig.protocol + "://" + defaultConfig.host + ":" + defaultConfig.port + defaultConfig.path
+};
+
+/**
+ * Disables the interval timer set by <code>this._enableTimer()</code>.
+ *
+ * param {Number} interval - The batch interval.
+ * @private
+ */
+SplunkLogger.prototype._disableTimer = function() {
+    if (this._timerID) {
+        clearInterval(this._timerID);
+        this._timerDuration = 0;
+        this._timerID = null;
+    }
+};
+
+/**
+ * Configures an interval timer to flush any events in
+ * <code>this.contextQueue</code> at the specified interval.
+ *
+ * param {Number} interval - The batch interval.
+ * @private
+ */
+SplunkLogger.prototype._enableTimer = function(interval) {
+    // Only enable the timer if possible
+    if (typeof interval !== "number") {
+        throw new Error("Batch interval must be a number, found: " + interval);
+    }
+    else if (typeof interval === "number" && interval > 0) {
+        if (this._timerID) {
+            this._disableTimer();
+        }
+        
+        // If batch interval is changed, update the config property
+        if (this.config && this.config.hasOwnProperty("batchInterval")) {
+            this.config.batchInterval = interval;
+        }
+
+        this._timerDuration = interval;
+
+        var that = this;
+        this._timerID = setInterval(function() {
+            that.flush();
+        }, interval);
+    }
 };
 
 /**
@@ -184,11 +248,41 @@ SplunkLogger.prototype._initializeConfig = function(config) {
         ret.autoFlush = defaultConfig.autoFlush;
         // Then check this.config.autoFlush
         if (this.hasOwnProperty("config") && this.config.hasOwnProperty("autoFlush")) {
-            ret.autoFlush = ret.autoFlush;
+            ret.autoFlush = this.config.autoFlush;
         }
         // Then check the config.autoFlush, the function argument
         if (config.hasOwnProperty("autoFlush")) {
             ret.autoFlush = config.autoFlush;
+        }
+        // Convert autoFlush value to boolean
+        ret.autoFlush = !!ret.autoFlush;
+
+        // Start with the default batchInterval value
+        ret.batchInterval = defaultConfig.batchInterval;
+        if (this.hasOwnProperty("config") && this.config.hasOwnProperty("batchInterval")) {
+            ret.batchInterval = this.config.batchInterval;
+        }
+        if (config.hasOwnProperty("batchInterval")) {
+            ret.batchInterval = config.batchInterval;
+        }
+        ret.batchInterval = parseInt(ret.batchInterval, 10);
+        if (isNaN(ret.batchInterval)) {
+            throw new Error("Batch interval must be a number, found: " + ret.batchInterval);
+        }
+        else if (ret.batchInterval < 0) {
+            throw new Error("Batch interval must be a positive number, found: " + ret.batchInterval);
+        }
+
+        var startTimer = !this._timerID && ret.autoFlush && ret.batchInterval > 0;
+        var changeTimer = this._timerID && ret.autoFlush && this._timerDuration !== ret.batchInterval && ret.batchInterval > 0;
+        
+        // Upsert the timer
+        if (startTimer || changeTimer) {
+            this._enableTimer(ret.batchInterval);
+        }
+        // Disable timer
+        else if (this._timerID && (this._timerDuration < 0 || !ret.autoFlush)) {
+            this._disableTimer();
         }
 
         if (!config.hasOwnProperty("port")) {
@@ -510,16 +604,18 @@ SplunkLogger.prototype._sendEvents = function(context, callback) {
  * @public
  */
 SplunkLogger.prototype.send = function (context, callback) {
+
+    console.log(this.config.batchInterval);
+    console.log(this.config.autoFlush);
+
     callback = callback || function(){};
     context = this._initializeContext(context);
     
     this.contextQueue.push(context);
 
-    if (context.config.autoFlush) {
+    // Only flush if using manual batching
+    if (context.config.autoFlush && !this._timerID) {
         this.flush(callback);
-    }
-    else {
-        callback();
     }
 };
 
@@ -537,14 +633,8 @@ SplunkLogger.prototype.flush = function (callback) {
 
     var context = {};
 
-    // Use the batching setting from this.config
-    if (this.config.autoFlush) {
-        // TODO: handle case of multiple events with autoFlush off, flushing fast
-        // Just take the oldest event in the queue
-        context = this.contextQueue.pop();
-    }
-    else {
-        // Empty the event queue
+    // Empty the queue if manual or interval batching with something to flush
+    if (!this.config.autoFlush || (this._timerID && this.contextQueue.length > 0)) {
         var queue = this.contextQueue;
         this.contextQueue = [];
         var data = "";
@@ -552,6 +642,18 @@ SplunkLogger.prototype.flush = function (callback) {
             data += JSON.stringify(this._makeBody(queue[i]));
         }
         context.message = data;
+    }
+    // Noop if there's nothing to flush; let non-batching requests get a no-data response from Splunk in the if block above
+    else if (this.contextQueue.length === 0) {
+        var body = {
+            text: "Nothing to flush."
+        };
+        return callback(null, {body: body}, body);
+    }
+    // Just take the oldest event in the queue
+    else {
+        // TODO: handle case of multiple events with autoFlush off, flushing fast
+        context = this.contextQueue.pop();
     }
     
     // Initialize the context, then manually set the data
