@@ -150,25 +150,30 @@ SplunkLogger.prototype._disableTimer = function() {
  */
 SplunkLogger.prototype._enableTimer = function(interval) {
     // Only enable the timer if possible
-    if (typeof interval !== "number") {
-        throw new Error("Batch interval must be a number, found: " + interval);
+    if (typeof interval === "number") {
+        if (interval <= 0) {
+            throw new Error("Batch interval must be a positive number, found: " + interval);
+        }
+        else {
+            if (this._timerID) {
+                this._disableTimer();
+            }
+            
+            // If batch interval is changed, update the config property
+            if (this.config && this.config.hasOwnProperty("batchInterval")) {
+                this.config.batchInterval = interval;
+            }
+
+            this._timerDuration = interval;
+
+            var that = this;
+            this._timerID = setInterval(function() {
+                that.flush();
+            }, interval);
+        }
     }
-    else if (typeof interval === "number" && interval > 0) {
-        if (this._timerID) {
-            this._disableTimer();
-        }
-        
-        // If batch interval is changed, update the config property
-        if (this.config && this.config.hasOwnProperty("batchInterval")) {
-            this.config.batchInterval = interval;
-        }
-
-        this._timerDuration = interval;
-
-        var that = this;
-        this._timerID = setInterval(function() {
-            that.flush();
-        }, interval);
+    else {
+        throw new Error("Batch interval must be a number, found: " + interval);
     }
 };
 
@@ -604,10 +609,6 @@ SplunkLogger.prototype._sendEvents = function(context, callback) {
  * @public
  */
 SplunkLogger.prototype.send = function (context, callback) {
-
-    console.log(this.config.batchInterval);
-    console.log(this.config.autoFlush);
-
     callback = callback || function(){};
     context = this._initializeContext(context);
     

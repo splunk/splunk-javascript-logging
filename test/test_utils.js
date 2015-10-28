@@ -443,7 +443,7 @@ describe("Utils", function() {
             utils.expBackoff({attempt: 2, rand: 1});
             setTimeout(done, 80);
         });
-        // TODO: this test is takes 2 minutes, rest of the tests take 7s combined...
+        // TODO: this test is takes 2 minutes, rest of the tests take 12s combined...
         // it("should have maximum backoff of 2m (slow running test)", function(done) {
         //     this.timeout(1000 * 60 * 2 + 500);
         //     utils.expBackoff({attempt: 100, rand: 0}, function(err, timeout) {
@@ -451,5 +451,20 @@ describe("Utils", function() {
         //         done();
         //     });
         // });
+    });
+    describe("bind", function() {
+        it("should successfully bind a function", function(done) {
+            var f;
+            (function() {
+                f = function(a) {
+                    this.a = a;
+                };
+            })();
+            var q = {};
+            var g = utils.bind(q, f);
+            g(12);
+            assert.strictEqual(q.a, 12);
+            done();
+        });
     });
 });

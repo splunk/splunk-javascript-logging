@@ -196,8 +196,10 @@ utils.expBackoff = function(opts, callback) {
 };
 
 /**
- * TODO: docs + tests
  * Binds a function to an instance of an object.
+ *
+ * @param {object} [self] - An object to bind the <code>fn</code> function parameter to.
+ * @param {object} [fn] - A function to bind to the <code>self</code> argument.
  */
 utils.bind = function(self, fn) {
     return function () {

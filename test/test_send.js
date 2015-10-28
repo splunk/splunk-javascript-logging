@@ -502,7 +502,6 @@ describe("SplunkLogger send (integration tests)", function() {
             var run = false;
 
             logger.error = function(err, errContext) {
-                // TODO: the resp.statusCode is what we want, but can't access here!
                 run = true;
                 assert.ok(err);
                 assert.strictEqual(err.message, "getaddrinfo ENOTFOUND");
@@ -1754,6 +1753,22 @@ describe("SplunkLogger send (integration tests)", function() {
                 logger._disableTimer();
                 done();
             }, 500);
+        });
+        it("should error when trying to set batchInterval to a negative value after logger creation", function() {
+            var config = {
+                token: configurationFile.token,
+                autoFlush: false
+            };
+            var logger = new SplunkLogger(config);
+
+            try {
+                logger._enableTimer(-1);
+                assert.ok(false, "Expected an error.");
+            }
+            catch(err) {
+                assert.ok(err);
+                assert.strictEqual(err.message, "Batch interval must be a positive number, found: -1");
+            }
         });
         it("should flush a stale event after enabling autoFlush and batchInterval", function(done) {
             var config = {
