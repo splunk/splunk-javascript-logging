@@ -683,6 +683,42 @@ describe("SplunkLogger", function() {
             assert.strictEqual(8088, loggerConfig.port);
             assert.strictEqual(0, loggerConfig.maxRetries);
         });
+        it("should set autoFlush property to true after initially false", function() {
+            Object.prototype.something = "ignore";
+            var config = {
+                token: "a-token-goes-here-usually",
+                url: "splunk.local",
+                autoFlush: false
+            };
+
+            var logger = new SplunkLogger(config);
+            var loggerConfig = logger.config;
+
+            assert.ok(loggerConfig);
+            assert.ok(!loggerConfig.hasOwnProperty("something"));
+            assert.strictEqual(config.token, loggerConfig.token);
+            assert.strictEqual("splunk-javascript-logging/0.8.0", loggerConfig.name);
+            assert.strictEqual("splunk.local", loggerConfig.host);
+            assert.strictEqual("/services/collector/event/1.0", loggerConfig.path);
+            assert.strictEqual("https", loggerConfig.protocol);
+            assert.strictEqual("info", loggerConfig.level);
+            assert.strictEqual(8088, loggerConfig.port);
+            assert.strictEqual(0, loggerConfig.maxRetries);
+            assert.strictEqual(false, loggerConfig.autoFlush);
+
+            config.autoFlush = true;
+            loggerConfig = logger._initializeConfig(config);
+
+            assert.strictEqual(config.token, loggerConfig.token);
+            assert.strictEqual("splunk-javascript-logging/0.8.0", loggerConfig.name);
+            assert.strictEqual("splunk.local", loggerConfig.host);
+            assert.strictEqual("/services/collector/event/1.0", loggerConfig.path);
+            assert.strictEqual("https", loggerConfig.protocol);
+            assert.strictEqual("info", loggerConfig.level);
+            assert.strictEqual(8088, loggerConfig.port);
+            assert.strictEqual(0, loggerConfig.maxRetries);
+            assert.strictEqual(true, loggerConfig.autoFlush);
+        });
     });
     describe("_initializeRequestOptions", function() {
         it("should get defaults with no args", function() {
