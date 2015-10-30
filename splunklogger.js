@@ -67,7 +67,7 @@ function _err(err, context) {
  * @param {string} [config.level=info] - Logging level to use, will show up as the <code>severity</code> field of an event, see
  *  [SplunkLogger.levels]{@link SplunkLogger#levels} for common levels.
  * @param {bool} [config.autoFlush=true] - Send events immediately or not.
- * @param {bool} [config.batchInterval=0] - If <code>config.autoFlush === true</code>, automatically flush events after this many milliseconds.
+ * @param {number} [config.batchInterval=0] - If <code>config.autoFlush === true</code>, automatically flush events after this many milliseconds.
  * When set to a non-positive value, events will be sent one by one.
  * @constructor
  * @throws Will throw an error if the <code>config</code> parameter is malformed.
