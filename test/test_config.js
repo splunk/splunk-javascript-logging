@@ -272,6 +272,36 @@ describe("SplunkLogger", function() {
             assert.strictEqual(8088, logger.config.port);
             assert.strictEqual(0, logger.config.maxRetries);
         });
+        it("should error when batchSize=NaN", function() {
+            var config = {
+                token: "a-token-goes-here-usually",
+                batchSize: "not a number",
+            };
+
+            try {
+                var logger = new SplunkLogger(config);
+                assert.fail(!logger, "Expected an error.");
+            }
+            catch (err) {
+                assert.ok(err);
+                assert.strictEqual("Batch size must be a number, found: NaN", err.message);
+            }
+        });
+        it("should error when batchSize is negative", function() {
+            var config = {
+                token: "a-token-goes-here-usually",
+                batchSize: -1,
+            };
+
+            try {
+                var logger = new SplunkLogger(config);
+                assert.fail(!logger, "Expected an error.");
+            }
+            catch (err) {
+                assert.ok(err);
+                assert.strictEqual("Batch size must be a positive number, found: -1", err.message);
+            }
+        });
         it("should set non-default boolean config values", function() {
             var config = {
                 token: "a-token-goes-here-usually",
@@ -683,42 +713,6 @@ describe("SplunkLogger", function() {
             assert.strictEqual(8088, loggerConfig.port);
             assert.strictEqual(0, loggerConfig.maxRetries);
         });
-        it("should set autoFlush property to true after initially false", function() {
-            Object.prototype.something = "ignore";
-            var config = {
-                token: "a-token-goes-here-usually",
-                url: "splunk.local",
-                autoFlush: false
-            };
-
-            var logger = new SplunkLogger(config);
-            var loggerConfig = logger.config;
-
-            assert.ok(loggerConfig);
-            assert.ok(!loggerConfig.hasOwnProperty("something"));
-            assert.strictEqual(config.token, loggerConfig.token);
-            assert.strictEqual("splunk-javascript-logging/0.8.0", loggerConfig.name);
-            assert.strictEqual("splunk.local", loggerConfig.host);
-            assert.strictEqual("/services/collector/event/1.0", loggerConfig.path);
-            assert.strictEqual("https", loggerConfig.protocol);
-            assert.strictEqual("info", loggerConfig.level);
-            assert.strictEqual(8088, loggerConfig.port);
-            assert.strictEqual(0, loggerConfig.maxRetries);
-            assert.strictEqual(false, loggerConfig.autoFlush);
-
-            config.autoFlush = true;
-            loggerConfig = logger._initializeConfig(config);
-
-            assert.strictEqual(config.token, loggerConfig.token);
-            assert.strictEqual("splunk-javascript-logging/0.8.0", loggerConfig.name);
-            assert.strictEqual("splunk.local", loggerConfig.host);
-            assert.strictEqual("/services/collector/event/1.0", loggerConfig.path);
-            assert.strictEqual("https", loggerConfig.protocol);
-            assert.strictEqual("info", loggerConfig.level);
-            assert.strictEqual(8088, loggerConfig.port);
-            assert.strictEqual(0, loggerConfig.maxRetries);
-            assert.strictEqual(true, loggerConfig.autoFlush);
-        });
     });
     describe("_initializeRequestOptions", function() {
         it("should get defaults with no args", function() {
@@ -1006,6 +1000,42 @@ describe("SplunkLogger", function() {
             assert.strictEqual(Logger.config.level, expected.level);
             assert.strictEqual(Logger.config.port, expected.port);
             assert.strictEqual(Logger.middlewares.length, 0);
+        });
+        it("should set autoFlush property to true after initially false", function() {
+            Object.prototype.something = "ignore";
+            var config = {
+                token: "a-token-goes-here-usually",
+                url: "splunk.local",
+                autoFlush: false
+            };
+
+            var logger = new SplunkLogger(config);
+            var loggerConfig = logger.config;
+
+            assert.ok(loggerConfig);
+            assert.ok(!loggerConfig.hasOwnProperty("something"));
+            assert.strictEqual(config.token, loggerConfig.token);
+            assert.strictEqual("splunk-javascript-logging/0.8.0", loggerConfig.name);
+            assert.strictEqual("splunk.local", loggerConfig.host);
+            assert.strictEqual("/services/collector/event/1.0", loggerConfig.path);
+            assert.strictEqual("https", loggerConfig.protocol);
+            assert.strictEqual("info", loggerConfig.level);
+            assert.strictEqual(8088, loggerConfig.port);
+            assert.strictEqual(0, loggerConfig.maxRetries);
+            assert.strictEqual(false, loggerConfig.autoFlush);
+
+            config.autoFlush = true;
+            loggerConfig = logger._initializeConfig(config);
+
+            assert.strictEqual(config.token, loggerConfig.token);
+            assert.strictEqual("splunk-javascript-logging/0.8.0", loggerConfig.name);
+            assert.strictEqual("splunk.local", loggerConfig.host);
+            assert.strictEqual("/services/collector/event/1.0", loggerConfig.path);
+            assert.strictEqual("https", loggerConfig.protocol);
+            assert.strictEqual("info", loggerConfig.level);
+            assert.strictEqual(8088, loggerConfig.port);
+            assert.strictEqual(0, loggerConfig.maxRetries);
+            assert.strictEqual(true, loggerConfig.autoFlush);
         });
     });
 });

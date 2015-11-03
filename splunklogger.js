@@ -118,7 +118,8 @@ var defaultConfig = {
     level: SplunkLogger.prototype.levels.INFO,
     autoFlush: true,
     maxRetries: 0,
-    batchInterval: 0
+    batchInterval: 0,
+    batchSize: 0
 };
 
 var defaultRequestOptions = {
@@ -262,14 +263,16 @@ SplunkLogger.prototype._initializeConfig = function(config) {
         // Convert autoFlush value to boolean
         ret.autoFlush = !!ret.autoFlush;
 
-        // Start with the default batchInterval value
-        ret.batchInterval = defaultConfig.batchInterval;
-        if (this.hasOwnProperty("config") && this.config.hasOwnProperty("batchInterval")) {
-            ret.batchInterval = this.config.batchInterval;
+        ret.batchSize = config.batchSize || ret.batchSize || defaultConfig.batchSize;
+        ret.batchSize = parseInt(ret.batchSize, 10);
+        if (isNaN(ret.batchSize)) {
+            throw new Error("Batch size must be a number, found: " + ret.batchSize);
         }
-        if (config.hasOwnProperty("batchInterval")) {
-            ret.batchInterval = config.batchInterval;
+        else if (ret.batchSize < 0) {
+            throw new Error("Batch size must be a positive number, found: " + ret.batchSize);
         }
+
+        ret.batchInterval = config.batchInterval || ret.batchInterval || defaultConfig.batchInterval;
         ret.batchInterval = parseInt(ret.batchInterval, 10);
         if (isNaN(ret.batchInterval)) {
             throw new Error("Batch interval must be a number, found: " + ret.batchInterval);
