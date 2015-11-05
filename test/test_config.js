@@ -141,7 +141,10 @@ describe("SplunkLogger", function() {
             assert.strictEqual("info", logger.config.level);
             assert.strictEqual(logger.levels.INFO, logger.config.level);
             assert.strictEqual(8088, logger.config.port);
+            assert.strictEqual(true, logger.config.autoFlush);
             assert.strictEqual(0, logger.config.maxRetries);
+            assert.strictEqual(0, logger.config.batchInterval);
+            assert.strictEqual(0, logger.config.maxBatchSize);
         });
         it("should set remaining defaults when setting config with token, autoFlush off, & level", function() {
             var config = {
@@ -272,10 +275,10 @@ describe("SplunkLogger", function() {
             assert.strictEqual(8088, logger.config.port);
             assert.strictEqual(0, logger.config.maxRetries);
         });
-        it("should error when batchSize=NaN", function() {
+        it("should error when maxBatchSize=NaN", function() {
             var config = {
                 token: "a-token-goes-here-usually",
-                batchSize: "not a number",
+                maxBatchSize: "not a number",
             };
 
             try {
@@ -284,13 +287,13 @@ describe("SplunkLogger", function() {
             }
             catch (err) {
                 assert.ok(err);
-                assert.strictEqual("Batch size must be a number, found: NaN", err.message);
+                assert.strictEqual("Max batch size must be a number, found: NaN", err.message);
             }
         });
-        it("should error when batchSize is negative", function() {
+        it("should error when maxBatchSize is negative", function() {
             var config = {
                 token: "a-token-goes-here-usually",
-                batchSize: -1,
+                maxBatchSize: -1,
             };
 
             try {
@@ -299,7 +302,7 @@ describe("SplunkLogger", function() {
             }
             catch (err) {
                 assert.ok(err);
-                assert.strictEqual("Batch size must be a positive number, found: -1", err.message);
+                assert.strictEqual("Max batch size must be a positive number, found: -1", err.message);
             }
         });
         it("should set non-default boolean config values", function() {
@@ -355,6 +358,24 @@ describe("SplunkLogger", function() {
             assert.strictEqual("info", logger.config.level);
             assert.strictEqual(config.port, logger.config.port);
             assert.strictEqual(0, logger.config.maxRetries);
+        });
+        it("should set non-default maxBatchSize", function() {
+            var config = {
+                token: "a-token-goes-here-usually",
+                maxBatchSize: 1234
+            };
+            var logger = new SplunkLogger(config);
+
+            assert.ok(logger);
+            assert.strictEqual(config.token, logger.config.token);
+            assert.strictEqual("splunk-javascript-logging/0.8.0", logger.config.name);
+            assert.strictEqual("localhost", logger.config.host);
+            assert.strictEqual("/services/collector/event/1.0", logger.config.path);
+            assert.strictEqual("https", logger.config.protocol);
+            assert.strictEqual("info", logger.config.level);
+            assert.strictEqual(8088, logger.config.port);
+            assert.strictEqual(0, logger.config.maxRetries);
+            assert.strictEqual(1234, logger.config.maxBatchSize);
         });
         it("should set protocol, host, port & path from url property", function() {
             var config = {

@@ -69,6 +69,8 @@ function _err(err, context) {
  * @param {bool} [config.autoFlush=true] - Send events immediately or not.
  * @param {number} [config.batchInterval=0] - If <code>config.autoFlush === true</code>, automatically flush events after this many milliseconds.
  * When set to a non-positive value, events will be sent one by one.
+ * @param {number} [config.maxBatchSize=0] - If <code>config.autoFlush === true</code>, automatically flush events after the size of queued
+ * events exceeds this many bytes.
  * @constructor
  * @throws Will throw an error if the <code>config</code> parameter is malformed.
  */
@@ -119,7 +121,7 @@ var defaultConfig = {
     autoFlush: true,
     maxRetries: 0,
     batchInterval: 0,
-    batchSize: 0
+    maxBatchSize: 0
 };
 
 var defaultRequestOptions = {
@@ -263,13 +265,13 @@ SplunkLogger.prototype._initializeConfig = function(config) {
         // Convert autoFlush value to boolean
         ret.autoFlush = !!ret.autoFlush;
 
-        ret.batchSize = config.batchSize || ret.batchSize || defaultConfig.batchSize;
-        ret.batchSize = parseInt(ret.batchSize, 10);
-        if (isNaN(ret.batchSize)) {
-            throw new Error("Batch size must be a number, found: " + ret.batchSize);
+        ret.maxBatchSize = config.maxBatchSize || ret.maxBatchSize || defaultConfig.maxBatchSize;
+        ret.maxBatchSize = parseInt(ret.maxBatchSize, 10);
+        if (isNaN(ret.maxBatchSize)) {
+            throw new Error("Max batch size must be a number, found: " + ret.maxBatchSize);
         }
-        else if (ret.batchSize < 0) {
-            throw new Error("Batch size must be a positive number, found: " + ret.batchSize);
+        else if (ret.maxBatchSize < 0) {
+            throw new Error("Max batch size must be a positive number, found: " + ret.maxBatchSize);
         }
 
         ret.batchInterval = config.batchInterval || ret.batchInterval || defaultConfig.batchInterval;
@@ -473,6 +475,26 @@ SplunkLogger.prototype.use = function(middleware) {
 };
 
 /**
+ * Estimates the size in bytes of the events in the
+ * <code>queue</code> parameter as if they were sent
+ * in a single HTTP request.
+ *
+ * @param {Array} queue - a queue of events, typically <code>this.contextQueue</code>.
+ * @returns {number} the estimated size.
+ */
+SplunkLogger.prototype.calculateBatchSize = function(queue) {
+    var size = 0;
+    var that = this;
+    for (var i = 0; i < queue.length; i++) {
+        var con = queue[i];
+        // TODO: REALLY INEFFICIENT
+        // TODO: Using Buffer probably breaks all browser support, if any
+        size += Buffer.byteLength(JSON.stringify(that._makeBody(con)), "utf8");
+    }
+    return size;
+};
+
+/**
  * Makes an HTTP POST to the configured server.
  *
  * @param requestOptions
@@ -492,21 +514,6 @@ SplunkLogger.prototype._post = function(requestOptions, callback) {
  */
 SplunkLogger.prototype._sendEvents = function(context, callback) {
     callback = callback || /* istanbul ignore next*/ function(){};
-
-    // Validate the context again, right before using it
-    context = this._initializeContext(context);
-    context.requestOptions.headers["Authorization"] = "Splunk " + context.config.token;
-
-    if (context.config.autoFlush) {
-        context.requestOptions.body = this._makeBody(context);
-    }
-    else {
-        // Don't run _makeBody since we've already done that
-        context.requestOptions.body = context.message;
-        // Manually set the content-type header for batched requests, default is application/json
-        // since json is set to true.
-        context.requestOptions.headers["content-type"] = "application/x-www-form-urlencoded";
-    }
 
     var that = this;
 
@@ -611,14 +618,16 @@ SplunkLogger.prototype._sendEvents = function(context, callback) {
  * @throws Will throw an error if the <code>context</code> parameter is malformed.
  * @public
  */
-SplunkLogger.prototype.send = function (context, callback) {
+SplunkLogger.prototype.send = function(context, callback) {
     callback = callback || function(){};
     context = this._initializeContext(context);
     
     this.contextQueue.push(context);
 
-    // Only flush if using manual batching
-    if (context.config.autoFlush && !this._timerID) {
+    var batchOverSize = this.calculateBatchSize(this.contextQueue) > context.config.maxBatchSize;
+
+    // Only flush if using manual batching, no timer, and if batch is too large
+    if (context.config.autoFlush && !this._timerID && batchOverSize) {
         this.flush(callback);
     }
 };
@@ -632,13 +641,16 @@ SplunkLogger.prototype.send = function (context, callback) {
  * @param {function} [callback] - A callback function: <code>function(err, response, body)</code>.
  * @public
  */
-SplunkLogger.prototype.flush = function (callback) {
+SplunkLogger.prototype.flush = function(callback) {
     callback = callback || function(){};
 
     var context = {};
 
-    // Empty the queue if manual or interval batching with something to flush
-    if (!this.config.autoFlush || (this._timerID && this.contextQueue.length > 0)) {
+    var batchOverSize = this.config.maxBatchSize > 0 && this.calculateBatchSize(this.contextQueue) > this.config.maxBatchSize;
+    var isBatched = !this.config.autoFlush || (this.config.autoFlush && this.contextQueue.length > 0 && (batchOverSize || this._timerID));
+
+    // Empty the queue if something to flush and manual/interval/size batching
+    if (isBatched) {
         var queue = this.contextQueue;
         this.contextQueue = [];
         var data = "";
@@ -677,17 +689,35 @@ SplunkLogger.prototype.flush = function (callback) {
     // After running all, if any, middlewares send the events
     var that = this;
     utils.chain(callbacks, function(err, passedContext) {
+        // The passedContext parameter could be named context to
+        // do this automatically, but the || notation adds a bit of clarity.
+        context = passedContext || context;
+
         // Errors from any of the middleware callbacks will fall through to here
         // If the context is modified at any point the error callback will get it also
         // event if next("error"); is called w/o the context parameter!
         // This works because context inside & outside the scope of this function
         // point to the same memory block.
-        // The passedContext parameter could be named context to
-        // do this automatically, but the || notation adds a bit of clarity.
         if (err) {
-            that.error(err, passedContext || context);
+            that.error(err, context);
         }
         else {
+            // Validate the context again, right before using it
+            context = that._initializeContext(context);
+            context.requestOptions.headers["Authorization"] = "Splunk " + context.config.token;
+
+            if (isBatched) {
+                // Don't run _makeBody since we've already done that for batching
+                // Manually set the content-type header for batched requests, default is application/json
+                // since json is set to true.
+                context.requestOptions.headers["content-type"] = "application/x-www-form-urlencoded";
+            }
+            else {
+                context.message = that._makeBody(context);
+            }
+
+            context.requestOptions.body = context.message;
+
             that._sendEvents(context, callback);
         }
     });
