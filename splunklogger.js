@@ -80,6 +80,7 @@ var SplunkLogger = function(config) {
     this.config = this._initializeConfig(config);
     this.middlewares = [];
     this.contextQueue = [];
+    this.eventSizes = [];
     this.error = _err;
 
     this._enableTimer = utils.bind(this, this._enableTimer);
@@ -171,7 +172,9 @@ SplunkLogger.prototype._enableTimer = function(interval) {
 
             var that = this;
             this._timerID = setInterval(function() {
-                that.flush();
+                if (that.contextQueue.length > 0) {
+                    that.flush();
+                }
             }, interval);
         }
     }
@@ -479,17 +482,12 @@ SplunkLogger.prototype.use = function(middleware) {
  * <code>queue</code> parameter as if they were sent
  * in a single HTTP request.
  *
- * @param {Array} queue - a queue of events, typically <code>this.contextQueue</code>.
- * @returns {number} the estimated size.
+ * @returns {number} the estimated size in bytes.
  */
-SplunkLogger.prototype.calculateBatchSize = function(queue) {
+SplunkLogger.prototype.calculateBatchSize = function() {
     var size = 0;
-    var that = this;
-    for (var i = 0; i < queue.length; i++) {
-        var con = queue[i];
-        // TODO: REALLY INEFFICIENT
-        // TODO: Using Buffer probably breaks all browser support, if any
-        size += Buffer.byteLength(JSON.stringify(that._makeBody(con)), "utf8");
+    for (var i = 0; i < this.eventSizes.length; i++) {
+        size += this.eventSizes[i];
     }
     return size;
 };
@@ -622,9 +620,11 @@ SplunkLogger.prototype.send = function(context, callback) {
     callback = callback || function(){};
     context = this._initializeContext(context);
     
+    // Store the context, and its estimated length
     this.contextQueue.push(context);
+    this.eventSizes.push(Buffer.byteLength(JSON.stringify(this._makeBody(context)), "utf8"));
 
-    var batchOverSize = this.calculateBatchSize(this.contextQueue) > context.config.maxBatchSize;
+    var batchOverSize = this.calculateBatchSize() > context.config.maxBatchSize;
 
     // Only flush if using manual batching, no timer, and if batch is too large
     if (context.config.autoFlush && !this._timerID && batchOverSize) {
@@ -646,30 +646,25 @@ SplunkLogger.prototype.flush = function(callback) {
 
     var context = {};
 
-    var batchOverSize = this.config.maxBatchSize > 0 && this.calculateBatchSize(this.contextQueue) > this.config.maxBatchSize;
-    var isBatched = !this.config.autoFlush || (this.config.autoFlush && this.contextQueue.length > 0 && (batchOverSize || this._timerID));
+    var batchOverSize = this.config.maxBatchSize > 0 && this.calculateBatchSize() > this.config.maxBatchSize;
+    var isBatched = !this.config.autoFlush || (this.config.autoFlush && (batchOverSize || this._timerID));
 
-    // Empty the queue if something to flush and manual/interval/size batching
+    // Empty the queue if manual/interval/size batching
     if (isBatched) {
         var queue = this.contextQueue;
         this.contextQueue = [];
+        this.eventSizes = [];
         var data = "";
         for (var i = 0; i < queue.length; i++) {
             data += JSON.stringify(this._makeBody(queue[i]));
         }
         context.message = data;
     }
-    // Noop if there's nothing to flush; let non-batching requests get a no-data response from Splunk in the if block above
-    else if (this.contextQueue.length === 0) {
-        var body = {
-            text: "Nothing to flush."
-        };
-        return callback(null, {body: body}, body);
-    }
     // Just take the oldest event in the queue
     else {
         // TODO: handle case of multiple events with autoFlush off, flushing fast
         context = this.contextQueue.pop();
+        this.eventSizes.pop();
     }
     
     // Initialize the context, then manually set the data
