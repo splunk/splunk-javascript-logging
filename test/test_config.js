@@ -275,6 +275,36 @@ describe("SplunkLogger", function() {
             assert.strictEqual(8088, logger.config.port);
             assert.strictEqual(0, logger.config.maxRetries);
         });
+        it("should error when maxBatchCount=NaN", function() {
+            var config = {
+                token: "a-token-goes-here-usually",
+                maxBatchCount: "not a number",
+            };
+
+            try {
+                var logger = new SplunkLogger(config);
+                assert.fail(!logger, "Expected an error.");
+            }
+            catch (err) {
+                assert.ok(err);
+                assert.strictEqual("Max batch count must be a number, found: NaN", err.message);
+            }
+        });
+        it("should error when maxBatchCount is negative", function() {
+            var config = {
+                token: "a-token-goes-here-usually",
+                maxBatchCount: -1,
+            };
+
+            try {
+                var logger = new SplunkLogger(config);
+                assert.fail(!logger, "Expected an error.");
+            }
+            catch (err) {
+                assert.ok(err);
+                assert.strictEqual("Max batch count must be a positive number, found: -1", err.message);
+            }
+        });
         it("should error when maxBatchSize=NaN", function() {
             var config = {
                 token: "a-token-goes-here-usually",

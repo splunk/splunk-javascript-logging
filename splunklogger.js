@@ -50,6 +50,7 @@ function _err(err, context) {
  * @property {object} config - Configuration settings for this <code>SplunkLogger</code> instance.
  * @property {function[]} middlewares - Middleware functions to run before sending data to Splunk.
  * @property {object[]} contextQueue - Queue of <code>context</code> objects to be sent to Splunk.
+ * @property {number[]} eventSizes - Parallel queue of the sizes of events stored in <code>contextQueue</code>.
  * @property {function} error - A callback function for errors: <code>function(err, context)</code>.
  * Defaults to <code>console.log</code> both values;
  *
@@ -71,6 +72,8 @@ function _err(err, context) {
  * When set to a non-positive value, events will be sent one by one.
  * @param {number} [config.maxBatchSize=0] - If <code>config.autoFlush === true</code>, automatically flush events after the size of queued
  * events exceeds this many bytes.
+ * @param {number} [config.maxBatchCount=0] - If <code>config.autoFlush === true</code>, automatically flush events after this many
+ * events have been queued.
  * @constructor
  * @throws Will throw an error if the <code>config</code> parameter is malformed.
  */
@@ -122,7 +125,8 @@ var defaultConfig = {
     autoFlush: true,
     maxRetries: 0,
     batchInterval: 0,
-    maxBatchSize: 0
+    maxBatchSize: 0,
+    maxBatchCount: 0
 };
 
 var defaultRequestOptions = {
@@ -164,7 +168,7 @@ SplunkLogger.prototype._enableTimer = function(interval) {
             }
             
             // If batch interval is changed, update the config property
-            if (this.config && this.config.hasOwnProperty("batchInterval")) {
+            if (this.config) {
                 this.config.batchInterval = interval;
             }
 
@@ -267,6 +271,15 @@ SplunkLogger.prototype._initializeConfig = function(config) {
         }
         // Convert autoFlush value to boolean
         ret.autoFlush = !!ret.autoFlush;
+
+        ret.maxBatchCount = config.maxBatchCount || ret.maxBatchCount || defaultConfig.maxBatchCount;
+        ret.maxBatchCount = parseInt(ret.maxBatchCount, 10);
+        if (isNaN(ret.maxBatchCount)) {
+            throw new Error("Max batch count must be a number, found: " + ret.maxBatchCount);
+        }
+        else if (ret.maxBatchCount < 0) {
+            throw new Error("Max batch count must be a positive number, found: " + ret.maxBatchCount);
+        }
 
         ret.maxBatchSize = config.maxBatchSize || ret.maxBatchSize || defaultConfig.maxBatchSize;
         ret.maxBatchSize = parseInt(ret.maxBatchSize, 10);
@@ -625,10 +638,11 @@ SplunkLogger.prototype.send = function(context, callback) {
     this.eventSizes.push(Buffer.byteLength(JSON.stringify(this._makeBody(context)), "utf8"));
 
     var batchOverSize = this.calculateBatchSize() > context.config.maxBatchSize;
+    var batchOverCount = this.contextQueue.length >= context.config.maxBatchCount && context.config.maxBatchCount > 0;
 
-    // Only flush if using manual batching, no timer, and if batch is too large
-    if (context.config.autoFlush && !this._timerID && batchOverSize) {
-        this.flush(callback);
+    // Only flush if not using manual batching, and if the contextQueue is too large or has many events
+    if (context.config.autoFlush && !this._timerID && (batchOverSize || batchOverCount)) {
+        this.flush(callback || function(){});
     }
 };
 
@@ -647,9 +661,10 @@ SplunkLogger.prototype.flush = function(callback) {
     var context = {};
 
     var batchOverSize = this.config.maxBatchSize > 0 && this.calculateBatchSize() > this.config.maxBatchSize;
-    var isBatched = !this.config.autoFlush || (this.config.autoFlush && (batchOverSize || this._timerID));
+    var batchOverCount = this.config.maxBatchCount > 0 && this.contextQueue.length >= this.config.maxBatchCount;
+    var isBatched = !this.config.autoFlush || (this.config.autoFlush && (batchOverSize || batchOverCount || this._timerID));
 
-    // Empty the queue if manual/interval/size batching
+    // Empty the queue if manual/interval/size/count batching
     if (isBatched) {
         var queue = this.contextQueue;
         this.contextQueue = [];

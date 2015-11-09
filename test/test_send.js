@@ -2123,7 +2123,7 @@ describe("SplunkLogger send (integration tests)", function() {
             }, 300);
         });
     });
-    describe("using max batch size", function(){
+    describe("using max batch size", function() {
         it("should flush first event immediately with maxBatchSize=1", function(done) {
             var config = {
                 token: configurationFile.token,
@@ -2236,6 +2236,13 @@ describe("SplunkLogger send (integration tests)", function() {
 
                 logger.send(payload);
             }, 300);
+
+            setTimeout(function() {
+                assert.ok(!logger._timerID);
+                assert.strictEqual(posts, 1);
+                assert.strictEqual(logger.contextQueue.length, 0);
+                assert.strictEqual(logger.eventSizes.length, 0);
+            }, 400);
         });
         it("should flush first event after 200ms, with maxBatchSize=200", function(done) {
             var config = {
@@ -2281,6 +2288,209 @@ describe("SplunkLogger send (integration tests)", function() {
                 assert.strictEqual(logger.eventSizes.length, 0);
                 done();
             }, 250);
+        });
+    });
+    describe("using max batch count", function() {
+        it("should flush first event immediately with maxBatchCount=1 with large maxBatchSize", function(done) {
+            var config = {
+                token: configurationFile.token,
+                maxBatchCount: 1,
+                maxBatchSize: 123456
+            };
+            var logger = new SplunkLogger(config);
+
+            var posts = 0;
+
+            // Wrap _post so we can verify how many times we called it
+            var _post = logger._post;
+            logger._post = function(context) {
+                _post(context, function(err, resp, body) {
+                    posts++;
+
+                    assert.ok(!logger._timerID);
+                    assert.strictEqual(posts, 1);
+                    assert.strictEqual(logger.contextQueue.length, 0);
+                    assert.strictEqual(logger.eventSizes.length, 0);
+
+                    assert.ok(!err);
+                    assert.strictEqual(body.code, successBody.code);
+                    assert.strictEqual(body.text, successBody.text);
+
+                    done();
+                });
+            };
+
+            var payload = {
+                message: "one event"
+            };
+            logger.send(payload);
+        });
+        it("should not flush first event with maxBatchCount=1 && autoFlush=false", function(done) {
+            var config = {
+                token: configurationFile.token,
+                autoFlush: false,
+                maxBatchCount: 1
+            };
+            var logger = new SplunkLogger(config);
+
+            var posts = 0;
+
+            // Wrap _post so we can verify how many times we called it
+            var _post = logger._post;
+            logger._post = function(context) {
+                _post(context, function(err, resp, body) {
+                    posts++;
+
+                    assert.ok(!err);
+                    assert.strictEqual(body.code, successBody.code);
+                    assert.strictEqual(body.text, successBody.text);
+                });
+            };
+
+            var payload = {
+                message: "one event"
+            };
+            logger.send(payload);
+
+            setTimeout(function() {
+                assert.ok(!logger._timerID);
+                assert.strictEqual(posts, 0);
+                assert.strictEqual(logger.contextQueue.length, 1);
+                assert.strictEqual(logger.eventSizes.length, 1);
+
+                done();
+            }, 1000);
+        });
+        it("should not flush events with maxBatchCount=0 (meaning ignore) and large maxBatchSize", function(done) {
+            var config = {
+                token: configurationFile.token,
+                maxBatchCount: 0,
+                maxBatchSize: 123456
+            };
+            var logger = new SplunkLogger(config);
+
+            var posts = 0;
+
+            // Wrap _post so we can verify how many times we called it
+            var _post = logger._post;
+            logger._post = function(context) {
+                _post(context, function(err, resp, body) {
+                    posts++;
+
+                    assert.ok(!err);
+                    assert.strictEqual(body.code, successBody.code);
+                    assert.strictEqual(body.text, successBody.text);
+                });
+            };
+
+            var payload = {
+                message: "one event"
+            };
+            logger.send(payload);
+
+            setTimeout(function() {
+                assert.ok(!logger._timerID);
+                assert.strictEqual(posts, 0);
+                assert.strictEqual(logger.contextQueue.length, 1);
+                assert.strictEqual(logger.eventSizes.length, 1);
+
+                done();
+            }, 1000);
+        });
+        it("should flush first 2 events after maxBatchCount=2, ignoring large maxBatchSize", function(done) {
+            var config = {
+                token: configurationFile.token,
+                maxBatchCount: 2,
+                maxBatchSize: 123456
+            };
+            var logger = new SplunkLogger(config);
+
+            var posts = 0;
+
+            // Wrap _post so we can verify how many times we called it
+            var _post = logger._post;
+            logger._post = function(context) {
+                _post(context, function(err, resp, body) {
+                    posts++;
+
+                    assert.ok(!logger._timerID);
+                    assert.strictEqual(posts, 1);
+                    assert.strictEqual(logger.contextQueue.length, 0);
+                    assert.strictEqual(logger.eventSizes.length, 0);
+
+                    assert.ok(!err);
+                    assert.strictEqual(body.code, successBody.code);
+                    assert.strictEqual(body.text, successBody.text);
+
+                    done();
+                });
+            };
+
+            var payload = {
+                message: "one event"
+            };
+            logger.send(payload);
+
+            setTimeout(function() {
+                assert.ok(!logger._timerID);
+                assert.strictEqual(posts, 0);
+                assert.strictEqual(logger.contextQueue.length, 1);
+                assert.strictEqual(logger.eventSizes.length, 1);
+
+                logger.send(payload);
+            }, 300);
+
+            setTimeout(function() {
+                assert.ok(!logger._timerID);
+                assert.strictEqual(posts, 1);
+                assert.strictEqual(logger.contextQueue.length, 0);
+                assert.strictEqual(logger.eventSizes.length, 0);
+            }, 400);
+        });
+        it("should flush first event after 200ms, with maxBatchCount=10", function(done) {
+            var config = {
+                token: configurationFile.token,
+                autoFlush: true,
+                maxBatchCount: 10,
+                batchInterval: 200
+            };
+            var logger = new SplunkLogger(config);
+
+            var posts = 0;
+
+            // Wrap _post so we can verify how many times we called it
+            var _post = logger._post;
+            logger._post = function(context) {
+                _post(context, function(err, resp, body) {
+                    posts++;
+
+                    assert.ok(!err);
+                    assert.strictEqual(body.code, successBody.code);
+                    assert.strictEqual(body.text, successBody.text);
+                });
+            };
+
+            var payload = {
+                message: "one event"
+            };
+            logger.send(payload);
+
+            // Make sure the event wasn't flushed yet
+            setTimeout(function() {
+                assert.strictEqual(logger.contextQueue.length, 1);
+                assert.strictEqual(logger.eventSizes.length, 1);
+            }, 150);
+
+            setTimeout(function() {
+                assert.ok(logger._timerID);
+                assert.strictEqual(logger._timerDuration, 200);
+                logger._disableTimer();
+
+                assert.strictEqual(posts, 1);
+                assert.strictEqual(logger.contextQueue.length, 0);
+                assert.strictEqual(logger.eventSizes.length, 0);
+                done();
+            }, 300);
         });
     });
 });
