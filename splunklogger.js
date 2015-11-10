@@ -299,14 +299,16 @@ SplunkLogger.prototype._initializeConfig = function(config) {
             throw new Error("Batch interval must be a positive number, found: " + ret.batchInterval);
         }
 
+        // Has the interval timer not started, and needs to be started?
         var startTimer = !this._timerID && ret.autoFlush && ret.batchInterval > 0;
+        // Has the interval timer already started, and the interval changed to a different duration?
         var changeTimer = this._timerID && ret.autoFlush && this._timerDuration !== ret.batchInterval && ret.batchInterval > 0;
         
         // Upsert the timer
         if (startTimer || changeTimer) {
             this._enableTimer(ret.batchInterval);
         }
-        // Disable timer
+        // Disable timer - there is currently a timer, but config says we no longer need a timer
         else if (this._timerID && (this._timerDuration < 0 || !ret.autoFlush)) {
             this._disableTimer();
         }
