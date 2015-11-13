@@ -144,7 +144,7 @@ describe("SplunkLogger", function() {
             assert.strictEqual(true, logger.config.autoFlush);
             assert.strictEqual(0, logger.config.maxRetries);
             assert.strictEqual(0, logger.config.batchInterval);
-            assert.strictEqual(10240, logger.config.maxBatchSize);
+            assert.strictEqual(0, logger.config.maxBatchSize);
 
             var expectedRO = {
                 json: true,

@@ -89,11 +89,11 @@ function _defaultEventFormatter(message, severity) {
  *  [SplunkLogger.levels]{@link SplunkLogger#levels} for common levels.
  * @param {bool} [config.autoFlush=true] - Send events immediately or not.
  * @param {number} [config.batchInterval=0] - If <code>config.autoFlush === true</code>, automatically flush events after this many milliseconds.
- * When set to a non-positive value, events will be sent one by one.
- * @param {number} [config.maxBatchSize=10240] - If <code>config.autoFlush === true</code>, automatically flush events after the size of queued
- * events exceeds this many bytes.
- * @param {number} [config.maxBatchCount=10] - If <code>config.autoFlush === true</code>, automatically flush events after this many
- * events have been queued.
+ * When set to a non-positive value, events will be sent one by one. This setting is ignored when non-positive.
+ * @param {number} [config.maxBatchSize=0] - If <code>config.autoFlush === true</code>, automatically flush events after the size of queued
+ * events exceeds this many bytes. This setting is ignored when non-positive.
+ * @param {number} [config.maxBatchCount=0] - If <code>config.autoFlush === true</code>, automatically flush events after this many
+ * events have been queued. This setting is ignored when non-positive.
  * @constructor
  * @throws Will throw an error if the <code>config</code> parameter is malformed.
  */
@@ -147,8 +147,8 @@ var defaultConfig = {
     autoFlush: true,
     maxRetries: 0,
     batchInterval: 0,
-    maxBatchSize: 10 * 1024,
-    maxBatchCount: 10
+    maxBatchSize: 0,
+    maxBatchCount: 0
 };
 
 var defaultRequestOptions = {
@@ -595,8 +595,8 @@ SplunkLogger.prototype.send = function(context, callback) {
     this.contextQueue.push(context);
     this.eventsBatchSize += Buffer.byteLength(JSON.stringify(this._makeBody(context)), "utf8");
 
-    var batchOverSize = this.eventsBatchSize > this.config.maxBatchSize;
-    var batchOverCount = this.contextQueue.length >= this.config.maxBatchCount;
+    var batchOverSize = this.eventsBatchSize > this.config.maxBatchSize && this.config.maxBatchSize > 0;
+    var batchOverCount = this.contextQueue.length >= this.config.maxBatchCount && this.config.maxBatchCount > 0;
 
     // Only flush if not using manual batching, and if the contextQueue is too large or has many events
     if (this.config.autoFlush && (batchOverSize || batchOverCount)) {

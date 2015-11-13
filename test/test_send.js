@@ -2050,6 +2050,7 @@ describe("SplunkLogger send (integration tests)", function() {
             
             logger.config.autoFlush = true;
             logger.config.batchInterval = 100;
+            logger._initializeConfig(logger.config);
 
             var payload2 = {
                 message: "something else"
