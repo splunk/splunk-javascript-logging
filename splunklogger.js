@@ -174,7 +174,7 @@ SplunkLogger.prototype._disableTimer = function() {
  * Configures an interval timer to flush any events in
  * <code>this.contextQueue</code> at the specified interval.
  *
- * param {Number} interval - The batch interval.
+ * param {Number} interval - The batch interval in milliseconds.
  * @private
  */
 SplunkLogger.prototype._enableTimer = function(interval) {
