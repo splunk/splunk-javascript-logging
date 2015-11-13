@@ -32,6 +32,23 @@ function _err(err, context) {
 }
 
 /**
+ * The default format for Splunk events.
+ *
+ * This function can be overwritten, and can return any type (string, object, array, etc.)
+ *
+ * @param {anything} [message] - The event message.
+ * @param {string} [severity] - The event severity.
+ * @return {any} The event format to send to Splunk,
+ */
+function _defaultEventFormatter(message, severity) {
+    var event = {
+        message: message,
+        severity: severity
+    };
+    return event;
+}
+
+/**
  * Constructs a SplunkLogger, to send events to Splunk via the HTTP Event Collector.
  * See <code>defaultConfig</code> for default configuration settings.
  *
@@ -48,9 +65,12 @@ function _err(err, context) {
  * var logger = new SplunkLogger(config);
  *
  * @property {object} config - Configuration settings for this <code>SplunkLogger</code> instance.
+ * @param {object} requestOptions - Options to pass to <code>{@link https://github.com/request/request#requestpost|request.post()}</code>.
+ * See the {@link http://github.com/request/request|request documentation} for all available options.
  * @property {function[]} middlewares - Middleware functions to run before sending data to Splunk.
  * @property {object[]} contextQueue - Queue of <code>context</code> objects to be sent to Splunk.
- * @property {number[]} eventSizes - Parallel queue of the sizes of events stored in <code>contextQueue</code>.
+ * @property {function} eventFormatter - Formats events, returning an event as a string, <code>function(message, severity)</code>.
+ * Can be overwritten, the default event formatter will display event and severity as properties in a JSON object.
  * @property {function} error - A callback function for errors: <code>function(err, context)</code>.
  * Defaults to <code>console.log</code> both values;
  *
@@ -70,9 +90,9 @@ function _err(err, context) {
  * @param {bool} [config.autoFlush=true] - Send events immediately or not.
  * @param {number} [config.batchInterval=0] - If <code>config.autoFlush === true</code>, automatically flush events after this many milliseconds.
  * When set to a non-positive value, events will be sent one by one.
- * @param {number} [config.maxBatchSize=0] - If <code>config.autoFlush === true</code>, automatically flush events after the size of queued
+ * @param {number} [config.maxBatchSize=10240] - If <code>config.autoFlush === true</code>, automatically flush events after the size of queued
  * events exceeds this many bytes.
- * @param {number} [config.maxBatchCount=0] - If <code>config.autoFlush === true</code>, automatically flush events after this many
+ * @param {number} [config.maxBatchCount=10] - If <code>config.autoFlush === true</code>, automatically flush events after this many
  * events have been queued.
  * @constructor
  * @throws Will throw an error if the <code>config</code> parameter is malformed.
@@ -81,16 +101,18 @@ var SplunkLogger = function(config) {
     this._timerID = null;
     this._timerDuration = 0;
     this.config = this._initializeConfig(config);
+    this.requestOptions = this._initializeRequestOptions();
     this.middlewares = [];
     this.contextQueue = [];
-    this.eventSizes = [];
+    this.eventsBatchSize = 0;
+    this.eventFormatter = _defaultEventFormatter;
     this.error = _err;
 
     this._enableTimer = utils.bind(this, this._enableTimer);
     this._disableTimer = utils.bind(this, this._disableTimer);
     this._initializeConfig = utils.bind(this, this._initializeConfig);
     this._initializeRequestOptions = utils.bind(this, this._initializeRequestOptions);
-    this._initializeMessage = utils.bind(this, this._initializeMessage);
+    this._validateMessage = utils.bind(this, this._validateMessage);
     this._initializeMetadata = utils.bind(this, this._initializeMetadata);
     this._initializeContext = utils.bind(this, this._initializeContext);
     this._makeBody = utils.bind(this, this._makeBody);
@@ -125,14 +147,13 @@ var defaultConfig = {
     autoFlush: true,
     maxRetries: 0,
     batchInterval: 0,
-    maxBatchSize: 0,
-    maxBatchCount: 0
+    maxBatchSize: 10 * 1024,
+    maxBatchCount: 10
 };
 
 var defaultRequestOptions = {
     json: true, // Sets the content-type header to application/json
-    strictSSL: false,
-    url: defaultConfig.protocol + "://" + defaultConfig.host + ":" + defaultConfig.port + defaultConfig.path
+    strictSSL: false
 };
 
 /**
@@ -158,33 +179,25 @@ SplunkLogger.prototype._disableTimer = function() {
  */
 SplunkLogger.prototype._enableTimer = function(interval) {
     // Only enable the timer if possible
-    if (typeof interval === "number") {
-        if (interval <= 0) {
-            throw new Error("Batch interval must be a positive number, found: " + interval);
-        }
-        else {
-            if (this._timerID) {
-                this._disableTimer();
-            }
-            
-            // If batch interval is changed, update the config property
-            if (this.config) {
-                this.config.batchInterval = interval;
-            }
+    interval = utils.validatePositiveInt(interval, "Batch interval");
 
-            this._timerDuration = interval;
+    if (this._timerID) {
+        this._disableTimer();
+    }
+    
+    // If batch interval is changed, update the config property
+    if (this.config) {
+        this.config.batchInterval = interval;
+    }
 
-            var that = this;
-            this._timerID = setInterval(function() {
-                if (that.contextQueue.length > 0) {
-                    that.flush();
-                }
-            }, interval);
+    this._timerDuration = interval;
+
+    var that = this;
+    this._timerID = setInterval(function() {
+        if (that.contextQueue.length > 0) {
+            that.flush();
         }
-    }
-    else {
-        throw new Error("Batch interval must be a number, found: " + interval);
-    }
+    }, interval);
 };
 
 /**
@@ -197,12 +210,7 @@ SplunkLogger.prototype._enableTimer = function(interval) {
  */
 SplunkLogger.prototype._initializeConfig = function(config) {
     // Copy over the instance config
-    var ret = {};
-    for (var key in this.config) {
-        if (this.config.hasOwnProperty(key)) {
-            ret[key] = this.config[key];
-        }
-    }
+    var ret = utils.copyObject(this.config);
 
     if (!config) {
         throw new Error("Config is required.");
@@ -243,60 +251,43 @@ SplunkLogger.prototype._initializeConfig = function(config) {
         }
 
         // Take the argument's value, then instance value, then the default value
-        ret.token = config.token || ret.token;
-        ret.name = config.name || ret.name || defaultConfig.name;
-        ret.host = config.host || ret.host || defaultConfig.host;
-        ret.path = config.path || ret.path || defaultConfig.path;
-        ret.protocol = config.protocol || ret.protocol || defaultConfig.protocol;
-        ret.level = config.level || ret.level || defaultConfig.level;
+        ret.token = utils.orByProp("token", config, ret);
+        ret.name = utils.orByProp("name", config, ret, defaultConfig);
+        ret.level = utils.orByProp("level", config, ret, defaultConfig);
 
-        ret.maxRetries = config.maxRetries || ret.maxRetries || defaultConfig.maxRetries;
-        ret.maxRetries = parseInt(ret.maxRetries, 10);
-        if (isNaN(ret.maxRetries)) {
-            throw new Error("Max retries must be a number, found: " + ret.maxRetries);
-        }
-        else if (ret.maxRetries < 0) {
-            throw new Error("Max retries must be a positive number, found: " + ret.maxRetries);
+        ret.host = utils.orByProp("host", config, ret, defaultConfig);
+        ret.path = utils.orByProp("path", config, ret, defaultConfig);
+        ret.protocol = utils.orByProp("protocol", config, ret, defaultConfig);
+        ret.port = utils.orByProp("port", config, ret, defaultConfig);
+        ret.port = utils.validatePositiveInt(ret.port, "Port");
+        if (ret.port < 1000 || ret.port > 65535) {
+            throw new Error("Port must be an integer between 1000 and 65535, found: " + ret.port);
         }
 
-        // Start with the default autoFlush value
-        ret.autoFlush = defaultConfig.autoFlush;
-        // Then check this.config.autoFlush
-        if (this.hasOwnProperty("config") && this.config.hasOwnProperty("autoFlush")) {
-            ret.autoFlush = this.config.autoFlush;
-        }
-        // Then check the config.autoFlush, the function argument
-        if (config.hasOwnProperty("autoFlush")) {
-            ret.autoFlush = config.autoFlush;
-        }
-        // Convert autoFlush value to boolean
-        ret.autoFlush = !!ret.autoFlush;
+        ret.maxRetries = utils.orByProp("maxRetries", config, ret, defaultConfig);
+        ret.maxRetries = utils.validatePositiveInt(ret.maxRetries, "Max retries");
 
-        ret.maxBatchCount = config.maxBatchCount || ret.maxBatchCount || defaultConfig.maxBatchCount;
-        ret.maxBatchCount = parseInt(ret.maxBatchCount, 10);
-        if (isNaN(ret.maxBatchCount)) {
-            throw new Error("Max batch count must be a number, found: " + ret.maxBatchCount);
+        ret.autoFlush = utils.orByBooleanProp("autoFlush", config, this.config, defaultConfig);
+
+        // If manual batching, don't complain about batch settings from defaultConfig
+        if (!ret.autoFlush) {
+            ret.maxBatchCount = utils.orByProp("maxBatchCount", config, ret) || 0;
+            ret.maxBatchSize = utils.orByProp("maxBatchSize", config, ret) || 0;
+            ret.batchInterval = utils.orByProp("batchInterval", config, ret) || 0;
         }
-        else if (ret.maxBatchCount < 0) {
-            throw new Error("Max batch count must be a positive number, found: " + ret.maxBatchCount);
+        else {
+            ret.maxBatchCount = utils.orByProp("maxBatchCount", config, ret, defaultConfig);
+            ret.maxBatchSize = utils.orByProp("maxBatchSize", config, ret, defaultConfig);
+            ret.batchInterval = utils.orByProp("batchInterval", config, ret, defaultConfig);
         }
 
-        ret.maxBatchSize = config.maxBatchSize || ret.maxBatchSize || defaultConfig.maxBatchSize;
-        ret.maxBatchSize = parseInt(ret.maxBatchSize, 10);
-        if (isNaN(ret.maxBatchSize)) {
-            throw new Error("Max batch size must be a number, found: " + ret.maxBatchSize);
-        }
-        else if (ret.maxBatchSize < 0) {
-            throw new Error("Max batch size must be a positive number, found: " + ret.maxBatchSize);
-        }
+        ret.maxBatchCount = utils.validatePositiveInt(ret.maxBatchCount, "Max batch count");
+        ret.maxBatchSize = utils.validatePositiveInt(ret.maxBatchSize, "Max batch size");
+        ret.batchInterval = utils.validatePositiveInt(ret.batchInterval, "Batch interval");
 
-        ret.batchInterval = config.batchInterval || ret.batchInterval || defaultConfig.batchInterval;
-        ret.batchInterval = parseInt(ret.batchInterval, 10);
-        if (isNaN(ret.batchInterval)) {
-            throw new Error("Batch interval must be a number, found: " + ret.batchInterval);
-        }
-        else if (ret.batchInterval < 0) {
-            throw new Error("Batch interval must be a positive number, found: " + ret.batchInterval);
+        // Error if autoFlush is off and any batching settings are set
+        if (!ret.autoFlush && (ret.batchInterval || ret.maxBatchSize || ret.maxBatchCount)) {
+            throw new Error("Autoflush is disabled, cannot configure batching settings.");
         }
 
         // Has the interval timer not started, and needs to be started?
@@ -312,19 +303,6 @@ SplunkLogger.prototype._initializeConfig = function(config) {
         else if (this._timerID && (this._timerDuration < 0 || !ret.autoFlush)) {
             this._disableTimer();
         }
-
-        if (!config.hasOwnProperty("port")) {
-            ret.port = ret.port || defaultConfig.port;
-        }
-        else {
-            ret.port = parseInt(config.port, 10);
-            if (isNaN(ret.port)) {
-                throw new Error("Port must be an integer, found: " + ret.port);
-            }
-        }
-        if (ret.port < 1000 || ret.port > 65535) {
-            throw new Error("Port must be an integer between 1000 and 65535, found: " + ret.port);
-        }
     }
     return ret;
 };
@@ -338,24 +316,15 @@ SplunkLogger.prototype._initializeConfig = function(config) {
  * @returns {object} requestOptions
  * @private
  */
-SplunkLogger.prototype._initializeRequestOptions = function(config, options) {
-    var ret = {};
-    for (var key in defaultRequestOptions) {
-        if (defaultRequestOptions.hasOwnProperty(key)) {
-            ret[key] = defaultRequestOptions[key];
-        }
+SplunkLogger.prototype._initializeRequestOptions = function(options) {
+    var ret = utils.copyObject(options || defaultRequestOptions);
+
+    if (options) {
+        ret.json = options.hasOwnProperty("json") ? options.json : defaultRequestOptions.json;
+        ret.strictSSL = options.strictSSL || defaultRequestOptions.strictSSL;
     }
 
-    config = config || this.config || defaultConfig;
-    options = options || ret;
-
-    ret.url = config.protocol + "://" + config.host + ":" + config.port + config.path;
-    ret.json = options.hasOwnProperty("json") ? options.json : ret.json;
-    ret.strictSSL = options.strictSSL || ret.strictSSL;
-    ret.headers = options.headers || {};
-    if (config.token) {
-        ret.headers.Authorization = "Splunk " + config.token;
-    }
+    ret.headers = ret.headers || {};
 
     return ret;
 };
@@ -366,7 +335,7 @@ SplunkLogger.prototype._initializeRequestOptions = function(config, options) {
  * @private
  * @throws Will throw an error if the <code>message</code> parameter is malformed.
  */
-SplunkLogger.prototype._initializeMessage = function(message) {
+SplunkLogger.prototype._validateMessage = function(message) {
     if (typeof message === "undefined" || message === null) {
         throw new Error("Message argument is required.");
     }
@@ -375,7 +344,7 @@ SplunkLogger.prototype._initializeMessage = function(message) {
 
 /**
  * Initialized metadata, if <code>context.metadata</code> is falsey or empty,
- * return an empty object;
+ * return an empty object.
  *
  * @param {object} context
  * @returns {object} metadata
@@ -383,7 +352,7 @@ SplunkLogger.prototype._initializeMessage = function(message) {
  */
 SplunkLogger.prototype._initializeMetadata = function(context) {
     var metadata = {};
-    if (context.hasOwnProperty("metadata")) {
+    if (context && context.hasOwnProperty("metadata")) {
         if (context.metadata.hasOwnProperty("time")) {
             metadata.time = context.metadata.time;
         }
@@ -404,7 +373,7 @@ SplunkLogger.prototype._initializeMetadata = function(context) {
 };
 
 /**
- * Initializes a context.
+ * Initializes a context object.
  *
  * @param context
  * @returns {object} context
@@ -422,15 +391,9 @@ SplunkLogger.prototype._initializeContext = function(context) {
         throw new Error("Context argument must have the message property set.");
     }
 
-    // _initializeConfig will throw an error config or this.config is
-    //     undefined, or doesn't have at least the token property set
-    context.config = this._initializeConfig(context.config || this.config);
+    context.message = this._validateMessage(context.message);
 
-    context.requestOptions = this._initializeRequestOptions(context.config, context.requestOptions);
-
-    context.message = this._initializeMessage(context.message);
-
-    context.severity = context.severity || SplunkLogger.prototype.levels.INFO;
+    context.severity = context.severity || defaultConfig.level;
 
     context.metadata = context.metadata || this._initializeMetadata(context);
 
@@ -453,11 +416,8 @@ SplunkLogger.prototype._makeBody = function(context) {
     var body = this._initializeMetadata(context);
     var time = utils.formatTime(body.time || Date.now());
     body.time = time.toString();
-    body.event = {
-        message: context.message,
-        severity: context.severity || SplunkLogger.prototype.levels.INFO
-    };
-        
+    
+    body.event = this.eventFormatter(context.message, context.severity || defaultConfig.level);
     return body;
 };
 
@@ -493,21 +453,6 @@ SplunkLogger.prototype.use = function(middleware) {
 };
 
 /**
- * Estimates the size in bytes of the events in the
- * <code>queue</code> parameter as if they were sent
- * in a single HTTP request.
- *
- * @returns {number} the estimated size in bytes.
- */
-SplunkLogger.prototype.calculateBatchSize = function() {
-    var size = 0;
-    for (var i = 0; i < this.eventSizes.length; i++) {
-        size += this.eventSizes[i];
-    }
-    return size;
-};
-
-/**
  * Makes an HTTP POST to the configured server.
  *
  * @param requestOptions
@@ -528,6 +473,22 @@ SplunkLogger.prototype._post = function(requestOptions, callback) {
 SplunkLogger.prototype._sendEvents = function(context, callback) {
     callback = callback || /* istanbul ignore next*/ function(){};
 
+    // Initialize the config once more to avoid undefined vals below
+    this.config = this._initializeConfig(this.config);
+
+    // Makes a copy of the request options so we can set the body
+    var requestOptions = this._initializeRequestOptions(this.requestOptions);
+    requestOptions.body = this._validateMessage(context.message);
+    requestOptions.headers["Authorization"] = "Splunk " + this.config.token;
+    // Manually set the content-type header for batched requests, default is application/json
+    // since json is set to true.
+    requestOptions.headers["Content-Type"] = "application/x-www-form-urlencoded";
+    requestOptions.url = this.config.protocol + "://" + this.config.host + ":" + this.config.port + this.config.path;
+
+
+    // Initialize the context again, right before using it
+    context = this._initializeContext(context);
+
     var that = this;
 
     var splunkError = null; // Errors returned by Splunk
@@ -542,10 +503,10 @@ SplunkLogger.prototype._sendEvents = function(context, callback) {
     utils.whilst(
         function() {
             // Continue if we can (re)try
-            return numRetries++ <= context.config.maxRetries;
+            return numRetries++ <= that.config.maxRetries;
         },
         function(done) {
-            that._post(context.requestOptions, function(err, resp, body) {
+            that._post(requestOptions, function(err, resp, body) {
                 // Store the latest error, response & body
                 splunkError = null;
                 requestError = err;
@@ -558,8 +519,8 @@ SplunkLogger.prototype._sendEvents = function(context, callback) {
                     splunkError.code = body.code;
                 }
 
-                // Request error (non-200), retry if numRetries hasn't exceeded the limit
-                if (requestError && numRetries <= context.config.maxRetries) {
+                // Retry if no Splunk error, a non-200 request response, and numRetries hasn't exceeded the limit
+                if (!splunkError && requestError && numRetries <= that.config.maxRetries) {
                     utils.expBackoff({attempt: numRetries}, done);
                 }
                 else {
@@ -580,7 +541,7 @@ SplunkLogger.prototype._sendEvents = function(context, callback) {
 };
 
 /**
- * Sends or queues data to be sent based on <code>context.config.autoFlush</code>.
+ * Sends or queues data to be sent based on <code>this.config.autoFlush</code>.
  * Default behavior is to send immediately.
  *
  * @example
@@ -616,10 +577,6 @@ SplunkLogger.prototype._sendEvents = function(context, callback) {
  *
  * @param {object} context - An object with at least the <code>data</code> property.
  * @param {(object|string|Array|number|bool)} context.message - Data to send to Splunk.
- * @param {object} [context.requestOptions] - Defaults are <code>{json:true, strictSSL:false}</code>. Additional
- * options to pass to <code>{@link https://github.com/request/request#requestpost|request.post()}</code>.
- * See the {@link http://github.com/request/request|request documentation} for all available options.
- * @param {object} [context.config] - See {@link SplunkLogger} for default values.
  * @param {string} [context.severity=info] - Severity level of this event.
  * @param {object} [context.metadata] - Metadata for this event.
  * @param {string} [context.metadata.host] - If not specified, Splunk will decide the value.
@@ -632,27 +589,24 @@ SplunkLogger.prototype._sendEvents = function(context, callback) {
  * @public
  */
 SplunkLogger.prototype.send = function(context, callback) {
-    callback = callback || function(){};
     context = this._initializeContext(context);
     
     // Store the context, and its estimated length
     this.contextQueue.push(context);
-    this.eventSizes.push(Buffer.byteLength(JSON.stringify(this._makeBody(context)), "utf8"));
+    this.eventsBatchSize += Buffer.byteLength(JSON.stringify(this._makeBody(context)), "utf8");
 
-    var batchOverSize = this.calculateBatchSize() > context.config.maxBatchSize;
-    var batchOverCount = this.contextQueue.length >= context.config.maxBatchCount && context.config.maxBatchCount > 0;
+    var batchOverSize = this.eventsBatchSize > this.config.maxBatchSize;
+    var batchOverCount = this.contextQueue.length >= this.config.maxBatchCount;
 
     // Only flush if not using manual batching, and if the contextQueue is too large or has many events
-    if (context.config.autoFlush && !this._timerID && (batchOverSize || batchOverCount)) {
+    if (this.config.autoFlush && (batchOverSize || batchOverCount)) {
         this.flush(callback || function(){});
     }
 };
 
 /**
- * Manually send events in <code>this.contextQueue</code> to Splunk, after
+ * Manually send all events in <code>this.contextQueue</code> to Splunk, after
  * chaining any <code>functions</code> in <code>this.middlewares</code>.
- * Auto flush settings will be used from <code>this.config.autoFlush</code>,
- * ignoring auto flush settings every on every <code>context</code> in <code>this.contextQueue</code>.
  *
  * @param {function} [callback] - A callback function: <code>function(err, response, body)</code>.
  * @public
@@ -662,36 +616,21 @@ SplunkLogger.prototype.flush = function(callback) {
 
     var context = {};
 
-    var batchOverSize = this.config.maxBatchSize > 0 && this.calculateBatchSize() > this.config.maxBatchSize;
-    var batchOverCount = this.config.maxBatchCount > 0 && this.contextQueue.length >= this.config.maxBatchCount;
-    var isBatched = !this.config.autoFlush || (this.config.autoFlush && (batchOverSize || batchOverCount || this._timerID));
-
-    // Empty the queue if manual/interval/size/count batching
-    if (isBatched) {
-        var queue = this.contextQueue;
-        this.contextQueue = [];
-        this.eventSizes = [];
-        var data = "";
-        for (var i = 0; i < queue.length; i++) {
-            data += JSON.stringify(this._makeBody(queue[i]));
-        }
-        context.message = data;
+    // Empty the queue, reset the eventsBatchSize
+    var queue = this.contextQueue;
+    this.contextQueue = [];
+    this.eventsBatchSize = 0;
+    var data = "";
+    for (var i = 0; i < queue.length; i++) {
+        data += JSON.stringify(this._makeBody(queue[i]));
     }
-    // Just take the oldest event in the queue
-    else {
-        // TODO: handle case of multiple events with autoFlush off, flushing fast
-        context = this.contextQueue.pop();
-        this.eventSizes.pop();
-    }
+    context.message = data;
     
-    // Initialize the context, then manually set the data
+    // Initialize the context before invoking middleware functions
     context = this._initializeContext(context);
     
     // Copy over the middlewares
-    var callbacks = [];
-    for (var j = 0; j < this.middlewares.length; j++) {
-        callbacks[j] = this.middlewares[j];
-    }
+    var callbacks = utils.copyArray(this.middlewares);
 
     // Send the data to the first middleware
     callbacks.unshift(function(cb) {
@@ -705,7 +644,7 @@ SplunkLogger.prototype.flush = function(callback) {
         // do this automatically, but the || notation adds a bit of clarity.
         context = passedContext || context;
 
-        // Errors from any of the middleware callbacks will fall through to here
+        // Errors from any of the middleware callbacks will fall through to here.
         // If the context is modified at any point the error callback will get it also
         // event if next("error"); is called w/o the context parameter!
         // This works because context inside & outside the scope of this function
@@ -714,22 +653,6 @@ SplunkLogger.prototype.flush = function(callback) {
             that.error(err, context);
         }
         else {
-            // Validate the context again, right before using it
-            context = that._initializeContext(context);
-            context.requestOptions.headers["Authorization"] = "Splunk " + context.config.token;
-
-            if (isBatched) {
-                // Don't run _makeBody since we've already done that for batching
-                // Manually set the content-type header for batched requests, default is application/json
-                // since json is set to true.
-                context.requestOptions.headers["content-type"] = "application/x-www-form-urlencoded";
-            }
-            else {
-                context.message = that._makeBody(context);
-            }
-
-            context.requestOptions.body = context.message;
-
             that._sendEvents(context, callback);
         }
     });

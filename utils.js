@@ -200,11 +200,106 @@ utils.expBackoff = function(opts, callback) {
  *
  * @param {object} [self] - An object to bind the <code>fn</code> function parameter to.
  * @param {object} [fn] - A function to bind to the <code>self</code> argument.
+ * @returns {function}
+ * @static
  */
 utils.bind = function(self, fn) {
     return function () {
         return fn.apply(self, arguments);
     };
+};
+
+/**
+ * Copies all properties into a new object which is returned.
+ *
+ * @param {object} [obj] - Object to copy properties from.
+ */
+utils.copyObject = function(obj) {
+    var ret = {};
+    for (var key in obj) {
+        if (obj.hasOwnProperty(key)) {
+            ret[key] = obj[key];
+        }
+    }
+    return ret;
+};
+
+/**
+ * Copies all elements into a new array which is returned.
+ *
+ * @param {array} [arr] - Array to copy elements from.
+ * @returns {array}
+ * @static
+ */
+utils.copyArray = function(arr) {
+    var ret = [];
+    for (var i = 0; arr && i < arr.length; i++) {
+        ret[i] = arr[i];
+    }
+    return ret;
+};
+
+/**
+ * Takes a property name, then any number of objects as arguments
+ * and performs logical OR operations on them one at a time
+ * Returns true as soon as a truthy
+ * value is found, else returning false.
+ *
+ * @param {string} [prop] - property name for other arguments.
+ * @returns {boolean}
+ * @static
+ */
+utils.orByProp = function(prop) {
+    var ret = false;
+    for (var i = 1; !ret && i < arguments.length; i++) {
+        if (arguments[i]) {
+            ret = ret || arguments[i][prop];
+        }
+    }
+    return ret;
+};
+
+/**
+ * Like <code>utisl.orByProp()</code> but for a boolean property.
+ * The first argument after <code>prop</code> with that property
+ * defined will be returned.
+ *
+ * @param {string} [prop] - property name for other arguments.
+ * @returns {boolean}
+ * @static
+ */
+utils.orByBooleanProp = function(prop) {
+    var ret = null;
+    // Logic is reversed here, first value wins
+    for (var i = arguments.length - 1; i > 0; i--) {
+        if (arguments[i] && arguments[i].hasOwnProperty(prop)) {
+            ret = arguments[i][prop];
+        }
+    }
+    // Convert whatever we have to a boolean
+    return !!ret;
+};
+
+ /**
+  * Tries to validate the <code>value</code> parameter as a positive
+  * integer.
+  *
+  * @param {number} [value] - Some value, expected to be a positive integer.
+  * @param {number} [label] - Human readable name for <code>value</code>
+  * for error messages.
+  * @returns {number}
+  * @throws Will throw an error if the <code>value</code> parameter cannot by parsed as an integer.
+  * @static
+  */
+utils.validatePositiveInt = function(value, label) {
+    value = parseInt(value, 10);
+    if (isNaN(value)) {
+        throw new Error(label + " must be a number, found: " + value);
+    }
+    else if (value < 0) {
+        throw new Error(label + " must be a positive number, found: " + value);
+    }
+    return value;
 };
 
 module.exports = utils;

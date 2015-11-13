@@ -467,4 +467,75 @@ describe("Utils", function() {
             done();
         });
     });
+    describe("copyObject", function() {
+        it("should copy a 5 property object", function() {
+            var o = {
+                a: 1,
+                b: 2,
+                c: 3,
+                d: 4,
+                e: 5,
+            };
+
+            var copy = o;
+            
+            // Pointing to the same memory block
+            assert.strictEqual(copy, o);
+
+            // Verify it was a real copy
+            copy = utils.copyObject(o);
+            assert.notStrictEqual(copy, o);
+            assert.strictEqual(Object.keys(copy).length, 5);
+            assert.strictEqual(copy.a, o.a);
+            assert.strictEqual(copy.b, o.b);
+            assert.strictEqual(copy.c, o.c);
+            assert.strictEqual(copy.d, o.d);
+            assert.strictEqual(copy.e, o.e);
+
+            // Verify changing original object vals doesn't change copy's vals
+            for (var k in o) {
+                if (o.hasOwnProperty(k)){
+                    o[k]++;
+                }
+            }
+            assert.notStrictEqual(copy.a, o.a);
+            assert.notStrictEqual(copy.b, o.b);
+            assert.notStrictEqual(copy.c, o.c);
+            assert.notStrictEqual(copy.d, o.d);
+            assert.notStrictEqual(copy.e, o.e);
+
+        });
+    });
+    describe("copyArray", function() {
+        it("should copy a 5 element array", function() {
+            var a = [0, 1, 2, 3, 4];
+
+            var copy = a;
+            
+            // Pointing to the same memory block
+            assert.strictEqual(copy, a);
+
+            // Verify it was a real copy
+            copy = utils.copyArray(a);
+            assert.notStrictEqual(copy, a);
+            assert.strictEqual(Object.keys(copy).length, 5);
+            assert.strictEqual(copy[0], a[0]);
+            assert.strictEqual(copy[1], a[1]);
+            assert.strictEqual(copy[2], a[2]);
+            assert.strictEqual(copy[3], a[3]);
+            assert.strictEqual(copy[4], a[4]);
+
+            // Verify changing original array vals doesn't change copy's vals
+            for (var k in a) {
+                    a[k]++;
+            }
+            assert.notStrictEqual(copy[0], a[0]);
+            assert.notStrictEqual(copy[1], a[1]);
+            assert.notStrictEqual(copy[2], a[2]);
+            assert.notStrictEqual(copy[3], a[3]);
+            assert.notStrictEqual(copy[4], a[4]);
+
+        });
+    });
+    // TODO: test for orByProp, orByBooleanProp, validatePositiveInt
 });

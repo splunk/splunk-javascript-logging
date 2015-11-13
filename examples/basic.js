@@ -23,21 +23,11 @@ var SplunkLogger = require("../index").Logger;
 
 /**
  * Only the token property is required.
- * Defaults are listed explicitly.
- *
- * Alternatively, specify config.url like so:
- *
- * "https://localhost:8088/services/collector/event/1.0"
  */
 var config = {
     token: "your-token-here",
-    host: "localhost",
-    path: "/services/collector/event/1.0",
-    protocol: "https",
-    port: 8088,
-    level: "info",
-    autoFlush: true,
-    maxRetries: 0
+    url: "https://localhost:8088",
+    maxBatchCount: 1 // Send events 1 at a time
 };
 
 // Create a new logger
@@ -50,7 +40,7 @@ Logger.error = function(err, context) {
 
 // Define the payload to send to Splunk's Event Collector
 var payload = {
-    // Message can be anything, doesn't have to be an object
+    // Message can be anything, it doesn't have to be an object
     message: {
         temperature: "70F",
         chickenCount: 500
@@ -67,6 +57,34 @@ var payload = {
 };
 
 console.log("Sending payload", payload);
+
+/**
+ * Since maxBatchCount is set to 1, calling send
+ * will immediately send the payload.
+ * 
+ * The underlying HTTP POST request is made to
+ *
+ *     https://localhost:8088/services/collector/event/1.0
+ *
+ * with the following data
+ *
+ *     "{
+ *         metadata: {
+ *             source: "chicken coop",
+ *             sourcetype: "httpevent",
+ *             index: "main",
+ *             host: "farm.local"
+ *         },
+ *         event: {
+ *             message: {
+ *                 temperature: "70F",
+ *                 chickenCount: 500
+ *             },
+ *             severity: "info"
+ *         },
+ *     }"
+ *
+ */
 Logger.send(payload, function(err, resp, body) {
     // If successful, body will be { text: 'Success', code: 0 }
     console.log("Response from Splunk", body);
