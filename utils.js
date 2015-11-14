@@ -281,7 +281,7 @@ utils.orByBooleanProp = function(prop) {
 };
 
  /**
-  * Tries to validate the <code>value</code> parameter as a positive
+  * Tries to validate the <code>value</code> parameter as a non-negative
   * integer.
   *
   * @param {number} [value] - Some value, expected to be a positive integer.
@@ -291,7 +291,7 @@ utils.orByBooleanProp = function(prop) {
   * @throws Will throw an error if the <code>value</code> parameter cannot by parsed as an integer.
   * @static
   */
-utils.validatePositiveInt = function(value, label) {
+utils.validateNonNegativeInt = function(value, label) {
     value = parseInt(value, 10);
     if (isNaN(value)) {
         throw new Error(label + " must be a number, found: " + value);

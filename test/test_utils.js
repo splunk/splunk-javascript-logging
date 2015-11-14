@@ -537,5 +537,82 @@ describe("Utils", function() {
 
         });
     });
-    // TODO: test for orByProp, orByBooleanProp, validatePositiveInt
+    describe("orByProp", function() {
+        it("should pick first value of 2", function() {
+            var a = {
+                x: "x value"
+            };
+            var b = {
+                y: "y value"
+            };
+
+            assert.strictEqual(utils.orByProp("x", a, b), "x value");
+            assert.strictEqual(utils.orByProp("y", b, a), "y value");
+        });
+        it("should pick second value of 2, when first is undefined", function() {
+            var a = {
+                x: "x value"
+            };
+            var b = {
+                y: "y value"
+            };
+
+            assert.strictEqual(utils.orByProp("x", b, a), "x value");
+            assert.strictEqual(utils.orByProp("y", a, b), "y value");
+        });
+    });
+    describe("orByBooleanProp", function() {
+        it("should pick first value of 2", function() {
+            var a = {
+                x: false
+            };
+            var b = {
+                y: true
+            };
+
+            assert.strictEqual(utils.orByBooleanProp("x", a, b), false);
+            assert.strictEqual(utils.orByBooleanProp("y", b, a), true);
+        });
+        it("should pick second value of 2", function() {
+            var a = {
+                x: false
+            };
+            var b = {
+                y: true
+            };
+
+            assert.strictEqual(utils.orByBooleanProp("x", b, a), false);
+            assert.strictEqual(utils.orByBooleanProp("y", a, b), true);
+        });
+    });
+    describe("validateNonNegativeInt", function() {
+        it("should error when value is NaN", function() {
+            try {
+                utils.validateNonNegativeInt(null, "test");
+                assert.ok(false, "Expected an error.");
+            }
+            catch (err) {
+                assert.ok(err);
+                assert.strictEqual(err.message, "test must be a number, found: NaN");
+            }
+        });
+        it("should error when value is negative", function() {
+            try {
+                utils.validateNonNegativeInt(-1, "test");
+                assert.ok(false, "Expected an error.");
+            }
+            catch (err) {
+                assert.ok(err);
+                assert.strictEqual(err.message, "test must be a positive number, found: -1");
+            }
+        });
+        it("should return the value when it's 0", function() {
+            var valid = utils.validateNonNegativeInt(0, "test");
+            assert.strictEqual(valid, 0);
+        });
+        it("should return the value when it's positive", function() {
+            var valid = utils.validateNonNegativeInt(5, "test");
+            assert.strictEqual(valid, 5);
+        });
+    });
 });

@@ -179,7 +179,7 @@ SplunkLogger.prototype._disableTimer = function() {
  */
 SplunkLogger.prototype._enableTimer = function(interval) {
     // Only enable the timer if possible
-    interval = utils.validatePositiveInt(interval, "Batch interval");
+    interval = utils.validateNonNegativeInt(interval, "Batch interval");
 
     if (this._timerID) {
         this._disableTimer();
@@ -259,13 +259,13 @@ SplunkLogger.prototype._initializeConfig = function(config) {
         ret.path = utils.orByProp("path", config, ret, defaultConfig);
         ret.protocol = utils.orByProp("protocol", config, ret, defaultConfig);
         ret.port = utils.orByProp("port", config, ret, defaultConfig);
-        ret.port = utils.validatePositiveInt(ret.port, "Port");
+        ret.port = utils.validateNonNegativeInt(ret.port, "Port");
         if (ret.port < 1000 || ret.port > 65535) {
             throw new Error("Port must be an integer between 1000 and 65535, found: " + ret.port);
         }
 
         ret.maxRetries = utils.orByProp("maxRetries", config, ret, defaultConfig);
-        ret.maxRetries = utils.validatePositiveInt(ret.maxRetries, "Max retries");
+        ret.maxRetries = utils.validateNonNegativeInt(ret.maxRetries, "Max retries");
 
         ret.autoFlush = utils.orByBooleanProp("autoFlush", config, this.config, defaultConfig);
 
@@ -281,9 +281,9 @@ SplunkLogger.prototype._initializeConfig = function(config) {
             ret.batchInterval = utils.orByProp("batchInterval", config, ret, defaultConfig);
         }
 
-        ret.maxBatchCount = utils.validatePositiveInt(ret.maxBatchCount, "Max batch count");
-        ret.maxBatchSize = utils.validatePositiveInt(ret.maxBatchSize, "Max batch size");
-        ret.batchInterval = utils.validatePositiveInt(ret.batchInterval, "Batch interval");
+        ret.maxBatchCount = utils.validateNonNegativeInt(ret.maxBatchCount, "Max batch count");
+        ret.maxBatchSize = utils.validateNonNegativeInt(ret.maxBatchSize, "Max batch size");
+        ret.batchInterval = utils.validateNonNegativeInt(ret.batchInterval, "Batch interval");
 
         // Error if autoFlush is off and any batching settings are set
         if (!ret.autoFlush && (ret.batchInterval || ret.maxBatchSize || ret.maxBatchCount)) {
