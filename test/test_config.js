@@ -903,7 +903,6 @@ describe("SplunkLogger", function() {
             assert.strictEqual(Logger.config.protocol, expected.protocol);
             assert.strictEqual(Logger.config.level, expected.level);
             assert.strictEqual(Logger.config.port, expected.port);
-            assert.strictEqual(Logger.middlewares.length, 0);
 
             Logger._initializeConfig({});
             assert.strictEqual(Logger.config.token, expected.token);
@@ -913,7 +912,6 @@ describe("SplunkLogger", function() {
             assert.strictEqual(Logger.config.protocol, expected.protocol);
             assert.strictEqual(Logger.config.level, expected.level);
             assert.strictEqual(Logger.config.port, expected.port);
-            assert.strictEqual(Logger.middlewares.length, 0);
         });
         it("token in constructor, then init with full config", function() {
             var config = {
@@ -939,7 +937,6 @@ describe("SplunkLogger", function() {
             assert.strictEqual(Logger.config.protocol, expected.protocol);
             assert.strictEqual(Logger.config.level, expected.level);
             assert.strictEqual(Logger.config.port, expected.port);
-            assert.strictEqual(Logger.middlewares.length, 0);
 
             expected.token = "a-different-token";
             Logger.config = Logger._initializeConfig(expected);
@@ -950,7 +947,6 @@ describe("SplunkLogger", function() {
             assert.strictEqual(Logger.config.protocol, expected.protocol);
             assert.strictEqual(Logger.config.level, expected.level);
             assert.strictEqual(Logger.config.port, expected.port);
-            assert.strictEqual(Logger.middlewares.length, 0);
         });
         it("should set autoFlush property to true after initially false", function() {
             Object.prototype.something = "ignore";

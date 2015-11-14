@@ -27,6 +27,7 @@ var utils = require("./utils");
  * @param {object} [context] - The <code>context</code> of an event.
  * @private
  */
+/* istanbul ignore next*/
 function _err(err, context) {
     console.log("ERROR:", err, " CONTEXT", context);
 }
@@ -67,7 +68,6 @@ function _defaultEventFormatter(message, severity) {
  * @property {object} config - Configuration settings for this <code>SplunkLogger</code> instance.
  * @param {object} requestOptions - Options to pass to <code>{@link https://github.com/request/request#requestpost|request.post()}</code>.
  * See the {@link http://github.com/request/request|request documentation} for all available options.
- * @property {function[]} middlewares - Middleware functions to run before sending data to Splunk.
  * @property {object[]} contextQueue - Queue of <code>context</code> objects to be sent to Splunk.
  * @property {function} eventFormatter - Formats events, returning an event as a string, <code>function(message, severity)</code>.
  * Can be overwritten, the default event formatter will display event and severity as properties in a JSON object.
@@ -102,7 +102,6 @@ var SplunkLogger = function(config) {
     this._timerDuration = 0;
     this.config = this._initializeConfig(config);
     this.requestOptions = this._initializeRequestOptions();
-    this.middlewares = [];
     this.contextQueue = [];
     this.eventsBatchSize = 0;
     this.eventFormatter = _defaultEventFormatter;
@@ -116,7 +115,6 @@ var SplunkLogger = function(config) {
     this._initializeMetadata = utils.bind(this, this._initializeMetadata);
     this._initializeContext = utils.bind(this, this._initializeContext);
     this._makeBody = utils.bind(this, this._makeBody);
-    this.use = utils.bind(this, this.use);
     this._post = utils.bind(this, this._post);
     this._sendEvents = utils.bind(this, this._sendEvents);
     this.send = utils.bind(this, this.send);
@@ -422,37 +420,6 @@ SplunkLogger.prototype._makeBody = function(context) {
 };
 
 /**
- * Adds an express-like middleware function to run before sending the
- * data to Splunk.
- * Multiple middleware functions can be used, they will be executed
- * in the order they are added.
- *
- * This function is a wrapper around <code>this.middlewares.push()</code>.
- *
- * @example
- * var SplunkLogger = require("splunk-logging").Logger;
- *
- * var Logger = new SplunkLogger({token: "your-token-here"});
- * Logger.use(function(context, next) {
- *     context.message.additionalProperty = "Add this before sending the data";
- *     next(null, context);
- * });
- *
- * @param {function} middleware - A middleware function: <code>function(context, next)</code>.
- * It must call <code>next(error, context)</code> to continue.
- * @public
- * @throws Will throw an error if <code>middleware</code> is not a <code>function</code>.
- */
-SplunkLogger.prototype.use = function(middleware) {
-    if (!middleware || typeof middleware !== "function") {
-        throw new Error("Middleware must be a function.");
-    }
-    else {
-        this.middlewares.push(middleware);
-    }
-};
-
-/**
  * Makes an HTTP POST to the configured server.
  *
  * @param requestOptions
@@ -539,7 +506,7 @@ SplunkLogger.prototype._sendEvents = function(context, callback) {
         }
     );
 };
-
+ 
 /**
  * Sends or queues data to be sent based on <code>this.config.autoFlush</code>.
  * Default behavior is to send immediately.
@@ -567,6 +534,7 @@ SplunkLogger.prototype._sendEvents = function(context, callback) {
  *     }
  * }; 
  *
+ * // The callback is only used if autoFlush is set to false.
  * logger.send(payload, function(err, resp, body) {
  *     if (err) {
  *         console.log("error:", err);
@@ -605,8 +573,7 @@ SplunkLogger.prototype.send = function(context, callback) {
 };
 
 /**
- * Manually send all events in <code>this.contextQueue</code> to Splunk, after
- * chaining any <code>functions</code> in <code>this.middlewares</code>.
+ * Manually send all events in <code>this.contextQueue</code> to Splunk.
  *
  * @param {function} [callback] - A callback function: <code>function(err, response, body)</code>.
  * @public
@@ -625,37 +592,7 @@ SplunkLogger.prototype.flush = function(callback) {
         data += JSON.stringify(this._makeBody(queue[i]));
     }
     context.message = data;
-    
-    // Initialize the context before invoking middleware functions
-    context = this._initializeContext(context);
-    
-    // Copy over the middlewares
-    var callbacks = utils.copyArray(this.middlewares);
-
-    // Send the data to the first middleware
-    callbacks.unshift(function(cb) {
-        cb(null, context);
-    });
-
-    // After running all, if any, middlewares send the events
-    var that = this;
-    utils.chain(callbacks, function(err, passedContext) {
-        // The passedContext parameter could be named context to
-        // do this automatically, but the || notation adds a bit of clarity.
-        context = passedContext || context;
-
-        // Errors from any of the middleware callbacks will fall through to here.
-        // If the context is modified at any point the error callback will get it also
-        // event if next("error"); is called w/o the context parameter!
-        // This works because context inside & outside the scope of this function
-        // point to the same memory block.
-        if (err) {
-            that.error(err, context);
-        }
-        else {
-            that._sendEvents(context, callback);
-        }
-    });
+    this._sendEvents(context, callback);
 };
 
 module.exports = SplunkLogger;

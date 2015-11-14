@@ -94,9 +94,7 @@ Logger.send(payload2);
  */
 
 // Kill the process
-var p = process;
 setTimeout(function() {
     console.log("Events should be in Splunk! Exiting...");
-    // p.exit();
     process.exit();
 }, 2000);
