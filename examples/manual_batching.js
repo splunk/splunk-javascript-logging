@@ -32,17 +32,12 @@ var SplunkLogger = require("../index").Logger;
 /**
  * Only the token property is required.
  * 
- * Here, autoFlush is set to false
+ * Here, autoFlush is set to false.
  */
 var config = {
     token: "your-token-here",
-    host: "localhost",
-    path: "/services/collector/event/1.0",
-    protocol: "https",
-    port: 8088,
-    level: "info",
-    autoFlush: false,
-    maxRetries: 0
+    url: "https://localhost:8088",
+    autoFlush: false // Manually flush events
 };
 
 // Create a new logger
