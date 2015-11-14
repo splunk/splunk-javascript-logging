@@ -16,7 +16,8 @@
 
 /**
  * This example shows how to batch events with the
- * SplunkLogger by manually calling flush.
+ * SplunkLogger with all available settings.
+ *
  * By default autoFlush is enabled.
  *
  * By disabling autoFlush, events will be queued
@@ -29,12 +30,17 @@ var SplunkLogger = require("../index").Logger;
 /**
  * Only the token property is required.
  * 
- * Here, autoFlush is set to false.
+ * Here, batchInterval is set to flush every 1
+ * second, when 10 events are queued, or
+ * when the size of queued events totals
+ * more than 1kb.
  */
 var config = {
-    token: "your-token-here",
+    token: "your-token",
     url: "https://localhost:8088",
-    autoFlush: false // Manually flush events
+    batchInterval: 1000,
+    maxBatchCount: 10,
+    maxBatchSize: 1024 // 1kb
 };
 
 // Create a new logger
@@ -81,13 +87,16 @@ console.log("Queuing second payload", payload2);
 Logger.send(payload2);
 
 /**
- * Since autoFlush is disabled, call flush manually.
- * This will send both payloads in a single
- * HTTP request.
- *
- * The same callback can work for send() and flush().
+ * Since we've configured autoFlush, we don't need
+ * to do anything at this point. Events will
+ * will be sent to Splunk automatically based
+ * on the batching settings above.
  */
-Logger.flush(function(err, resp, body) {
-    // If successful, body will be { text: 'Success', code: 0 }
-    console.log("Response from Splunk", body);
-});
+
+// Kill the process
+var p = process;
+setTimeout(function() {
+    console.log("Events should be in Splunk! Exiting...");
+    // p.exit();
+    process.exit();
+}, 2000);
