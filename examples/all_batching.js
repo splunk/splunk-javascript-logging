@@ -86,7 +86,7 @@ console.log("Queuing second payload", payload2);
 Logger.send(payload2);
 
 /**
- * Since we've configured autoFlush, we don't need
+ * Since we've configured batching, we don't need
  * to do anything at this point. Events will
  * will be sent to Splunk automatically based
  * on the batching settings above.
