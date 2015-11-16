@@ -221,6 +221,48 @@ describe("SplunkLogger", function() {
                 assert.strictEqual("Batch interval must be a positive number, found: -1", err.message);
             }
         });
+        it("should change the timer via _enableTimer()", function() {
+            var config = {
+                token: "a-token-goes-here-usually"
+            };
+
+            var logger = new SplunkLogger(config);
+            logger._enableTimer(1);
+            assert.strictEqual(logger._timerDuration, 1);
+            logger._enableTimer(2);
+            assert.strictEqual(logger._timerDuration, 2);
+            logger._disableTimer();
+        });
+        it("should disable the timer via _initializeConfig()", function() {
+            var config = {
+                token: "a-token-goes-here-usually"
+            };
+
+            var logger = new SplunkLogger(config);
+            logger._enableTimer(1);
+            assert.strictEqual(logger._timerDuration, 1);
+            logger._enableTimer(2);
+            assert.strictEqual(logger._timerDuration, 2);
+
+            logger.config.autoFlush = false;
+            logger.config.batchInterval = 0;
+
+            logger._initializeConfig(logger.config);
+            assert.ok(!logger._timerDuration);
+            assert.ok(!logger._timerID);
+        });
+        it("should be noop when _disableTimer() is called when no timer is configured", function() {
+            var config = {
+                token: "a-token-goes-here-usually"
+            };
+
+            var logger = new SplunkLogger(config);
+            var old = logger._timerDuration;
+            assert.ok(!logger._timerDuration);
+            logger._disableTimer();
+            assert.ok(!logger._timerDuration);
+            assert.strictEqual(logger._timerDuration, old);
+        });
         it("should set a batch interval timer with autoFlush on, & batchInterval set", function() {
             var config = {
                 token: "a-token-goes-here-usually",

@@ -560,6 +560,17 @@ describe("Utils", function() {
             assert.strictEqual(utils.orByProp("x", b, a), "x value");
             assert.strictEqual(utils.orByProp("y", a, b), "y value");
         });
+        it("should ignore a null argument", function() {
+            var a = {
+                x: "x value"
+            };
+            var b = {
+                y: "y value"
+            };
+
+            assert.strictEqual(utils.orByProp("x", null, b, a), "x value");
+            assert.strictEqual(utils.orByProp("y", null, a, b), "y value");
+        });
     });
     describe("orByBooleanProp", function() {
         it("should pick first value of 2", function() {

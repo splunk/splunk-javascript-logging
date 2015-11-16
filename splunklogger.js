@@ -447,7 +447,7 @@ SplunkLogger.prototype._sendEvents = function(context, callback) {
     var requestOptions = this._initializeRequestOptions(this.requestOptions);
     requestOptions.body = this._validateMessage(context.message);
     requestOptions.headers["Authorization"] = "Splunk " + this.config.token;
-    // Manually set the content-type header for batched requests, default is application/json
+    // Manually set the content-type header, the default is application/json
     // since json is set to true.
     requestOptions.headers["Content-Type"] = "application/x-www-form-urlencoded";
     requestOptions.url = this.config.protocol + "://" + this.config.host + ":" + this.config.port + this.config.path;

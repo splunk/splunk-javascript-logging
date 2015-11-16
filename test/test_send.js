@@ -1839,4 +1839,46 @@ describe("SplunkLogger send (integration tests)", function() {
             }, 300);
         });
     });
+    describe("using custom eventFormatter", function() {
+        it("should use custom event formatter, instead of the default", function(done) {
+            var config = {
+                token: configurationFile.token,
+                maxBatchCount: 1
+            };
+            var logger = new SplunkLogger(config);
+
+            logger.eventFormatter = function(message, severity) {
+                var ret = "[" + severity + "]";
+                for (var key in message) {
+                    if (message.hasOwnProperty(key)) {
+                        ret += key + "=" + message[key] + ", ";
+                    }
+                }
+                return ret;
+            };
+
+            var post = logger._post;
+            logger._post = function(opts, callback) {
+                var expected = "[info]some=data, asObject=true, num=123, ";
+
+                assert.ok(opts);
+                assert.ok(opts.hasOwnProperty("body"));
+                console.log(typeof opts.body);
+                var body = JSON.parse(opts.body);
+                assert.ok(body.hasOwnProperty("event"));
+                assert.ok(body.hasOwnProperty("time"));
+
+                assert.strictEqual(body.event, expected);
+
+                post(opts, callback);
+            };
+
+            logger.send({message: {some: "data", asObject: true, num: 123}}, function(err, resp, body) {
+                assert.ok(!err);
+                assert.strictEqual(body.code, successBody.code);
+                assert.strictEqual(body.text, successBody.text);
+                done();
+            });
+        });
+    });
 });
