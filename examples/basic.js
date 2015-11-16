@@ -69,12 +69,10 @@ console.log("Sending payload", payload);
  * with the following body
  *
  *     {
- *         "metadata": {
- *             "source": "chicken coop",
- *             "sourcetype": "httpevent",
- *             "index": "main",
- *             "host": "farm.local"
- *         },
+ *         "source": "chicken coop",
+ *         "sourcetype": "httpevent",
+ *         "index": "main",
+ *         "host": "farm.local",
  *         "event": {
  *             "message": {
  *                 "temperature": "70F",
