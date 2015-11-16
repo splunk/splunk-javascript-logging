@@ -66,23 +66,23 @@ console.log("Sending payload", payload);
  *
  *     https://localhost:8088/services/collector/event/1.0
  *
- * with the following data
+ * with the following body
  *
- *     "{
- *         metadata: {
- *             source: "chicken coop",
- *             sourcetype: "httpevent",
- *             index: "main",
- *             host: "farm.local"
+ *     {
+ *         "metadata": {
+ *             "source": "chicken coop",
+ *             "sourcetype": "httpevent",
+ *             "index": "main",
+ *             "host": "farm.local"
  *         },
- *         event: {
- *             message: {
- *                 temperature: "70F",
- *                 chickenCount: 500
+ *         "event": {
+ *             "message": {
+ *                 "temperature": "70F",
+ *                 "chickenCount": 500
  *             },
- *             severity: "info"
- *         },
- *     }"
+ *             "severity": "info"
+ *         }
+ *     }
  *
  */
 Logger.send(payload, function(err, resp, body) {

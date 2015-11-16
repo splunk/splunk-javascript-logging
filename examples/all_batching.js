@@ -30,9 +30,8 @@ var SplunkLogger = require("../index").Logger;
 /**
  * Only the token property is required.
  * 
- * Here, batchInterval is set to flush every 1
- * second, when 10 events are queued, or
- * when the size of queued events totals
+ * Here, batchInterval is set to flush every 1 second, when
+ * 10 events are queued, or when the size of queued events totals
  * more than 1kb.
  */
 var config = {

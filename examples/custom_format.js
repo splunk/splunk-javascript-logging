@@ -15,7 +15,7 @@
  */
 
 /**
- * This example shows how to configure retries with SplunkLogger.
+ * This example shows how to use a custom event format for SplunkLogger.
  */
 
 // Change to require("splunk-logging").Logger;
@@ -23,17 +23,11 @@ var SplunkLogger = require("../index").Logger;
 
 /**
  * Only the token property is required.
- *
- * Here we've set maxRetries to 5,
- * If there are any connection errors the request to Splunk will
- * be retried up to 5 times.
- * The default is 0.
  */
 var config = {
     token: "your-token-here",
     url: "https://localhost:8088",
-    level: "info",
-    maxRetries: 5
+    maxBatchCount: 1 // Send events 1 at a time
 };
 
 // Create a new logger
@@ -44,9 +38,35 @@ Logger.error = function(err, context) {
     console.log("error", err, "context", context);
 };
 
+/**
+ * Override the default eventFormatter() function,
+ * which takes a message and severity, returning
+ * any type - string or object are recommended.
+ *
+ * The message parameter can be any type. It will
+ * be whatever was passed to Logger.send().
+ * Severity will always be a string.
+ *
+ * In this example, we're 
+ */
+Logger.eventFormatter = function(message, severity) {
+    var event = "[" + severity + "]";
+
+    if (typeof message === "object") {
+        for (var key in message) {
+            event += key + "=" + message[key] + " ";
+        }
+    }
+    else {
+        event += "message=" + message + " ";
+    }
+
+    return event;
+};
+
 // Define the payload to send to Splunk's Event Collector
 var payload = {
-    // Message can be anything, doesn't have to be an object
+    // Message can be anything, it doesn't have to be an object
     message: {
         temperature: "70F",
         chickenCount: 500
@@ -63,6 +83,28 @@ var payload = {
 };
 
 console.log("Sending payload", payload);
+
+/**
+ * Since maxBatchCount is set to 1, calling send
+ * will immediately send the payload.
+ * 
+ * The underlying HTTP POST request is made to
+ *
+ *     https://localhost:8088/services/collector/event/1.0
+ *
+ * with the following body
+ *
+ *     {
+ *         "metadata": {
+ *             "source": "chicken coop",
+ *             "sourcetype": "httpevent",
+ *             "index": "main",
+ *             "host": "farm.local"
+ *         },
+ *         "event": "[info]temperature=70F, chickenCount=500"
+ *     }
+ *
+ */
 Logger.send(payload, function(err, resp, body) {
     // If successful, body will be { text: 'Success', code: 0 }
     console.log("Response from Splunk", body);
