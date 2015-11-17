@@ -26,8 +26,7 @@ var SplunkLogger = require("../index").Logger;
  */
 var config = {
     token: "your-token-here",
-    url: "https://localhost:8088",
-    maxBatchCount: 1 // Send events 1 at a time
+    url: "https://localhost:8088"
 };
 
 // Create a new logger
@@ -50,7 +49,7 @@ var payload = {
         source: "chicken coop",
         sourcetype: "httpevent",
         index: "main",
-        host: "farm.local",
+        host: "farm.local"
     },
     // Severity is also optional
     severity: "info"
@@ -59,8 +58,8 @@ var payload = {
 console.log("Sending payload", payload);
 
 /**
- * Since maxBatchCount is set to 1, calling send
- * will immediately send the payload.
+ * Since maxBatchCount is set to 1 by default,
+ * calling send will immediately send the payload.
  * 
  * The underlying HTTP POST request is made to
  *

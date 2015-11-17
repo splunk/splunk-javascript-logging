@@ -56,7 +56,7 @@ var payload = {
         source: "chicken coop",
         sourcetype: "httpevent",
         index: "main",
-        host: "farm.local",
+        host: "farm.local"
     },
     // Severity is also optional
     severity: "info"

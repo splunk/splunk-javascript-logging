@@ -47,7 +47,12 @@ Logger.error = function(err, context) {
  * be whatever was passed to Logger.send().
  * Severity will always be a string.
  *
- * In this example, we're 
+ * In this example, we're building up a string
+ * of key=value pairs if message is an object,
+ * otherwise the message value is as value for
+ * the message key.
+ * This string is prefixed with the event
+ * severity in square brackets.
  */
 Logger.eventFormatter = function(message, severity) {
     var event = "[" + severity + "]";
@@ -58,7 +63,7 @@ Logger.eventFormatter = function(message, severity) {
         }
     }
     else {
-        event += "message=" + message + " ";
+        event += "message=" + message;
     }
 
     return event;
@@ -76,7 +81,7 @@ var payload = {
         source: "chicken coop",
         sourcetype: "httpevent",
         index: "main",
-        host: "farm.local",
+        host: "farm.local"
     },
     // Severity is also optional
     severity: "info"
@@ -85,8 +90,8 @@ var payload = {
 console.log("Sending payload", payload);
 
 /**
- * Since maxBatchCount is set to 1, calling send
- * will immediately send the payload.
+ * Since maxBatchCount is set to 1 by default,
+ * calling send will immediately send the payload.
  * 
  * The underlying HTTP POST request is made to
  *
@@ -95,13 +100,11 @@ console.log("Sending payload", payload);
  * with the following body
  *
  *     {
- *         "metadata": {
- *             "source": "chicken coop",
- *             "sourcetype": "httpevent",
- *             "index": "main",
- *             "host": "farm.local"
- *         },
- *         "event": "[info]temperature=70F, chickenCount=500"
+ *         "source": "chicken coop",
+ *         "sourcetype": "httpevent",
+ *         "index": "main",
+ *         "host": "farm.local",
+ *         "event": "[info]temperature=70F chickenCount=500 "
  *     }
  *
  */

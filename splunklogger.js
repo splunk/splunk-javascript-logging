@@ -165,7 +165,6 @@ SplunkLogger.prototype._disableTimer = function() {
     }
 };
 
-// TODO: update doc
 /**
  * Configures an interval timer to flush any events in
  * <code>this.serializedContextQueue</code> at the specified interval.

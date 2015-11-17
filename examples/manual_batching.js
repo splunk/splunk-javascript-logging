@@ -17,9 +17,8 @@
 /**
  * This example shows how to batch events with the
  * SplunkLogger by manually calling flush.
- * By default autoFlush is enabled.
  *
- * By disabling autoFlush, events will be queued
+ * By setting maxbatchCount=0, events will be queued
  * until flush() is called.
  */
 
@@ -29,12 +28,12 @@ var SplunkLogger = require("../index").Logger;
 /**
  * Only the token property is required.
  * 
- * Here, autoFlush is set to false.
+ * Here, maxBatchCount is set to 0.
  */
 var config = {
     token: "your-token-here",
     url: "https://localhost:8088",
-    autoFlush: false // Manually flush events
+    maxBatchCount: 0 // Manually flush events
 };
 
 // Create a new logger
@@ -57,7 +56,7 @@ var payload = {
         source: "chicken coop",
         sourcetype: "httpevent",
         index: "main",
-        host: "farm.local",
+        host: "farm.local"
     },
     // Severity is also optional
     severity: "info"
@@ -81,7 +80,7 @@ console.log("Queuing second payload", payload2);
 Logger.send(payload2);
 
 /**
- * Since autoFlush is disabled, call flush manually.
+ * Call flush manually.
  * This will send both payloads in a single
  * HTTP request.
  *

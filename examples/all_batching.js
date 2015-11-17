@@ -16,12 +16,8 @@
 
 /**
  * This example shows how to batch events with the
- * SplunkLogger with all available settings.
- *
- * By default autoFlush is enabled.
- *
- * By disabling autoFlush, events will be queued
- * until flush() is called.
+ * SplunkLogger with all available settings:
+ * batchInterval, maxBatchCount, & maxBatchSize.
  */
 
 // Change to require("splunk-logging").Logger;
