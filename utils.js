@@ -260,15 +260,16 @@ utils.orByProp = function(prop) {
 };
 
 /**
- * Like <code>utisl.orByProp()</code> but for a boolean property.
+ * Like <code>utils.orByProp()</code> but for a falsey property.
  * The first argument after <code>prop</code> with that property
  * defined will be returned.
+ * Useful for booleans and numbers.
  *
  * @param {string} [prop] - property name for other arguments.
  * @returns {boolean}
  * @static
  */
-utils.orByBooleanProp = function(prop) {
+utils.orByFalseyProp = function(prop) {
     var ret = null;
     // Logic is reversed here, first value wins
     for (var i = arguments.length - 1; i > 0; i--) {
@@ -276,8 +277,7 @@ utils.orByBooleanProp = function(prop) {
             ret = arguments[i][prop];
         }
     }
-    // Convert whatever we have to a boolean
-    return !!ret;
+    return ret;
 };
 
  /**

@@ -141,7 +141,6 @@ describe("SplunkLogger", function() {
             assert.strictEqual("info", logger.config.level);
             assert.strictEqual(logger.levels.INFO, logger.config.level);
             assert.strictEqual(8088, logger.config.port);
-            assert.strictEqual(true, logger.config.autoFlush);
             assert.strictEqual(0, logger.config.maxRetries);
             assert.strictEqual(0, logger.config.batchInterval);
             assert.strictEqual(0, logger.config.maxBatchSize);
@@ -157,11 +156,10 @@ describe("SplunkLogger", function() {
             assert.strictEqual(expectedRO.strictSSL, logger.requestOptions.strictSSL);
             assert.strictEqual(Object.keys(expectedRO.headers).length, Object.keys(logger.requestOptions.headers).length);
         });
-        it("should set remaining defaults when setting config with token, autoFlush off, & level", function() {
+        it("should set remaining defaults when setting config with token, batching off, & level", function() {
             var config = {
                 token: "a-token-goes-here-usually",
-                level: "important",
-                autoFlush: false
+                level: "important"
             };
             var logger = new SplunkLogger(config);
 
@@ -172,7 +170,6 @@ describe("SplunkLogger", function() {
             assert.strictEqual("/services/collector/event/1.0", logger.config.path);
             assert.strictEqual("https", logger.config.protocol);
             assert.strictEqual("important", logger.config.level);
-            assert.strictEqual(false, logger.config.autoFlush);
             assert.strictEqual(8088, logger.config.port);
             assert.strictEqual(0, logger.config.maxRetries);
         });
@@ -233,6 +230,7 @@ describe("SplunkLogger", function() {
             assert.strictEqual(logger._timerDuration, 2);
             logger._disableTimer();
         });
+        // TODO: fix this test
         it("should disable the timer via _initializeConfig()", function() {
             var config = {
                 token: "a-token-goes-here-usually"
@@ -244,8 +242,8 @@ describe("SplunkLogger", function() {
             logger._enableTimer(2);
             assert.strictEqual(logger._timerDuration, 2);
 
-            logger.config.autoFlush = false;
             logger.config.batchInterval = 0;
+            logger.config.maxBatchCount = 0;
 
             logger._initializeConfig(logger.config);
             assert.ok(!logger._timerDuration);
@@ -263,11 +261,10 @@ describe("SplunkLogger", function() {
             assert.ok(!logger._timerDuration);
             assert.strictEqual(logger._timerDuration, old);
         });
-        it("should set a batch interval timer with autoFlush on, & batchInterval set", function() {
+        it("should set a batch interval timer with batching on, & batchInterval set", function() {
             var config = {
                 token: "a-token-goes-here-usually",
-                batchInterval: 100,
-                autoFlush: true
+                batchInterval: 100
             };
             var logger = new SplunkLogger(config);
 
@@ -280,15 +277,13 @@ describe("SplunkLogger", function() {
             assert.strictEqual("/services/collector/event/1.0", logger.config.path);
             assert.strictEqual("https", logger.config.protocol);
             assert.strictEqual("info", logger.config.level);
-            assert.strictEqual(true, logger.config.autoFlush);
             assert.strictEqual(100, logger.config.batchInterval);
             assert.strictEqual(8088, logger.config.port);
             assert.strictEqual(0, logger.config.maxRetries);
         });
-        it("should not set a batch interval timer with autoFlush on, & default batchInterval", function() {
+        it("should not set a batch interval timer with batching on, & default batchInterval", function() {
             var config = {
-                token: "a-token-goes-here-usually",
-                autoFlush: true
+                token: "a-token-goes-here-usually"
             };
             var logger = new SplunkLogger(config);
 
@@ -301,26 +296,9 @@ describe("SplunkLogger", function() {
             assert.strictEqual("/services/collector/event/1.0", logger.config.path);
             assert.strictEqual("https", logger.config.protocol);
             assert.strictEqual("info", logger.config.level);
-            assert.strictEqual(true, logger.config.autoFlush);
             assert.strictEqual(0, logger.config.batchInterval);
             assert.strictEqual(8088, logger.config.port);
             assert.strictEqual(0, logger.config.maxRetries);
-        });
-        it("should error trying set a batch interval timer with autoFlush off, & batchInterval set", function() {
-            var config = {
-                token: "a-token-goes-here-usually",
-                batchInterval: 100,
-                autoFlush: false
-            };
-
-            try {
-                var logger = new SplunkLogger(config);
-                assert.ok(!logger, "Expected an error.");
-            }
-            catch (err) {
-                assert.ok(err);
-                assert.strictEqual(err.message, "Autoflush is disabled, cannot configure batching settings.");
-            }
         });
         it("should error when maxBatchCount=NaN", function() {
             var config = {
@@ -536,7 +514,6 @@ describe("SplunkLogger", function() {
             assert.strictEqual("/services/collector/event/1.0", logger.config.path);
             assert.strictEqual("https", logger.config.protocol);
             assert.strictEqual("info", logger.config.level);
-            assert.strictEqual(true, logger.config.autoFlush);
             assert.strictEqual(8088, logger.config.port);
             assert.strictEqual(0, logger.config.maxRetries);
         });
@@ -554,7 +531,6 @@ describe("SplunkLogger", function() {
             assert.strictEqual("/services/collector/event/1.0", logger.config.path);
             assert.strictEqual("https", logger.config.protocol);
             assert.strictEqual("info", logger.config.level);
-            assert.strictEqual(true, logger.config.autoFlush);
             assert.strictEqual(8088, logger.config.port);
             assert.strictEqual(10, logger.config.maxRetries);
         });
@@ -989,42 +965,6 @@ describe("SplunkLogger", function() {
             assert.strictEqual(Logger.config.protocol, expected.protocol);
             assert.strictEqual(Logger.config.level, expected.level);
             assert.strictEqual(Logger.config.port, expected.port);
-        });
-        it("should set autoFlush property to true after initially false", function() {
-            Object.prototype.something = "ignore";
-            var config = {
-                token: "a-token-goes-here-usually",
-                url: "splunk.local",
-                autoFlush: false
-            };
-
-            var logger = new SplunkLogger(config);
-            var loggerConfig = logger.config;
-
-            assert.ok(loggerConfig);
-            assert.ok(!loggerConfig.hasOwnProperty("something"));
-            assert.strictEqual(config.token, loggerConfig.token);
-            assert.strictEqual("splunk-javascript-logging/0.8.0", loggerConfig.name);
-            assert.strictEqual("splunk.local", loggerConfig.host);
-            assert.strictEqual("/services/collector/event/1.0", loggerConfig.path);
-            assert.strictEqual("https", loggerConfig.protocol);
-            assert.strictEqual("info", loggerConfig.level);
-            assert.strictEqual(8088, loggerConfig.port);
-            assert.strictEqual(0, loggerConfig.maxRetries);
-            assert.strictEqual(false, loggerConfig.autoFlush);
-
-            config.autoFlush = true;
-            loggerConfig = logger._initializeConfig(config);
-
-            assert.strictEqual(config.token, loggerConfig.token);
-            assert.strictEqual("splunk-javascript-logging/0.8.0", loggerConfig.name);
-            assert.strictEqual("splunk.local", loggerConfig.host);
-            assert.strictEqual("/services/collector/event/1.0", loggerConfig.path);
-            assert.strictEqual("https", loggerConfig.protocol);
-            assert.strictEqual("info", loggerConfig.level);
-            assert.strictEqual(8088, loggerConfig.port);
-            assert.strictEqual(0, loggerConfig.maxRetries);
-            assert.strictEqual(true, loggerConfig.autoFlush);
         });
     });
 });

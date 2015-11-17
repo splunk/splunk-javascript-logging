@@ -59,8 +59,7 @@ function _defaultEventFormatter(message, severity) {
  * var config = {
  *     token: "your-token-here",
  *     name: "my application",
- *     host: "splunk.local",
- *     autoFlush: true
+ *     url: "https://splunk.local:8088"
  * };
  *
  * var logger = new SplunkLogger(config);
@@ -87,13 +86,12 @@ function _defaultEventFormatter(message, severity) {
  * the corresponding property is set on <code>config</code>.
  * @param {string} [config.level=info] - Logging level to use, will show up as the <code>severity</code> field of an event, see
  *  [SplunkLogger.levels]{@link SplunkLogger#levels} for common levels.
- * @param {bool} [config.autoFlush=true] - Send events immediately or not.
- * @param {number} [config.batchInterval=0] - If <code>config.autoFlush === true</code>, automatically flush events after this many milliseconds.
+ * @param {number} [config.batchInterval=0] - Automatically flush events after this many milliseconds.
  * When set to a non-positive value, events will be sent one by one. This setting is ignored when non-positive.
- * @param {number} [config.maxBatchSize=0] - If <code>config.autoFlush === true</code>, automatically flush events after the size of queued
+ * @param {number} [config.maxBatchSize=0] - Automatically flush events after the size of queued
  * events exceeds this many bytes. This setting is ignored when non-positive.
- * @param {number} [config.maxBatchCount=0] - If <code>config.autoFlush === true</code>, automatically flush events after this many
- * events have been queued. This setting is ignored when non-positive.
+ * @param {number} [config.maxBatchCount=1] - Automatically flush events after this many
+ * events have been queued. Defaults to flush immediately on sending an event. This setting is ignored when non-positive.
  * @constructor
  * @throws Will throw an error if the <code>config</code> parameter is malformed.
  */
@@ -142,11 +140,10 @@ var defaultConfig = {
     protocol: "https",
     port: 8088,
     level: SplunkLogger.prototype.levels.INFO,
-    autoFlush: true, // TODO: remove all refs to this property, !autoFlush = all batch settings === 0
     maxRetries: 0,
     batchInterval: 0,
     maxBatchSize: 0,
-    maxBatchCount: 0 // TODO: set to 1
+    maxBatchCount: 1
 };
 
 var defaultRequestOptions = {
@@ -266,40 +263,25 @@ SplunkLogger.prototype._initializeConfig = function(config) {
         ret.maxRetries = utils.orByProp("maxRetries", config, ret, defaultConfig);
         ret.maxRetries = utils.validateNonNegativeInt(ret.maxRetries, "Max retries");
 
-        ret.autoFlush = utils.orByBooleanProp("autoFlush", config, this.config, defaultConfig);
-
-        // If manual batching, don't complain about batch settings from defaultConfig
-        if (!ret.autoFlush) {
-            ret.maxBatchCount = utils.orByProp("maxBatchCount", config, ret) || 0;
-            ret.maxBatchSize = utils.orByProp("maxBatchSize", config, ret) || 0;
-            ret.batchInterval = utils.orByProp("batchInterval", config, ret) || 0;
-        }
-        else {
-            ret.maxBatchCount = utils.orByProp("maxBatchCount", config, ret, defaultConfig);
-            ret.maxBatchSize = utils.orByProp("maxBatchSize", config, ret, defaultConfig);
-            ret.batchInterval = utils.orByProp("batchInterval", config, ret, defaultConfig);
-        }
-
+        // Batching settings
+        ret.maxBatchCount = utils.orByFalseyProp("maxBatchCount", config, ret, defaultConfig);
         ret.maxBatchCount = utils.validateNonNegativeInt(ret.maxBatchCount, "Max batch count");
+        ret.maxBatchSize = utils.orByFalseyProp("maxBatchSize", config, ret, defaultConfig);
         ret.maxBatchSize = utils.validateNonNegativeInt(ret.maxBatchSize, "Max batch size");
+        ret.batchInterval = utils.orByFalseyProp("batchInterval", config, ret, defaultConfig);
         ret.batchInterval = utils.validateNonNegativeInt(ret.batchInterval, "Batch interval");
 
-        // Error if autoFlush is off and any batching settings are set
-        if (!ret.autoFlush && (ret.batchInterval || ret.maxBatchSize || ret.maxBatchCount)) {
-            throw new Error("Autoflush is disabled, cannot configure batching settings.");
-        }
-
         // Has the interval timer not started, and needs to be started?
-        var startTimer = !this._timerID && ret.autoFlush && ret.batchInterval > 0;
+        var startTimer = !this._timerID && ret.batchInterval > 0;
         // Has the interval timer already started, and the interval changed to a different duration?
-        var changeTimer = this._timerID && ret.autoFlush && this._timerDuration !== ret.batchInterval && ret.batchInterval > 0;
+        var changeTimer = this._timerID && this._timerDuration !== ret.batchInterval && ret.batchInterval > 0;
         
         // Upsert the timer
         if (startTimer || changeTimer) {
             this._enableTimer(ret.batchInterval);
         }
         // Disable timer - there is currently a timer, but config says we no longer need a timer
-        else if (this._timerID && (this._timerDuration < 0 || !ret.autoFlush)) {
+        else if (this._timerID && (ret.batchInterval <= 0 || this._timerDuration < 0)) {
             this._disableTimer();
         }
     }
@@ -509,7 +491,7 @@ SplunkLogger.prototype._sendEvents = function(context, callback) {
 };
  
 /**
- * Sends or queues data to be sent based on <code>this.config.autoFlush</code>.
+ * Sends or queues data to be sent based on batching settings.
  * Default behavior is to send immediately.
  *
  * @example
@@ -527,7 +509,7 @@ SplunkLogger.prototype._sendEvents = function(context, callback) {
  *         chickenCount: 500
  *     },
  *     severity: "info",
- *     {
+ *     metadata: {
  *         source: "chicken coop",
  *         sourcetype: "httpevent",
  *         index: "main",
@@ -535,7 +517,8 @@ SplunkLogger.prototype._sendEvents = function(context, callback) {
  *     }
  * }; 
  *
- * // The callback is only used if autoFlush is set to false.
+ * // The callback is only used if maxBatchCount=1, or
+ * // batching thresholds have been exceeded.
  * logger.send(payload, function(err, resp, body) {
  *     if (err) {
  *         console.log("error:", err);
@@ -568,8 +551,8 @@ SplunkLogger.prototype.send = function(context, callback) {
     var batchOverSize = this.eventsBatchSize > this.config.maxBatchSize && this.config.maxBatchSize > 0;
     var batchOverCount = this.serializedContextQueue.length >= this.config.maxBatchCount && this.config.maxBatchCount > 0;
 
-    // Only flush if not using manual batching, and if the queue is too large or has many events
-    if (this.config.autoFlush && (batchOverSize || batchOverCount)) {
+    // Only flush if the queue's byte size is too large, or has too many events
+    if (batchOverSize || batchOverCount) {
         this.flush(callback || function(){});
     }
 };

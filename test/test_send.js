@@ -156,11 +156,10 @@ describe("SplunkLogger _makeBody", function() {
     });
 });
 describe("SplunkLogger send (integration tests)", function() {
-    describe("using no middleware", function () {
+    describe("normal", function () {
         it("should error with bad token", function(done) {
             var config = {
-                token: "token-goes-here",
-                maxBatchCount: 1
+                token: "token-goes-here"
             };
 
             var logger = new SplunkLogger(config);
@@ -200,8 +199,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should send without callback", function(done) {
             var config = {
-                token: configurationFile.token,
-                maxBatchCount: 1
+                token: configurationFile.token
             };
 
             var logger = new SplunkLogger(config);
@@ -223,8 +221,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should succeed with valid token", function(done) {
             var config = {
-                token: configurationFile.token,
-                maxBatchCount: 1
+                token: configurationFile.token
             };
 
             var logger = new SplunkLogger(config);
@@ -246,8 +243,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should succeed with valid token, using custom time", function(done) {
             var config = {
-                token: configurationFile.token,
-                maxBatchCount: 1
+                token: configurationFile.token
             };
 
             var logger = new SplunkLogger(config);
@@ -273,8 +269,7 @@ describe("SplunkLogger send (integration tests)", function() {
         // TODO: test unsuccessfully sending to another index with specific index token settings
         it("should succeed with valid token, sending to a different index", function(done) {
             var config = {
-                token: configurationFile.token,
-                maxBatchCount: 1
+                token: configurationFile.token
             };
 
             var logger = new SplunkLogger(config);
@@ -303,8 +298,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should succeed with valid token, changing source", function(done) {
             var config = {
-                token: configurationFile.token,
-                maxBatchCount: 1
+                token: configurationFile.token
             };
 
             var logger = new SplunkLogger(config);
@@ -329,8 +323,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should succeed with valid token, changing sourcetype", function(done) {
             var config = {
-                token: configurationFile.token,
-                maxBatchCount: 1
+                token: configurationFile.token
             };
 
             var logger = new SplunkLogger(config);
@@ -355,8 +348,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should succeed with valid token, changing host", function(done) {
             var config = {
-                token: configurationFile.token,
-                maxBatchCount: 1
+                token: configurationFile.token
             };
 
             var logger = new SplunkLogger(config);
@@ -381,8 +373,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should succeed with valid token", function(done) {
             var config = {
-                token: configurationFile.token,
-                maxBatchCount: 1
+                token: configurationFile.token
             };
 
             var logger = new SplunkLogger(config);
@@ -404,8 +395,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should succeed without token passed through context", function(done) {
             var config = {
-                token: configurationFile.token,
-                maxBatchCount: 1
+                token: configurationFile.token
             };
             var logger = new SplunkLogger(config);
 
@@ -430,8 +420,7 @@ describe("SplunkLogger send (integration tests)", function() {
         it("should fail on wrong protocol (assumes HTTP is invalid)", function(done) {
             var config = {
                 token: configurationFile.token,
-                protocol: "http",
-                maxBatchCount: 1
+                protocol: "http"
             };
 
             var logger = new SplunkLogger(config);
@@ -472,8 +461,7 @@ describe("SplunkLogger send (integration tests)", function() {
         it("should fail on wrong Splunk server", function(done) {
             var config = {
                 token: configurationFile.token,
-                url: "https://something-so-invalid-that-it-should-never-exist.xyz:12345/junk",
-                maxBatchCount: 1
+                url: "https://something-so-invalid-that-it-should-never-exist.xyz:12345/junk"
             };
 
             var logger = new SplunkLogger(config);
@@ -514,8 +502,7 @@ describe("SplunkLogger send (integration tests)", function() {
         it("should succeed with valid token, using non-default url", function(done) {
             var config = {
                 token: configurationFile.token,
-                url: "https://localhost:8088/services/collector/event/1.0",
-                maxBatchCount: 1
+                url: "https://localhost:8088/services/collector/event/1.0"
             };
 
             var logger = new SplunkLogger(config);
@@ -536,8 +523,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should error with valid token, using strict SSL", function(done) {
             var config = {
-                token: configurationFile.token,
-                maxBatchCount: 1
+                token: configurationFile.token
             };
 
             var logger = new SplunkLogger(config);
@@ -579,8 +565,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should send 2 events with valid token, w/o callbacks", function(done) {
             var config = {
-                token: configurationFile.token,
-                maxBatchCount: 1
+                token: configurationFile.token
             };
 
             var logger = new SplunkLogger(config);
@@ -613,11 +598,10 @@ describe("SplunkLogger send (integration tests)", function() {
             }, 1000);
         });
     });
-    describe("without autoFlush", function () {
+    describe("default batching settings", function () {
         it("should get no data response when flushing empty batch with valid token", function(done) {
             var config = {
-                token: configurationFile.token,
-                autoFlush: false
+                token: configurationFile.token
             };
 
             var logger = new SplunkLogger(config);
@@ -648,8 +632,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should be noop when flushing empty batch, without callback, with valid token", function(done) {
             var config = {
-                token: configurationFile.token,
-                autoFlush: false
+                token: configurationFile.token
             };
 
             var logger = new SplunkLogger(config);
@@ -672,7 +655,7 @@ describe("SplunkLogger send (integration tests)", function() {
         it("should flush a batch of 1 event with valid token", function(done) {
             var config = {
                 token: configurationFile.token,
-                autoFlush: false
+                maxBatchCount: 0 // Use manual batching
             };
 
             var logger = new SplunkLogger(config);
@@ -700,7 +683,7 @@ describe("SplunkLogger send (integration tests)", function() {
         it("should flush a batch of 2 events with valid token", function(done) {
             var config = {
                 token: configurationFile.token,
-                autoFlush: false
+                maxBatchCount: 0
             };
 
             var logger = new SplunkLogger(config);
@@ -731,8 +714,7 @@ describe("SplunkLogger send (integration tests)", function() {
         it("should retry exactly 0 times (send once only)", function(done) {
             var config = {
                 token: configurationFile.token,
-                maxRetries: 0,
-                maxBatchCount: 1
+                maxRetries: 0
             };
             var logger = new SplunkLogger(config);
 
@@ -1174,7 +1156,6 @@ describe("SplunkLogger send (integration tests)", function() {
         it("should not make a POST request if contextQueue is always empty", function(done) {
             var config = {
                 token: configurationFile.token,
-                autoFlush: true,
                 batchInterval: 100
             };
             var logger = new SplunkLogger(config);
@@ -1207,8 +1188,8 @@ describe("SplunkLogger send (integration tests)", function() {
         it("should only make 1 POST request for 1 event", function(done) {
             var config = {
                 token: configurationFile.token,
-                autoFlush: true,
-                batchInterval: 100
+                batchInterval: 100,
+                maxBatchCount: 10
             };
             var logger = new SplunkLogger(config);
 
@@ -1245,8 +1226,8 @@ describe("SplunkLogger send (integration tests)", function() {
         it("should only make 1 POST request for 2 events", function(done) {
             var config = {
                 token: configurationFile.token,
-                autoFlush: true,
-                batchInterval: 100
+                batchInterval: 100,
+                maxBatchCount: 10
             };
             var logger = new SplunkLogger(config);
 
@@ -1286,7 +1267,6 @@ describe("SplunkLogger send (integration tests)", function() {
         it("should only make 1 POST request for 5 events", function(done) {
             var config = {
                 token: configurationFile.token,
-                autoFlush: true,
                 batchInterval: 200,
                 maxBatchSize: 5000,
                 maxBatchCount: 10
@@ -1329,8 +1309,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should error when trying to set batchInterval to a negative value after logger creation", function() {
             var config = {
-                token: configurationFile.token,
-                autoFlush: false
+                token: configurationFile.token
             };
             var logger = new SplunkLogger(config);
 
@@ -1343,10 +1322,10 @@ describe("SplunkLogger send (integration tests)", function() {
                 assert.strictEqual(err.message, "Batch interval must be a positive number, found: -1");
             }
         });
-        it("should flush a stale event after enabling autoFlush and batchInterval", function(done) {
+        it("should flush a stale event after enabling batching and batchInterval", function(done) {
             var config = {
                 token: configurationFile.token,
-                autoFlush: false
+                maxBatchCount: 10
             };
             var logger = new SplunkLogger(config);
 
@@ -1370,7 +1349,6 @@ describe("SplunkLogger send (integration tests)", function() {
             logger.send(payload);
             assert.strictEqual(logger._timerDuration, 0);
             
-            logger.config.autoFlush = true;
             logger.config.batchInterval = 100;
             logger._initializeConfig(logger.config);
 
@@ -1392,7 +1370,6 @@ describe("SplunkLogger send (integration tests)", function() {
         it("should flush an event with batchInterval, then set batchInterval=0 and maxBatchCount=3 for manual batching", function(done) {
             var config = {
                 token: configurationFile.token,
-                autoFlush: true,
                 batchInterval: 100,
                 maxBatchSize: 100000,
                 maxBatchCount: 3
@@ -1448,8 +1425,8 @@ describe("SplunkLogger send (integration tests)", function() {
         it("should flush an event with batchInterval=100", function(done) {
             var config = {
                 token: configurationFile.token,
-                autoFlush: true,
-                batchInterval: 100
+                batchInterval: 100,
+                maxBatchCount: 10
             };
             var logger = new SplunkLogger(config);
 
@@ -1500,9 +1477,7 @@ describe("SplunkLogger send (integration tests)", function() {
     describe("using max batch size", function() {
         it("should flush first event immediately with maxBatchSize=1", function(done) {
             var config = {
-                token: configurationFile.token,
-                autoFlush: true,
-                maxBatchSize: 1
+                token: configurationFile.token
             };
             var logger = new SplunkLogger(config);
 
@@ -1535,7 +1510,7 @@ describe("SplunkLogger send (integration tests)", function() {
         it("should flush first 2 events after maxBatchSize>100", function(done) {
             var config = {
                 token: configurationFile.token,
-                autoFlush: true,
+                maxBatchCount: 10,
                 maxBatchSize: 100
             };
             var logger = new SplunkLogger(config);
@@ -1585,9 +1560,9 @@ describe("SplunkLogger send (integration tests)", function() {
         it("should flush first event after 200ms, with maxBatchSize=200", function(done) {
             var config = {
                 token: configurationFile.token,
-                autoFlush: true,
                 maxBatchSize: 200,
-                batchInterval: 200
+                batchInterval: 200,
+                maxBatchCount: 10
             };
             var logger = new SplunkLogger(config);
 
@@ -1630,9 +1605,9 @@ describe("SplunkLogger send (integration tests)", function() {
         it("should flush first event before 200ms, with maxBatchSize=1", function(done) {
             var config = {
                 token: configurationFile.token,
-                autoFlush: true,
                 maxBatchSize: 1,
-                batchInterval: 200
+                batchInterval: 200,
+                maxBatchCount: 10
             };
             var logger = new SplunkLogger(config);
 
@@ -1796,7 +1771,6 @@ describe("SplunkLogger send (integration tests)", function() {
         it("should flush first event after 200ms, with maxBatchCount=10", function(done) {
             var config = {
                 token: configurationFile.token,
-                autoFlush: true,
                 maxBatchCount: 10,
                 batchInterval: 200
             };
@@ -1863,7 +1837,6 @@ describe("SplunkLogger send (integration tests)", function() {
 
                 assert.ok(opts);
                 assert.ok(opts.hasOwnProperty("body"));
-                console.log(typeof opts.body);
                 var body = JSON.parse(opts.body);
                 assert.ok(body.hasOwnProperty("event"));
                 assert.ok(body.hasOwnProperty("time"));

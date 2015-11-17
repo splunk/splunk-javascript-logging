@@ -572,7 +572,7 @@ describe("Utils", function() {
             assert.strictEqual(utils.orByProp("y", null, a, b), "y value");
         });
     });
-    describe("orByBooleanProp", function() {
+    describe("orByFalseyProp", function() {
         it("should pick first value of 2", function() {
             var a = {
                 x: false
@@ -581,8 +581,8 @@ describe("Utils", function() {
                 y: true
             };
 
-            assert.strictEqual(utils.orByBooleanProp("x", a, b), false);
-            assert.strictEqual(utils.orByBooleanProp("y", b, a), true);
+            assert.strictEqual(utils.orByFalseyProp("x", a, b), false);
+            assert.strictEqual(utils.orByFalseyProp("y", b, a), true);
         });
         it("should pick second value of 2", function() {
             var a = {
@@ -592,8 +592,8 @@ describe("Utils", function() {
                 y: true
             };
 
-            assert.strictEqual(utils.orByBooleanProp("x", b, a), false);
-            assert.strictEqual(utils.orByBooleanProp("y", a, b), true);
+            assert.strictEqual(utils.orByFalseyProp("x", b, a), false);
+            assert.strictEqual(utils.orByFalseyProp("y", a, b), true);
         });
     });
     describe("validateNonNegativeInt", function() {
