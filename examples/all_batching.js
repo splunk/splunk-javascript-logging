@@ -15,7 +15,9 @@
  */
 
 /**
- * This example shows how to use middleware with the SplunkLogger.
+ * This example shows how to batch events with the
+ * SplunkLogger with all available settings:
+ * batchInterval, maxBatchCount, & maxBatchSize.
  */
 
 // Change to require("splunk-logging").Logger;
@@ -23,20 +25,17 @@ var SplunkLogger = require("../index").Logger;
 
 /**
  * Only the token property is required.
- * Defaults are listed explicitly.
- *
- * Alternatively, specify config.url like so:
- *
- * "https://localhost:8088/services/collector/event/1.0"
+ * 
+ * Here, batchInterval is set to flush every 1 second, when
+ * 10 events are queued, or when the size of queued events totals
+ * more than 1kb.
  */
 var config = {
-    token: "your-token-here",
-    host: "localhost",
-    path: "/services/collector/event/1.0",
-    protocol: "https",
-    port: 8088,
-    level: "info",
-    autoFlush: true
+    token: "your-token",
+    url: "https://localhost:8088",
+    batchInterval: 1000,
+    maxBatchCount: 10,
+    maxBatchSize: 1024 // 1kb
 };
 
 // Create a new logger
@@ -46,22 +45,6 @@ Logger.error = function(err, context) {
     // Handle errors here
     console.log("error", err, "context", context);
 };
-
-// Add a middleware function
-Logger.use(function(context, next) {
-    console.log("Message before middleware", context.message);
-
-    // Add a property to the message if it's an object
-    if (typeof context.message === "object") {
-        context.message.nestedValue = {
-            b00l: true,
-            another: "string"
-        };
-    }
-
-    console.log("Message after middleware", context.message);
-    next(null, context);
-});
 
 // Define the payload to send to Splunk's Event Collector
 var payload = {
@@ -75,14 +58,38 @@ var payload = {
         source: "chicken coop",
         sourcetype: "httpevent",
         index: "main",
-        host: "farm.local"
+        host: "farm.local",
     },
     // Severity is also optional
     severity: "info"
 };
 
-console.log("Sending payload", payload);
-Logger.send(payload, function(err, resp, body) {
-    // If successful, body will be { text: 'Success', code: 0 }
-    console.log("Response from Splunk", body);
-});
+console.log("Queuing payload", payload);
+// Don't need a callback here
+Logger.send(payload);
+
+var payload2 = {
+    message: {
+        temperature: "75F",
+        chickenCount: 600,
+        note: "New chickens have arrived"
+    },
+    metadata: payload.metadata
+};
+
+console.log("Queuing second payload", payload2);
+// Don't need a callback here
+Logger.send(payload2);
+
+/**
+ * Since we've configured batching, we don't need
+ * to do anything at this point. Events will
+ * will be sent to Splunk automatically based
+ * on the batching settings above.
+ */
+
+// Kill the process
+setTimeout(function() {
+    console.log("Events should be in Splunk! Exiting...");
+    process.exit();
+}, 2000);
