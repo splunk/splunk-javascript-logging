@@ -79,6 +79,7 @@ utils.toArray = function(iterable) {
     return Array.prototype.slice.call(iterable);
 };
 
+// TODO: this isn't used anymore, remove it
 /**
  * Run async function in a chain, like {@link https://github.com/caolan/async#waterfall|Async.waterfall}.
  *

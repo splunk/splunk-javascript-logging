@@ -1,6 +1,6 @@
 # Splunk Logging Library for JavaScript (beta)
 
-#### Version 0.8.0
+#### Version 0.9.0
 
 This project provides a simple interface for logging to Splunk's Event Collector.
 
@@ -18,9 +18,10 @@ If you already have Node.js and npm installed, simply run: `npm install --save s
 
 See the `examples` folder for more examples:
 
+* `all_batching.js`: shows how to configure a logger with the 3 batching settings: `batchInterval`, `maxBatchCount`, & `maxBatchSize`.
+* `custom_format.js`: shows how to configure a logger so log message to Splunk using a custom format.
 * `basic.js`: shows how to configure a logger and send a log message to Splunk.
-* `batching.js`: shows how to queue log messages, and send them in batches.
-* `middleware.js`: shows how to add an express-like middleware function to be called before sending log messages to Splunk.
+* `manual_batching.js`: shows how to queue log messages, and send them in batches by manually calling `flush()`.
 * `retry.js`: shows how to configure retries on errors.
 
 ### Basic example
