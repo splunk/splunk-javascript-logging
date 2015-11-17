@@ -4,7 +4,7 @@
 
 ### New Features & APIs
 
-* Added to configure automated batching with 3 settings: `batchInterval`, `maxBatchCount`, & `maxBatchSize`.
+* Added the ability to configure automated batching with 3 settings: `batchInterval`, `maxBatchCount`, & `maxBatchSize`.
 * Added the ability to retry sending to Splunk in the case of network errors with the `maxRetries` configuration setting.
 * Added the ability to configure a custom Splunk event format by overriding `eventFormatter(message, severity)`.
 
