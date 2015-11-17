@@ -31,7 +31,7 @@ var SplunkLogger = require("../index").Logger;
  * more than 1kb.
  */
 var config = {
-    token: "your-token",
+    token: "your-token-here",
     url: "https://localhost:8088",
     batchInterval: 1000,
     maxBatchCount: 10,
