@@ -212,11 +212,11 @@ describe("SplunkLogger send (integration tests)", function() {
                 message: data
             };
 
-            assert.strictEqual(logger.contextQueue.length, 0);
+            assert.strictEqual(logger.serializedContextQueue.length, 0);
             assert.strictEqual(logger.eventsBatchSize, 0);
             logger.send(context);
             setTimeout(function() {
-                assert.strictEqual(logger.contextQueue.length, 0);
+                assert.strictEqual(logger.serializedContextQueue.length, 0);
                 assert.strictEqual(logger.eventsBatchSize, 0);
                 done();
             }, 500);
@@ -606,7 +606,7 @@ describe("SplunkLogger send (integration tests)", function() {
             logger.send(context2);
 
             setTimeout(function() {
-                assert.strictEqual(logger.contextQueue.length, 0);
+                assert.strictEqual(logger.serializedContextQueue.length, 0);
                 assert.strictEqual(logger.eventsBatchSize, 0);
                 assert.strictEqual(sent, 2);
                 done();
@@ -632,7 +632,7 @@ describe("SplunkLogger send (integration tests)", function() {
                 assert.ok(errContext);
             };
 
-            assert.strictEqual(logger.contextQueue.length, 0);
+            assert.strictEqual(logger.serializedContextQueue.length, 0);
             assert.strictEqual(logger.eventsBatchSize, 0);
             logger.flush(function(err, resp, body) {
                 assert.ok(!err);
@@ -641,7 +641,7 @@ describe("SplunkLogger send (integration tests)", function() {
                 assert.strictEqual(resp.body, body);
                 assert.strictEqual(body.text, noDataBody.text);
                 assert.strictEqual(body.code, noDataBody.code);
-                assert.strictEqual(logger.contextQueue.length, 0);
+                assert.strictEqual(logger.serializedContextQueue.length, 0);
                 assert.strictEqual(logger.eventsBatchSize, 0);
                 done();
             });
@@ -663,10 +663,10 @@ describe("SplunkLogger send (integration tests)", function() {
             };
 
             // Nothing should be sent if queue is empty
-            assert.strictEqual(logger.contextQueue.length, 0);
+            assert.strictEqual(logger.serializedContextQueue.length, 0);
             assert.strictEqual(logger.eventsBatchSize, 0);
             logger.flush();
-            assert.strictEqual(logger.contextQueue.length, 0);
+            assert.strictEqual(logger.serializedContextQueue.length, 0);
             assert.strictEqual(logger.eventsBatchSize, 0);
         });
         it("should flush a batch of 1 event with valid token", function(done) {
@@ -684,7 +684,7 @@ describe("SplunkLogger send (integration tests)", function() {
         
             logger.send(context);
 
-            assert.strictEqual(logger.contextQueue.length, 1);
+            assert.strictEqual(logger.serializedContextQueue.length, 1);
             assert.ok(logger.eventsBatchSize > 50);
             logger.flush(function(err, resp, body) {
                 assert.ok(!err);
@@ -692,7 +692,7 @@ describe("SplunkLogger send (integration tests)", function() {
                 assert.strictEqual(resp.body, body);
                 assert.strictEqual(body.text, successBody.text);
                 assert.strictEqual(body.code, successBody.code);
-                assert.strictEqual(logger.contextQueue.length, 0);
+                assert.strictEqual(logger.serializedContextQueue.length, 0);
                 assert.strictEqual(logger.eventsBatchSize, 0);
                 done();
             });
@@ -713,7 +713,7 @@ describe("SplunkLogger send (integration tests)", function() {
             logger.send(context);
             logger.send(context);
 
-            assert.strictEqual(logger.contextQueue.length, 2);
+            assert.strictEqual(logger.serializedContextQueue.length, 2);
             assert.ok(logger.eventsBatchSize > 100);
             logger.flush(function(err, resp, body) {
                 assert.ok(!err);
@@ -721,7 +721,7 @@ describe("SplunkLogger send (integration tests)", function() {
                 assert.strictEqual(resp.body, body);
                 assert.strictEqual(body.text, successBody.text);
                 assert.strictEqual(body.code, successBody.code);
-                assert.strictEqual(logger.contextQueue.length, 0);
+                assert.strictEqual(logger.serializedContextQueue.length, 0);
                 assert.strictEqual(logger.eventsBatchSize, 0);
                 done();
             });
@@ -1196,7 +1196,7 @@ describe("SplunkLogger send (integration tests)", function() {
             setTimeout(function() {
                 assert.strictEqual(logger._timerDuration, 100);
                 assert.strictEqual(posts, 0);
-                assert.strictEqual(logger.contextQueue.length, 0);
+                assert.strictEqual(logger.serializedContextQueue.length, 0);
                 assert.strictEqual(logger.eventsBatchSize, 0);
 
                 // Clean up the timer
@@ -1234,7 +1234,7 @@ describe("SplunkLogger send (integration tests)", function() {
             setTimeout(function() {
                 assert.strictEqual(logger._timerDuration, 100);
                 assert.strictEqual(posts, 1);
-                assert.strictEqual(logger.contextQueue.length, 0);
+                assert.strictEqual(logger.serializedContextQueue.length, 0);
                 assert.strictEqual(logger.eventsBatchSize, 0);
 
                 // Clean up the timer
@@ -1276,7 +1276,7 @@ describe("SplunkLogger send (integration tests)", function() {
             setTimeout(function() {
                 assert.strictEqual(logger._timerDuration, 100);
                 assert.strictEqual(posts, 1);
-                assert.strictEqual(logger.contextQueue.length, 0);
+                assert.strictEqual(logger.serializedContextQueue.length, 0);
 
                 // Clean up the timer
                 logger._disableTimer();
@@ -1319,7 +1319,7 @@ describe("SplunkLogger send (integration tests)", function() {
             setTimeout(function() {
                 assert.strictEqual(logger._timerDuration, 200);
                 assert.strictEqual(posts, 1);
-                assert.strictEqual(logger.contextQueue.length, 0);
+                assert.strictEqual(logger.serializedContextQueue.length, 0);
                 assert.strictEqual(logger.eventsBatchSize, 0);
 
                 // Clean up the timer
@@ -1381,7 +1381,7 @@ describe("SplunkLogger send (integration tests)", function() {
 
             setTimeout(function() {
                 assert.strictEqual(posts, 1);
-                assert.strictEqual(logger.contextQueue.length, 0);
+                assert.strictEqual(logger.serializedContextQueue.length, 0);
                 assert.strictEqual(logger.eventsBatchSize, 0);
 
                 // Clean up the timer
@@ -1428,7 +1428,7 @@ describe("SplunkLogger send (integration tests)", function() {
                 logger.send(payload2);
                 logger.send(payload2);
 
-                assert.strictEqual(logger.contextQueue.length, 2);
+                assert.strictEqual(logger.serializedContextQueue.length, 2);
                 assert.ok(logger.eventsBatchSize > 150);
                 logger.send(payload2); // This should trigger a flush
                 run = true;
@@ -1437,7 +1437,7 @@ describe("SplunkLogger send (integration tests)", function() {
             setTimeout(function() {
                 assert.ok(run);
                 assert.strictEqual(posts, 2);
-                assert.strictEqual(logger.contextQueue.length, 0);
+                assert.strictEqual(logger.serializedContextQueue.length, 0);
                 assert.strictEqual(logger.eventsBatchSize, 0);
 
                 // Clean up the timer
@@ -1479,7 +1479,7 @@ describe("SplunkLogger send (integration tests)", function() {
                 };
                 logger.send(payload2);
 
-                assert.strictEqual(logger.contextQueue.length, 1);
+                assert.strictEqual(logger.serializedContextQueue.length, 1);
                 assert.ok(logger.eventsBatchSize > 50);
                 run = true;
             }, 150);
@@ -1488,7 +1488,7 @@ describe("SplunkLogger send (integration tests)", function() {
             setTimeout(function() {
                 assert.ok(run);
                 assert.strictEqual(posts, 2);
-                assert.strictEqual(logger.contextQueue.length, 0);
+                assert.strictEqual(logger.serializedContextQueue.length, 0);
                 assert.strictEqual(logger.eventsBatchSize, 0);
 
                 // Clean up the timer
@@ -1516,7 +1516,7 @@ describe("SplunkLogger send (integration tests)", function() {
 
                     assert.ok(!logger._timerID);
                     assert.strictEqual(posts, 1);
-                    assert.strictEqual(logger.contextQueue.length, 0);
+                    assert.strictEqual(logger.serializedContextQueue.length, 0);
                     assert.strictEqual(logger.eventsBatchSize, 0);
 
                     assert.ok(!err);
@@ -1550,7 +1550,7 @@ describe("SplunkLogger send (integration tests)", function() {
 
                     assert.ok(!logger._timerID);
                     assert.strictEqual(posts, 1);
-                    assert.strictEqual(logger.contextQueue.length, 0);
+                    assert.strictEqual(logger.serializedContextQueue.length, 0);
                     assert.strictEqual(logger.eventsBatchSize, 0);
 
                     assert.ok(!err);
@@ -1569,7 +1569,7 @@ describe("SplunkLogger send (integration tests)", function() {
             setTimeout(function() {
                 assert.ok(!logger._timerID);
                 assert.strictEqual(posts, 0);
-                assert.strictEqual(logger.contextQueue.length, 1);
+                assert.strictEqual(logger.serializedContextQueue.length, 1);
                 assert.ok(logger.eventsBatchSize > 50);
 
                 logger.send(payload);
@@ -1578,7 +1578,7 @@ describe("SplunkLogger send (integration tests)", function() {
             setTimeout(function() {
                 assert.ok(!logger._timerID);
                 assert.strictEqual(posts, 1);
-                assert.strictEqual(logger.contextQueue.length, 0);
+                assert.strictEqual(logger.serializedContextQueue.length, 0);
                 assert.strictEqual(logger.eventsBatchSize, 0);
             }, 400);
         });
@@ -1612,7 +1612,7 @@ describe("SplunkLogger send (integration tests)", function() {
 
             // Make sure the event wasn't flushed yet
             setTimeout(function() {
-                assert.strictEqual(logger.contextQueue.length, 1);
+                assert.strictEqual(logger.serializedContextQueue.length, 1);
                 assert.ok(logger.eventsBatchSize > 50);
             }, 150);
 
@@ -1622,7 +1622,7 @@ describe("SplunkLogger send (integration tests)", function() {
                 logger._disableTimer();
 
                 assert.strictEqual(posts, 1);
-                assert.strictEqual(logger.contextQueue.length, 0);
+                assert.strictEqual(logger.serializedContextQueue.length, 0);
                 assert.strictEqual(logger.eventsBatchSize, 0);
                 done();
             }, 250);
@@ -1657,7 +1657,7 @@ describe("SplunkLogger send (integration tests)", function() {
 
             // Event should be sent before the interval timer runs the first time
             setTimeout(function() {
-                assert.strictEqual(logger.contextQueue.length, 0);
+                assert.strictEqual(logger.serializedContextQueue.length, 0);
                 assert.strictEqual(posts, 1);
             }, 150);
 
@@ -1667,7 +1667,7 @@ describe("SplunkLogger send (integration tests)", function() {
                 logger._disableTimer();
 
                 assert.strictEqual(posts, 1);
-                assert.strictEqual(logger.contextQueue.length, 0);
+                assert.strictEqual(logger.serializedContextQueue.length, 0);
                 done();
             }, 250);
         });
@@ -1691,7 +1691,7 @@ describe("SplunkLogger send (integration tests)", function() {
 
                     assert.ok(!logger._timerID);
                     assert.strictEqual(posts, 1);
-                    assert.strictEqual(logger.contextQueue.length, 0);
+                    assert.strictEqual(logger.serializedContextQueue.length, 0);
                     assert.strictEqual(logger.eventsBatchSize, 0);
 
                     assert.ok(!err);
@@ -1737,7 +1737,7 @@ describe("SplunkLogger send (integration tests)", function() {
             setTimeout(function() {
                 assert.ok(!logger._timerID);
                 assert.strictEqual(posts, 0);
-                assert.strictEqual(logger.contextQueue.length, 1);
+                assert.strictEqual(logger.serializedContextQueue.length, 1);
                 assert.ok(logger.eventsBatchSize > 50);
 
                 done();
@@ -1761,7 +1761,7 @@ describe("SplunkLogger send (integration tests)", function() {
 
                     assert.ok(!logger._timerID);
                     assert.strictEqual(posts, 1);
-                    assert.strictEqual(logger.contextQueue.length, 0);
+                    assert.strictEqual(logger.serializedContextQueue.length, 0);
                     assert.strictEqual(logger.eventsBatchSize, 0);
 
                     assert.ok(!err);
@@ -1780,7 +1780,7 @@ describe("SplunkLogger send (integration tests)", function() {
             setTimeout(function() {
                 assert.ok(!logger._timerID);
                 assert.strictEqual(posts, 0);
-                assert.strictEqual(logger.contextQueue.length, 1);
+                assert.strictEqual(logger.serializedContextQueue.length, 1);
                 assert.ok(logger.eventsBatchSize > 50);
 
                 logger.send(payload);
@@ -1789,7 +1789,7 @@ describe("SplunkLogger send (integration tests)", function() {
             setTimeout(function() {
                 assert.ok(!logger._timerID);
                 assert.strictEqual(posts, 1);
-                assert.strictEqual(logger.contextQueue.length, 0);
+                assert.strictEqual(logger.serializedContextQueue.length, 0);
                 assert.strictEqual(logger.eventsBatchSize, 0);
             }, 400);
         });
@@ -1823,7 +1823,7 @@ describe("SplunkLogger send (integration tests)", function() {
 
             // Make sure the event wasn't flushed yet
             setTimeout(function() {
-                assert.strictEqual(logger.contextQueue.length, 1);
+                assert.strictEqual(logger.serializedContextQueue.length, 1);
                 assert.ok(logger.eventsBatchSize > 50);
             }, 150);
 
@@ -1833,7 +1833,7 @@ describe("SplunkLogger send (integration tests)", function() {
                 logger._disableTimer();
 
                 assert.strictEqual(posts, 1);
-                assert.strictEqual(logger.contextQueue.length, 0);
+                assert.strictEqual(logger.serializedContextQueue.length, 0);
                 assert.strictEqual(logger.eventsBatchSize, 0);
                 done();
             }, 300);

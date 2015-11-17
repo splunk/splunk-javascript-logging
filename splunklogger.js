@@ -68,7 +68,7 @@ function _defaultEventFormatter(message, severity) {
  * @property {object} config - Configuration settings for this <code>SplunkLogger</code> instance.
  * @param {object} requestOptions - Options to pass to <code>{@link https://github.com/request/request#requestpost|request.post()}</code>.
  * See the {@link http://github.com/request/request|request documentation} for all available options.
- * @property {object[]} contextQueue - Queue of <code>context</code> objects to be sent to Splunk.
+ * @property {object[]} serializedContextQueue - Queue of serialized <code>context</code> objects to be sent to Splunk.
  * @property {function} eventFormatter - Formats events, returning an event as a string, <code>function(message, severity)</code>.
  * Can be overwritten, the default event formatter will display event and severity as properties in a JSON object.
  * @property {function} error - A callback function for errors: <code>function(err, context)</code>.
@@ -102,7 +102,7 @@ var SplunkLogger = function(config) {
     this._timerDuration = 0;
     this.config = this._initializeConfig(config);
     this.requestOptions = this._initializeRequestOptions();
-    this.contextQueue = [];
+    this.serializedContextQueue = [];
     this.eventsBatchSize = 0;
     this.eventFormatter = _defaultEventFormatter;
     this.error = _err;
@@ -142,11 +142,11 @@ var defaultConfig = {
     protocol: "https",
     port: 8088,
     level: SplunkLogger.prototype.levels.INFO,
-    autoFlush: true,
+    autoFlush: true, // TODO: remove all refs to this property, !autoFlush = all batch settings === 0
     maxRetries: 0,
     batchInterval: 0,
     maxBatchSize: 0,
-    maxBatchCount: 0
+    maxBatchCount: 0 // TODO: set to 1
 };
 
 var defaultRequestOptions = {
@@ -168,9 +168,10 @@ SplunkLogger.prototype._disableTimer = function() {
     }
 };
 
+// TODO: update doc
 /**
  * Configures an interval timer to flush any events in
- * <code>this.contextQueue</code> at the specified interval.
+ * <code>this.serializedContextQueue</code> at the specified interval.
  *
  * param {Number} interval - The batch interval in milliseconds.
  * @private
@@ -192,7 +193,7 @@ SplunkLogger.prototype._enableTimer = function(interval) {
 
     var that = this;
     this._timerID = setInterval(function() {
-        if (that.contextQueue.length > 0) {
+        if (that.serializedContextQueue.length > 0) {
             that.flush();
         }
     }, interval);
@@ -560,20 +561,21 @@ SplunkLogger.prototype.send = function(context, callback) {
     context = this._initializeContext(context);
     
     // Store the context, and its estimated length
-    this.contextQueue.push(context);
-    this.eventsBatchSize += Buffer.byteLength(JSON.stringify(this._makeBody(context)), "utf8");
+    var currentEvent = JSON.stringify(this._makeBody(context));
+    this.serializedContextQueue.push(currentEvent);
+    this.eventsBatchSize += Buffer.byteLength(currentEvent, "utf8");
 
     var batchOverSize = this.eventsBatchSize > this.config.maxBatchSize && this.config.maxBatchSize > 0;
-    var batchOverCount = this.contextQueue.length >= this.config.maxBatchCount && this.config.maxBatchCount > 0;
+    var batchOverCount = this.serializedContextQueue.length >= this.config.maxBatchCount && this.config.maxBatchCount > 0;
 
-    // Only flush if not using manual batching, and if the contextQueue is too large or has many events
+    // Only flush if not using manual batching, and if the queue is too large or has many events
     if (this.config.autoFlush && (batchOverSize || batchOverCount)) {
         this.flush(callback || function(){});
     }
 };
 
 /**
- * Manually send all events in <code>this.contextQueue</code> to Splunk.
+ * Manually send all events in <code>this.serializedContextQueue</code> to Splunk.
  *
  * @param {function} [callback] - A callback function: <code>function(err, response, body)</code>.
  * @public
@@ -581,17 +583,17 @@ SplunkLogger.prototype.send = function(context, callback) {
 SplunkLogger.prototype.flush = function(callback) {
     callback = callback || function(){};
 
-    var context = {};
-
     // Empty the queue, reset the eventsBatchSize
-    var queue = this.contextQueue;
-    this.contextQueue = [];
+    var queue = this.serializedContextQueue;
+    this.serializedContextQueue = [];
     this.eventsBatchSize = 0;
-    var data = "";
-    for (var i = 0; i < queue.length; i++) {
-        data += JSON.stringify(this._makeBody(queue[i]));
-    }
-    context.message = data;
+
+    // Send all queued events
+    var data = queue.join("");
+    var context = {
+        message: data
+    };
+    
     this._sendEvents(context, callback);
 };
 
