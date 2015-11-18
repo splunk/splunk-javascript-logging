@@ -26,8 +26,7 @@ var SplunkLogger = require("../index").Logger;
  */
 var config = {
     token: "your-token-here",
-    url: "https://localhost:8088",
-    maxBatchCount: 1 // Send events 1 at a time
+    url: "https://localhost:8088"
 };
 
 // Create a new logger
