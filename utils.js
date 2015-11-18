@@ -23,7 +23,7 @@ var utils = {};
 /* Utility Functions */
 
 /**
- * Formats the time for Splunk as a the epoch time in seconds.
+ * Formats the time for Splunk Enterprise or Splunk Cloud as a the epoch time in seconds.
  *
  * @param {(string|number|date)} time - A date string, timestamp, or <code>Date</code> object.
  * @returns {number|null} Epoch time in seconds, or <code>null</code> if <code>time</code> is malformed.
@@ -226,7 +226,7 @@ utils.copyObject = function(obj) {
 };
 
 /**
- * Copies all elements into a new array which is returned.
+ * Copies all elements into a new array, which is returned.
  *
  * @param {array} [arr] - Array to copy elements from.
  * @returns {array}
@@ -261,10 +261,10 @@ utils.orByProp = function(prop) {
 };
 
 /**
- * Like <code>utils.orByProp()</code> but for a falsey property.
+ * Like <code>utils.orByProp()</code> but for a false property.
  * The first argument after <code>prop</code> with that property
  * defined will be returned.
- * Useful for booleans and numbers.
+ * Useful for Booleans and numbers.
  *
  * @param {string} [prop] - property name for other arguments.
  * @returns {boolean}
