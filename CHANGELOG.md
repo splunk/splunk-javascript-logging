@@ -1,18 +1,18 @@
-# Splunk Logging Library for JavaScript
+# Splunk logging for JavaScript
 
 ## v0.9.0
 
-### New Features & APIs
+### New features & APIs
 
 * Added the ability to configure automated batching with 3 settings: `batchInterval`, `maxBatchCount`, & `maxBatchSize`.
-* Added the ability to retry sending to Splunk in the case of network errors with the `maxRetries` configuration setting.
-* Added the ability to configure a custom Splunk event format by overriding `eventFormatter(message, severity)`.
+* Added the ability to retry sending to Splunk Enterprise or Splunk Cloud in the case of network errors with the `maxRetries` configuration setting.
+* Added the ability to configure a custom Splunk Enterprise or Splunk Cloud event format by overriding `eventFormatter(message, severity)`.
 
 ### Breaking Changes
 
 * Removed the `autoFlush` configuration setting. To achieve the same effect, set `config.maxBatchCount` to `0`.
 * Removed support for middleware functions.
-* The `context` object has been simplified, `config` and `requestOptions` can no longer be specified there - please use those settings directly on the logger.
+* The `context` object has been simplified, `config` and `requestOptions` can no longer be specified there; please use those settings directly on the logger.
 
 ### Examples
 
