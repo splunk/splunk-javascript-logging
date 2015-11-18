@@ -1,4 +1,4 @@
-# Splunk Logging Library for JavaScript (beta)
+# Splunk Logging Library for JavaScript
 
 #### Version 0.9.0
 
