@@ -20,7 +20,7 @@ See the `examples` folder for more examples:
 
 * `all_batching.js`: shows how to configure a logger with the 3 batching settings: `batchInterval`, `maxBatchCount`, & `maxBatchSize`.
 * `basic.js`: shows how to configure a logger and send a log message to Splunk.
-* `custom_format.js`: shows how to configure a logger so log message to Splunk using a custom format.
+* `custom_format.js`: shows how to configure a logger to log messages to Splunk using a custom format.
 * `manual_batching.js`: shows how to queue log messages, and send them in batches by manually calling `flush()`.
 * `retry.js`: shows how to configure retries on errors.
 
