@@ -33,9 +33,9 @@ function _err(err, context) {
 }
 
 /**
- * The default format for Splunk events.
+ * The default format for Splunk Enterprise or Splunk Cloud events.
  *
- * This function can be overwritten, and can return any type (string, object, array, etc.)
+ * This function can be overwritten, and can return any type (string, object, array, and so on).
  *
  * @param {anything} [message] - The event message.
  * @param {string} [severity] - The event severity.
@@ -50,8 +50,9 @@ function _defaultEventFormatter(message, severity) {
 }
 
 /**
- * Constructs a SplunkLogger, to send events to Splunk via the HTTP Event Collector.
- * See <code>defaultConfig</code> for default configuration settings.
+ * Constructs a SplunkLogger, to send events to Splunk Enterprise or Splunk Cloud 
+ * via HTTP Event Collector. See <code>defaultConfig</code> for default 
+ * configuration settings.
  *
  * @example
  * var SplunkLogger = require("splunk-logging").Logger;
@@ -67,20 +68,20 @@ function _defaultEventFormatter(message, severity) {
  * @property {object} config - Configuration settings for this <code>SplunkLogger</code> instance.
  * @param {object} requestOptions - Options to pass to <code>{@link https://github.com/request/request#requestpost|request.post()}</code>.
  * See the {@link http://github.com/request/request|request documentation} for all available options.
- * @property {object[]} serializedContextQueue - Queue of serialized <code>context</code> objects to be sent to Splunk.
+ * @property {object[]} serializedContextQueue - Queue of serialized <code>context</code> objects to be sent to Splunk Enterprise or Splunk Cloud.
  * @property {function} eventFormatter - Formats events, returning an event as a string, <code>function(message, severity)</code>.
  * Can be overwritten, the default event formatter will display event and severity as properties in a JSON object.
  * @property {function} error - A callback function for errors: <code>function(err, context)</code>.
  * Defaults to <code>console.log</code> both values;
  *
  * @param {object} config - Configuration settings for a new [SplunkLogger]{@link SplunkLogger}.
- * @param {string} config.token - Splunk HTTP Event Collector token, required.
+ * @param {string} config.token - HTTP Event Collector token, required.
  * @param {string} [config.name=splunk-javascript-logging/0.9.0] - Name for this logger.
- * @param {string} [config.host=localhost] - Hostname or IP address of Splunk server.
- * @param {string} [config.maxRetries=0] - How many times to retry when HTTP POST to Splunk fails.
- * @param {string} [config.path=/services/collector/event/1.0] - URL path to send data to on the Splunk server.
- * @param {string} [config.protocol=https] - Protocol used to communicate with the Splunk server, <code>http</code> or <code>https</code>.
- * @param {number} [config.port=8088] - HTTP Event Collector port on the Splunk server.
+ * @param {string} [config.host=localhost] - Hostname or IP address of Splunk Enterprise or Splunk Cloud server.
+ * @param {string} [config.maxRetries=0] - How many times to retry when HTTP POST to Splunk Enterprise or Splunk Cloud fails.
+ * @param {string} [config.path=/services/collector/event/1.0] - URL path to send data to on the Splunk Enterprise or Splunk Cloud server.
+ * @param {string} [config.protocol=https] - Protocol used to communicate with the Splunk Enterprise or Splunk Cloud server, <code>http</code> or <code>https</code>.
+ * @param {number} [config.port=8088] - HTTP Event Collector port on the Splunk Enterprise or Splunk Cloud server.
  * @param {string} [config.url] - URL string to pass to {@link https://nodejs.org/api/url.html#url_url_parsing|url.parse}. This will try to set
  * <code>host</code>, <code>path</code>, <code>protocol</code>, <code>port</code>, <code>url</code>. Any of these values will be overwritten if 
  * the corresponding property is set on <code>config</code>.
@@ -147,7 +148,7 @@ var defaultConfig = {
 };
 
 var defaultRequestOptions = {
-    json: true, // Sets the content-type header to application/json
+    json: true, // Sets the content-type header to application/json.
     strictSSL: false
 };
 
@@ -275,7 +276,7 @@ SplunkLogger.prototype._initializeConfig = function(config) {
         // Has the interval timer already started, and the interval changed to a different duration?
         var changeTimer = this._timerID && this._timerDuration !== ret.batchInterval && ret.batchInterval > 0;
         
-        // Upsert the timer
+        // Enable the timer
         if (startTimer || changeTimer) {
             this._enableTimer(ret.batchInterval);
         }
@@ -323,7 +324,7 @@ SplunkLogger.prototype._validateMessage = function(message) {
 };
 
 /**
- * Initialized metadata, if <code>context.metadata</code> is falsey or empty,
+ * Initializes metadata. If <code>context.metadata</code> is false or empty,
  * return an empty object.
  *
  * @param {object} context
@@ -413,7 +414,7 @@ SplunkLogger.prototype._post = function(requestOptions, callback) {
 };
 
 /**
- * Sends events to Splunk, optionally with retries on non-Splunk errors.
+ * Sends events to Splunk Enterprise or Splunk Cloud, optionally with retries on non-Splunk errors.
  *
  * @param context
  * @param {function} callback - A callback function: <code>function(err, response, body)</code>
@@ -434,13 +435,12 @@ SplunkLogger.prototype._sendEvents = function(context, callback) {
     requestOptions.headers["Content-Type"] = "application/x-www-form-urlencoded";
     requestOptions.url = this.config.protocol + "://" + this.config.host + ":" + this.config.port + this.config.path;
 
-
     // Initialize the context again, right before using it
     context = this._initializeContext(context);
 
     var that = this;
 
-    var splunkError = null; // Errors returned by Splunk
+    var splunkError = null; // Errors returned by Splunk Enterprise or Splunk Cloud
     var requestError = null; // Any non-Splunk errors
 
     // References so we don't have to deal with callback parameters
@@ -462,7 +462,7 @@ SplunkLogger.prototype._sendEvents = function(context, callback) {
                 _response = resp;
                 _body = body;
 
-                // Try to parse an error response from Splunk
+                // Try to parse an error response from Splunk Enterprise or Splunk Cloud
                 if (!requestError && body && body.code.toString() !== "0") {
                     splunkError = new Error(body.text);
                     splunkError.code = body.code;
@@ -501,7 +501,7 @@ SplunkLogger.prototype._sendEvents = function(context, callback) {
  * 
  * var logger = new SplunkLogger(config);
  *
- * // Payload to send to Splunk's Event Collector
+ * // Payload to send to HTTP Event Collector.
  * var payload = {
  *     message: {
  *         temperature: "70F",
@@ -530,11 +530,11 @@ SplunkLogger.prototype._sendEvents = function(context, callback) {
  * @param {(object|string|Array|number|bool)} context.message - Data to send to Splunk.
  * @param {string} [context.severity=info] - Severity level of this event.
  * @param {object} [context.metadata] - Metadata for this event.
- * @param {string} [context.metadata.host] - If not specified, Splunk will decide the value.
- * @param {string} [context.metadata.index] - The Splunk index to send data to.
- * If not specified, Splunk will decide the value.
- * @param {string} [context.metadata.source] - If not specified, Splunk will decide the value.
- * @param {string} [context.metadata.sourcetype] - If not specified, Splunk will decide the value.
+ * @param {string} [context.metadata.host] - If not specified, Splunk Enterprise or Splunk Cloud will decide the value.
+ * @param {string} [context.metadata.index] - The Splunk Enterprise or Splunk Cloud index to send data to.
+ * If not specified, Splunk Enterprise or Splunk Cloud will decide the value.
+ * @param {string} [context.metadata.source] - If not specified, Splunk Enterprise or Splunk Cloud will decide the value.
+ * @param {string} [context.metadata.sourcetype] - If not specified, Splunk Enterprise or Splunk Cloud will decide the value.
  * @param {function} [callback] - A callback function: <code>function(err, response, body)</code>.
  * @throws Will throw an error if the <code>context</code> parameter is malformed.
  * @public
@@ -557,7 +557,7 @@ SplunkLogger.prototype.send = function(context, callback) {
 };
 
 /**
- * Manually send all events in <code>this.serializedContextQueue</code> to Splunk.
+ * Manually send all events in <code>this.serializedContextQueue</code> to Splunk Enterprise or Splunk Cloud.
  *
  * @param {function} [callback] - A callback function: <code>function(err, response, body)</code>.
  * @public
