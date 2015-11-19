@@ -261,7 +261,7 @@ utils.orByProp = function(prop) {
 };
 
 /**
- * Like <code>utils.orByProp()</code> but for a false property.
+ * Like <code>utils.orByProp()</code> but for a falsey property.
  * The first argument after <code>prop</code> with that property
  * defined will be returned.
  * Useful for Booleans and numbers.
