@@ -40,7 +40,7 @@ Logger.error = function(err, context) {
 /**
  * Override the default eventFormatter() function,
  * which takes a message and severity, returning
- * any type - string or object are recommended.
+ * any type; string or object are recommended.
  *
  * The message parameter can be any type. It will
  * be whatever was passed to Logger.send().
@@ -50,6 +50,7 @@ Logger.error = function(err, context) {
  * of key=value pairs if message is an object,
  * otherwise the message value is as value for
  * the message key.
+ * 
  * This string is prefixed with the event
  * severity in square brackets.
  */
@@ -68,7 +69,7 @@ Logger.eventFormatter = function(message, severity) {
     return event;
 };
 
-// Define the payload to send to Splunk's Event Collector
+// Define the payload to send to HTTP Event Collector
 var payload = {
     // Message can be anything, it doesn't have to be an object
     message: {
