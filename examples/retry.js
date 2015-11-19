@@ -44,7 +44,7 @@ Logger.error = function(err, context) {
     console.log("error", err, "context", context);
 };
 
-// Define the payload to send to Splunk's Event Collector
+// Define the payload to send to HTTP Event Collector
 var payload = {
     // Message can be anything, doesn't have to be an object
     message: {
