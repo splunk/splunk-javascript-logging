@@ -15,7 +15,7 @@
  */
 
 /**
- * This example shows basic usage of the SplunkLogger.
+ * This example shows how to configure retries with SplunkLogger.
  */
 
 // Change to require("splunk-logging").Logger;
@@ -23,10 +23,17 @@ var SplunkLogger = require("../index").Logger;
 
 /**
  * Only the token property is required.
+ *
+ * Here we've set maxRetries to 10,
+ * If there are any connection errors the request to Splunk will
+ * be retried up to 10 times.
+ * The default is 0.
  */
 var config = {
     token: "your-token-here",
-    url: "https://localhost:8088"
+    url: "https://localhost:8088",
+    level: "info",
+    maxRetries: 10
 };
 
 // Create a new logger
@@ -39,7 +46,7 @@ Logger.error = function(err, context) {
 
 // Define the payload to send to HTTP Event Collector
 var payload = {
-    // Message can be anything, it doesn't have to be an object
+    // Message can be anything, doesn't have to be an object
     message: {
         temperature: "70F",
         chickenCount: 500
@@ -56,32 +63,6 @@ var payload = {
 };
 
 console.log("Sending payload", payload);
-
-/**
- * Since maxBatchCount is set to 1 by default,
- * calling send will immediately send the payload.
- * 
- * The underlying HTTP POST request is made to
- *
- *     https://localhost:8088/services/collector/event/1.0
- *
- * with the following body
- *
- *     {
- *         "source": "chicken coop",
- *         "sourcetype": "httpevent",
- *         "index": "main",
- *         "host": "farm.local",
- *         "event": {
- *             "message": {
- *                 "temperature": "70F",
- *                 "chickenCount": 500
- *             },
- *             "severity": "info"
- *         }
- *     }
- *
- */
 Logger.send(payload, function(err, resp, body) {
     // If successful, body will be { text: 'Success', code: 0 }
     console.log("Response from Splunk", body);
