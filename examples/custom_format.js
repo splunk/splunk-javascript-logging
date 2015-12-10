@@ -15,7 +15,7 @@
  */
 
 /**
- * This example shows basic usage of the SplunkLogger.
+ * This example shows how to use a custom event format for SplunkLogger.
  */
 
 // Change to require("splunk-logging").Logger;
@@ -35,6 +35,38 @@ var Logger = new SplunkLogger(config);
 Logger.error = function(err, context) {
     // Handle errors here
     console.log("error", err, "context", context);
+};
+
+/**
+ * Override the default eventFormatter() function,
+ * which takes a message and severity, returning
+ * any type; string or object are recommended.
+ *
+ * The message parameter can be any type. It will
+ * be whatever was passed to Logger.send().
+ * Severity will always be a string.
+ *
+ * In this example, we're building up a string
+ * of key=value pairs if message is an object,
+ * otherwise the message value is as value for
+ * the message key.
+ * 
+ * This string is prefixed with the event
+ * severity in square brackets.
+ */
+Logger.eventFormatter = function(message, severity) {
+    var event = "[" + severity + "]";
+
+    if (typeof message === "object") {
+        for (var key in message) {
+            event += key + "=" + message[key] + " ";
+        }
+    }
+    else {
+        event += "message=" + message;
+    }
+
+    return event;
 };
 
 // Define the payload to send to HTTP Event Collector
@@ -72,13 +104,7 @@ console.log("Sending payload", payload);
  *         "sourcetype": "httpevent",
  *         "index": "main",
  *         "host": "farm.local",
- *         "event": {
- *             "message": {
- *                 "temperature": "70F",
- *                 "chickenCount": 500
- *             },
- *             "severity": "info"
- *         }
+ *         "event": "[info]temperature=70F chickenCount=500 "
  *     }
  *
  */

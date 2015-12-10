@@ -1,26 +1,34 @@
-# Splunk Logging Library for JavaScript (beta)
+# Splunk logging for JavaScript
 
-#### Version 0.8.0
+#### Version 0.9.0
 
-This project provides a simple interface for logging to Splunk's Event Collector.
+This project provides a simple JavaScript interface for logging to HTTP Event Collector in Splunk Enterprise and Splunk Cloud.
 
 ## Requirements
 
-* Splunk 6.3+.
-* An HTTP Event Collector token from your Splunk server.
-* Node.js v0.10+.
+* Node.js v0.10 or later.
+* Splunk Enterprise 6.3.0 or later, or Splunk Cloud.
+* An HTTP Event Collector token from your Splunk Enterprise server.
 
 ## Installation
 
-If you already have Node.js and npm installed, simply run: `npm install --save splunk-logging`.
+First, update npm to the latest version by running:
+
+    sudo npm install npm -g
+
+Then run: 
+ 
+    npm install --save splunk-logging
 
 ## Usage
 
-See the `examples` folder for more examples:
+See the `examples` folder for usage examples:
 
-* `basic.js`: shows how to configure a logger and send a log message to Splunk.
-* `batching.js`: shows how to queue log messages, and send them in batches.
-* `middleware.js`: shows how to add an express-like middleware function to be called before sending log messages to Splunk.
+* `all_batching.js`: Shows how to configure a logger with the 3 batching settings: `batchInterval`, `maxBatchCount`, & `maxBatchSize`.
+* `basic.js`: Shows how to configure a logger and send a log message to Splunk.
+* `custom_format.js`: Shows how to configure a logger to log messages to Splunk using a custom format.
+* `manual_batching.js`: Shows how to queue log messages, and send them in batches by manually calling `flush()`.
+* `retry.js`: Shows how to configure retries on errors.
 
 ### Basic example
 
@@ -35,7 +43,7 @@ var config = {
 var Logger = new SplunkLogger(config);
 
 var payload = {
-    // Message can be anything, doesn't have to be an object
+    // Message can be anything; doesn't have to be an object
     message: {
         temperature: "70F",
         chickenCount: 500
@@ -51,7 +59,7 @@ Logger.send(payload, function(err, resp, body) {
 
 ## Community
 
-Stay connected with other developers building on Splunk.
+Stay connected with other developers building on Splunk software.
 
 <table>
 
@@ -62,7 +70,7 @@ Stay connected with other developers building on Splunk.
 
 <tr>
 <td><b>Issues</b>
-<td><span>https://github.com/splunk/splunk-logging-javascript/issues/</span></td>
+<td><span>https://github.com/splunk/splunk-javascript-logging/issues/</span></td>
 </tr>
 
 <tr>
@@ -84,7 +92,7 @@ Stay connected with other developers building on Splunk.
 
 ### Contact us
 
-You can reach the Developer Platform team at _devinfo@splunk.com_.
+You can reach the developer platform team at _devinfo@splunk.com_.
 
 ## License
 

@@ -15,7 +15,11 @@
  */
 
 /**
- * This example shows how to use middleware with the SplunkLogger.
+ * This example shows how to batch events with the
+ * SplunkLogger by manually calling flush.
+ *
+ * By setting maxbatchCount=0, events will be queued
+ * until flush() is called.
  */
 
 // Change to require("splunk-logging").Logger;
@@ -23,20 +27,13 @@ var SplunkLogger = require("../index").Logger;
 
 /**
  * Only the token property is required.
- * Defaults are listed explicitly.
- *
- * Alternatively, specify config.url like so:
- *
- * "https://localhost:8088/services/collector/event/1.0"
+ * 
+ * Here, maxBatchCount is set to 0.
  */
 var config = {
     token: "your-token-here",
-    host: "localhost",
-    path: "/services/collector/event/1.0",
-    protocol: "https",
-    port: 8088,
-    level: "info",
-    autoFlush: true
+    url: "https://localhost:8088",
+    maxBatchCount: 0 // Manually flush events
 };
 
 // Create a new logger
@@ -46,22 +43,6 @@ Logger.error = function(err, context) {
     // Handle errors here
     console.log("error", err, "context", context);
 };
-
-// Add a middleware function
-Logger.use(function(context, next) {
-    console.log("Message before middleware", context.message);
-
-    // Add a property to the message if it's an object
-    if (typeof context.message === "object") {
-        context.message.nestedValue = {
-            b00l: true,
-            another: "string"
-        };
-    }
-
-    console.log("Message after middleware", context.message);
-    next(null, context);
-});
 
 // Define the payload to send to Splunk's Event Collector
 var payload = {
@@ -81,8 +62,31 @@ var payload = {
     severity: "info"
 };
 
-console.log("Sending payload", payload);
-Logger.send(payload, function(err, resp, body) {
+console.log("Queuing payload", payload);
+// Don't need a callback here
+Logger.send(payload);
+
+var payload2 = {
+    message: {
+        temperature: "75F",
+        chickenCount: 600,
+        note: "New chickens have arrived"
+    },
+    metadata: payload.metadata
+};
+
+console.log("Queuing second payload", payload2);
+// Don't need a callback here
+Logger.send(payload2);
+
+/**
+ * Call flush manually.
+ * This will send both payloads in a single
+ * HTTP request.
+ *
+ * The same callback can work for send() and flush().
+ */
+Logger.flush(function(err, resp, body) {
     // If successful, body will be { text: 'Success', code: 0 }
     console.log("Response from Splunk", body);
 });
