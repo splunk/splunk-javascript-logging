@@ -1,5 +1,12 @@
 # Splunk logging for JavaScript
 
+## v0.9.1
+
+### Bug Fixes
+
+* Relax port validation for ports < 1000.
+
+
 ## v0.9.0
 
 ### New features & APIs
