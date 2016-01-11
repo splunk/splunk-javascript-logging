@@ -112,10 +112,10 @@ describe("SplunkLogger", function() {
             var logger = new SplunkLogger(config);
             assert.strictEqual(logger.config.port, 1234);
         });
-        it("should correctly parse port < 1000", function() {
+        it("should error parsing port < 1", function() {
             var config = {
                 token: "a-token-goes-here-usually",
-                port: 999
+                port: 0
             };
             try {
                 var logger = new SplunkLogger(config);
@@ -123,8 +123,27 @@ describe("SplunkLogger", function() {
             }
             catch (err) {
                 assert.ok(err);
-                assert.strictEqual(err.message, "Port must be an integer between 1000 and 65535, found: " + config.port);
+                assert.strictEqual(err.message, "Port must be an integer between 1 and 65535, found: " + config.port);
             }
+        });
+        it("should correctly parse 1 < port < 1000", function() {
+            var config = {
+                token: "a-token-goes-here-usually",
+                port: 999
+            };
+            var logger = new SplunkLogger(config);
+            assert.ok(logger);
+            assert.strictEqual(config.token, logger.config.token);
+            assert.strictEqual("splunk-javascript-logging/0.9.0", logger.config.name);
+            assert.strictEqual("localhost", logger.config.host);
+            assert.strictEqual("/services/collector/event/1.0", logger.config.path);
+            assert.strictEqual("https", logger.config.protocol);
+            assert.strictEqual("info", logger.config.level);
+            assert.strictEqual(logger.levels.INFO, logger.config.level);
+            assert.strictEqual(999, logger.config.port);
+            assert.strictEqual(0, logger.config.maxRetries);
+            assert.strictEqual(0, logger.config.batchInterval);
+            assert.strictEqual(0, logger.config.maxBatchSize);
         });
         it("should set default config with token only config", function() {
             var config = {
@@ -145,16 +164,16 @@ describe("SplunkLogger", function() {
             assert.strictEqual(0, logger.config.batchInterval);
             assert.strictEqual(0, logger.config.maxBatchSize);
 
-            var expectedRO = {
+            var expected = {
                 json: true,
                 strictSSL: false,
                 headers: {}
             };
             assert.ok(logger.hasOwnProperty("requestOptions"));
             assert.strictEqual(Object.keys(logger.requestOptions).length, 3);
-            assert.strictEqual(expectedRO.json, logger.requestOptions.json);
-            assert.strictEqual(expectedRO.strictSSL, logger.requestOptions.strictSSL);
-            assert.strictEqual(Object.keys(expectedRO.headers).length, Object.keys(logger.requestOptions.headers).length);
+            assert.strictEqual(expected.json, logger.requestOptions.json);
+            assert.strictEqual(expected.strictSSL, logger.requestOptions.strictSSL);
+            assert.strictEqual(Object.keys(expected.headers).length, Object.keys(logger.requestOptions.headers).length);
         });
         it("should set remaining defaults when setting config with token, batching off, & level", function() {
             var config = {
@@ -636,10 +655,10 @@ describe("SplunkLogger", function() {
             var loggerConfig = SplunkLogger.prototype._initializeConfig(config);
             assert.strictEqual(loggerConfig.port, 1234);
         });
-        it("should correctly parse port < 1000", function() {
+        it("should correctly parse port < 1", function() {
             var config = {
                 token: "a-token-goes-here-usually",
-                port: 999
+                port: 0
             };
             try {
                 SplunkLogger.prototype._initializeConfig(config);
@@ -647,8 +666,29 @@ describe("SplunkLogger", function() {
             }
             catch (err) {
                 assert.ok(err);
-                assert.strictEqual(err.message, "Port must be an integer between 1000 and 65535, found: " + config.port);
+                assert.strictEqual(err.message, "Port must be an integer between 1 and 65535, found: " + config.port);
             }
+        });
+        it("should correctly parse 1 < port < 1000", function() {
+            var config = {
+                token: "a-token-goes-here-usually",
+                port: 999
+            };
+
+            var loggerConfig = SplunkLogger.prototype._initializeConfig(config);
+
+            assert.ok(loggerConfig);
+            assert.strictEqual(config.token, loggerConfig.token);
+            assert.strictEqual("splunk-javascript-logging/0.9.0", loggerConfig.name);
+            assert.strictEqual("localhost", loggerConfig.host);
+            assert.strictEqual("/services/collector/event/1.0", loggerConfig.path);
+            assert.strictEqual("https", loggerConfig.protocol);
+            assert.strictEqual("info", loggerConfig.level);
+            assert.strictEqual("info", loggerConfig.level);
+            assert.strictEqual(999, loggerConfig.port);
+            assert.strictEqual(0, loggerConfig.maxRetries);
+            assert.strictEqual(0, loggerConfig.batchInterval);
+            assert.strictEqual(0, loggerConfig.maxBatchSize);
         });
         it("should set default config with token only config", function() {
             var config = {
@@ -665,6 +705,8 @@ describe("SplunkLogger", function() {
             assert.strictEqual("info", loggerConfig.level);
             assert.strictEqual(8088, loggerConfig.port);
             assert.strictEqual(0, loggerConfig.maxRetries);
+            assert.strictEqual(0, loggerConfig.batchInterval);
+            assert.strictEqual(0, loggerConfig.maxBatchSize);
         });
         it("should set non-default boolean config values", function() {
             var config = {
@@ -682,6 +724,8 @@ describe("SplunkLogger", function() {
             assert.strictEqual("info", loggerConfig.level);
             assert.strictEqual(8088, loggerConfig.port);
             assert.strictEqual(0, loggerConfig.maxRetries);
+            assert.strictEqual(0, loggerConfig.batchInterval);
+            assert.strictEqual(0, loggerConfig.maxBatchSize);
         });
         it("should set non-default path", function() {
             var config = {
@@ -699,6 +743,8 @@ describe("SplunkLogger", function() {
             assert.strictEqual("info", loggerConfig.level);
             assert.strictEqual(8088, loggerConfig.port);
             assert.strictEqual(0, loggerConfig.maxRetries);
+            assert.strictEqual(0, loggerConfig.batchInterval);
+            assert.strictEqual(0, loggerConfig.maxBatchSize);
         });
         it("should set non-default port", function() {
             var config = {
@@ -716,6 +762,8 @@ describe("SplunkLogger", function() {
             assert.strictEqual("info", loggerConfig.level);
             assert.strictEqual(config.port, loggerConfig.port);
             assert.strictEqual(0, loggerConfig.maxRetries);
+            assert.strictEqual(0, loggerConfig.batchInterval);
+            assert.strictEqual(0, loggerConfig.maxBatchSize);
         });
         it("should set protocol, host, port & path from url property", function() {
             var config = {
@@ -733,6 +781,8 @@ describe("SplunkLogger", function() {
             assert.strictEqual("info", loggerConfig.level);
             assert.strictEqual(9088, loggerConfig.port);
             assert.strictEqual(0, loggerConfig.maxRetries);
+            assert.strictEqual(0, loggerConfig.batchInterval);
+            assert.strictEqual(0, loggerConfig.maxBatchSize);
         });
         it("should set protocol from url property", function() {
             var config = {
@@ -750,6 +800,8 @@ describe("SplunkLogger", function() {
             assert.strictEqual("info", loggerConfig.level);
             assert.strictEqual(8088, loggerConfig.port);
             assert.strictEqual(0, loggerConfig.maxRetries);
+            assert.strictEqual(0, loggerConfig.batchInterval);
+            assert.strictEqual(0, loggerConfig.maxBatchSize);
         });
         it("should set host from url property with host only", function() {
             var config = {
@@ -767,6 +819,8 @@ describe("SplunkLogger", function() {
             assert.strictEqual("info", loggerConfig.level);
             assert.strictEqual(8088, loggerConfig.port);
             assert.strictEqual(0, loggerConfig.maxRetries);
+            assert.strictEqual(0, loggerConfig.batchInterval);
+            assert.strictEqual(0, loggerConfig.maxBatchSize);
         });
         it("should ignore prototype values", function() {
             Object.prototype.something = "ignore";
@@ -786,6 +840,8 @@ describe("SplunkLogger", function() {
             assert.strictEqual("info", loggerConfig.level);
             assert.strictEqual(8088, loggerConfig.port);
             assert.strictEqual(0, loggerConfig.maxRetries);
+            assert.strictEqual(0, loggerConfig.batchInterval);
+            assert.strictEqual(0, loggerConfig.maxBatchSize);
         });
     });
     describe("_initializeRequestOptions", function() {
