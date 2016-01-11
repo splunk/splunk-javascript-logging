@@ -476,7 +476,7 @@ describe("SplunkLogger send (integration tests)", function() {
             logger.error = function(err, errContext) {
                 run = true;
                 assert.ok(err);
-                assert.strictEqual(err.message, "getaddrinfo ENOTFOUND");
+                assert.strictEqual(err.message.indexOf("getaddrinfo ENOTFOUND"), 0);
                 assert.strictEqual(err.code, "ENOTFOUND");
 
                 assert.ok(errContext);
@@ -492,7 +492,7 @@ describe("SplunkLogger send (integration tests)", function() {
             logger.send(context, function(err, resp, body) {
                 assert.ok(err);
                 assert.ok(run);
-                assert.strictEqual(err.message, "getaddrinfo ENOTFOUND");
+                assert.strictEqual(err.message.indexOf("getaddrinfo ENOTFOUND"), 0);
                 assert.strictEqual(err.code, "ENOTFOUND");
                 assert.ok(!resp);
                 assert.ok(!body);
@@ -540,7 +540,7 @@ describe("SplunkLogger send (integration tests)", function() {
             logger.error = function(err, errContext) {
                 run = true;
                 assert.ok(err);
-                assert.strictEqual(err.message, "SELF_SIGNED_CERT_IN_CHAIN");
+                assert.strictEqual(err.code, "SELF_SIGNED_CERT_IN_CHAIN");
                 assert.ok(errContext);
 
                 var body = JSON.parse(errContext.message);
@@ -557,7 +557,7 @@ describe("SplunkLogger send (integration tests)", function() {
             logger.send(context, function(err, resp, body) {
                 assert.ok(err);
                 assert.ok(run);
-                assert.strictEqual(err.message, "SELF_SIGNED_CERT_IN_CHAIN");
+                assert.strictEqual(err.code, "SELF_SIGNED_CERT_IN_CHAIN");
                 assert.ok(!resp);
                 assert.ok(!body);
                 done();
