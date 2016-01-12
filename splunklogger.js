@@ -76,7 +76,7 @@ function _defaultEventFormatter(message, severity) {
  *
  * @param {object} config - Configuration settings for a new [SplunkLogger]{@link SplunkLogger}.
  * @param {string} config.token - HTTP Event Collector token, required.
- * @param {string} [config.name=splunk-javascript-logging/0.9.0] - Name for this logger.
+ * @param {string} [config.name=splunk-javascript-logging/0.9.1] - Name for this logger.
  * @param {string} [config.host=localhost] - Hostname or IP address of Splunk Enterprise or Splunk Cloud server.
  * @param {string} [config.maxRetries=0] - How many times to retry when HTTP POST to Splunk Enterprise or Splunk Cloud fails.
  * @param {string} [config.path=/services/collector/event/1.0] - URL path to send data to on the Splunk Enterprise or Splunk Cloud server.
@@ -135,7 +135,7 @@ SplunkLogger.prototype.levels = {
 };
 
 var defaultConfig = {
-    name: "splunk-javascript-logging/0.9.0",
+    name: "splunk-javascript-logging/0.9.1",
     host: "localhost",
     path: "/services/collector/event/1.0",
     protocol: "https",
@@ -254,10 +254,10 @@ SplunkLogger.prototype._initializeConfig = function(config) {
         ret.host = utils.orByProp("host", config, ret, defaultConfig);
         ret.path = utils.orByProp("path", config, ret, defaultConfig);
         ret.protocol = utils.orByProp("protocol", config, ret, defaultConfig);
-        ret.port = utils.orByProp("port", config, ret, defaultConfig);
+        ret.port = utils.orByFalseyProp("port", config, ret, defaultConfig);
         ret.port = utils.validateNonNegativeInt(ret.port, "Port");
-        if (ret.port < 1000 || ret.port > 65535) {
-            throw new Error("Port must be an integer between 1000 and 65535, found: " + ret.port);
+        if (ret.port < 1 || ret.port > 65535) {
+            throw new Error("Port must be an integer between 1 and 65535, found: " + ret.port);
         }
 
         ret.maxRetries = utils.orByProp("maxRetries", config, ret, defaultConfig);
