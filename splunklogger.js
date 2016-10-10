@@ -18,6 +18,7 @@ var request = require("request");
 var url = require("url");
 
 var utils = require("./utils");
+var Log = require("./log");
 
 /**
  * Default error handler for <code>SplunkLogger</code>.
@@ -118,6 +119,8 @@ var SplunkLogger = function(config) {
     this._sendEvents = utils.bind(this, this._sendEvents);
     this.send = utils.bind(this, this.send);
     this.flush = utils.bind(this, this.flush);
+
+    this.log = new Log(this);
 };
 
 /**
