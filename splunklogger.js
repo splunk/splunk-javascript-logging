@@ -105,7 +105,7 @@ var SplunkLogger = function(config) {
     this.serializedContextQueue = [];
     this.eventsBatchSize = 0;
     this.eventFormatter = _defaultEventFormatter;
-    this.error = _err;
+    this.onError = _err;
 
     this._enableTimer = utils.bind(this, this._enableTimer);
     this._disableTimer = utils.bind(this, this._disableTimer);
@@ -482,9 +482,9 @@ SplunkLogger.prototype._sendEvents = function(context, callback) {
             });
         },
         function() {
-            // Call error() for a request error or Splunk error
+            // Call onError() for a request error or Splunk error
             if (requestError || splunkError) {
-                that.error(requestError || splunkError, context);
+                that.onError(requestError || splunkError, context);
             }
 
             callback(requestError, _response, _body);
