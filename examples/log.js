@@ -79,49 +79,49 @@ console.log("Sending message using .log", message);
  *
  */
 // Set metadata values
-Logger.log.set_metadata(metadata);
+Logger.set_metadata(metadata);
 
-Logger.log.log(message, function(err, resp, body) {
+Logger.log(message, function(err, resp, body) {
     // If successful, body will be { text: 'Success', code: 0 }
     console.log("Response from Splunk .log", body);
 });
 
 console.log("Sending message using .info", message);
 
-Logger.log.info(message, function(err, resp, body) {
+Logger.info(message, function(err, resp, body) {
     // If successful, body will be { text: 'Success', code: 0 }
     console.log("Response from Splunk .info", body);
 });
 
 console.log("Sending message using .warn", message);
 
-Logger.log.warn(message, function(err, resp, body) {
+Logger.warn(message, function(err, resp, body) {
     // If successful, body will be { text: 'Success', code: 0 }
     console.log("Response from Splunk .warn", body);
 });
 
 console.log("Sending message using .debug", message);
 
-Logger.log.debug(message, function(err, resp, body) {
+Logger.debug(message, function(err, resp, body) {
     // If successful, body will be { text: 'Success', code: 0 }
     console.log("Response from Splunk .debug", body);
 });
 
 console.log("Sending message using .error", message);
 
-Logger.log.error(message, function(err, resp, body) {
+Logger.error(message, function(err, resp, body) {
     // If successful, body will be { text: 'Success', code: 0 }
     console.log("Response from Splunk .error", body);
 });
 
 console.log("Sending one line string", "Hello World");
-Logger.log.log("Hello World", function(err, resp, body) {
+Logger.log("Hello World", function(err, resp, body) {
     // If successful, body will be { text: 'Success', code: 0 }
     console.log("Response from Splunk .log", body);
 });
 
 // Clearing the metadata values
-Logger.log.clear_metadata();
+Logger.clear_metadata();
 
 console.log("Sending hello world with no callback");
-Logger.log.log("Hello World with no callback");
+Logger.log("Hello World with no callback");
