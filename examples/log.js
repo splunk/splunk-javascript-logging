@@ -78,41 +78,50 @@ console.log("Sending message using .log", message);
  *     }
  *
  */
-Logger.log.log(message, metadata, function(err, resp, body) {
+// Set metadata values
+Logger.log.set_metadata(metadata);
+
+Logger.log.log(message, function(err, resp, body) {
     // If successful, body will be { text: 'Success', code: 0 }
     console.log("Response from Splunk .log", body);
 });
 
 console.log("Sending message using .info", message);
 
-Logger.log.info(message, metadata, function(err, resp, body) {
+Logger.log.info(message, function(err, resp, body) {
     // If successful, body will be { text: 'Success', code: 0 }
     console.log("Response from Splunk .info", body);
 });
 
 console.log("Sending message using .warn", message);
 
-Logger.log.warn(message, metadata, function(err, resp, body) {
+Logger.log.warn(message, function(err, resp, body) {
     // If successful, body will be { text: 'Success', code: 0 }
     console.log("Response from Splunk .warn", body);
 });
 
 console.log("Sending message using .debug", message);
 
-Logger.log.debug(message, metadata, function(err, resp, body) {
+Logger.log.debug(message, function(err, resp, body) {
     // If successful, body will be { text: 'Success', code: 0 }
     console.log("Response from Splunk .debug", body);
 });
 
 console.log("Sending message using .error", message);
 
-Logger.log.error(message, metadata, function(err, resp, body) {
+Logger.log.error(message, function(err, resp, body) {
     // If successful, body will be { text: 'Success', code: 0 }
     console.log("Response from Splunk .error", body);
 });
 
 console.log("Sending one line string", "Hello World");
-Logger.log.log("Hello World", null, function(err, resp, body) {
+Logger.log.log("Hello World", function(err, resp, body) {
     // If successful, body will be { text: 'Success', code: 0 }
     console.log("Response from Splunk .log", body);
 });
+
+// Clearing the metadata values
+Logger.log.clear_metadata();
+
+console.log("Sending hello world with no callback");
+Logger.log.log("Hello World with no callback");
