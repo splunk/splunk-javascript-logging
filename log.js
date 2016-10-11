@@ -10,12 +10,12 @@ var Log = function (logger) {
  * @returns {{message, content, severity: severity}}
  * @private
  */
-Log.prototype._prep_context = function(content, severity, metadata) {
+Log.prototype._prep_context = function(content, severity) {
     var context = {
         "message": content,
         "severity": severity
     };
-    if (metadata || this.metadata) { context.metadata = metadata || this.metadata; }
+    if (this.metadata) { context.metadata = this.metadata; }
     return context;
 };
 
