@@ -206,7 +206,7 @@ SplunkLogger.prototype._enableTimer = function(interval) {
  *      index: "main",
  *      host: "farm.local",
  * };
- * logger.log.set_metadata(metadata);
+ * logger.set_metadata(metadata);
  *
  * @param metadata
  */
@@ -218,7 +218,7 @@ SplunkLogger.prototype.set_metadata = function (metadata) {
  * Clears the default metadata values for the convencience methods
  *
  * @example
- * logger.log.clear_metadata();
+ * logger.clear_metadata();
  */
 SplunkLogger.prototype.clear_metadata = function() {
     this.metadata = undefined;
@@ -607,10 +607,10 @@ SplunkLogger.prototype.send = function(context, callback) {
  * Will be sent with the default severity level - 'info' unless configured
  *
  * @examples
- * logger.log.log(string_payload)
- * logger.log.log(object_payload)
- * logger.log.log(array_payload, callback)
- * logger.log.log(numerical_payload, callback)
+ * logger.log(string_payload)
+ * logger.log(object_payload)
+ * logger.log(array_payload, callback)
+ * logger.log(numerical_payload, callback)
  *
  * @param {anything} message - message or object to be logged.
  * @param {function} [callback] - A callback function: <code>function(err, response, body)</code>
@@ -626,10 +626,10 @@ SplunkLogger.prototype.log = function(message, callback) {
  * Assumes that the object is not already in send format, if so use logger.send
  *
  * @examples
- * logger.log.info(string_payload)
- * logger.log.info(object_payload)
- * logger.log.info(array_payload, callback)
- * logger.log.info(numerical_payload, callback)
+ * logger.info(string_payload)
+ * logger.info(object_payload)
+ * logger.info(array_payload, callback)
+ * logger.info(numerical_payload, callback)
  *
  * @param {anything} message - message or object to be logged.
  * @param {function} [callback] - A callback function: <code>function(err, response, body)</code>
@@ -645,10 +645,10 @@ SplunkLogger.prototype.info = function(message, callback) {
  * Assumes that the object is not already in send format, if so use logger.send
  *
  * @example
- * logger.log.debug(string_payload)
- * logger.log.debug(object_payload)
- * logger.log.debug(array_payload, callback)
- * logger.log.debug(numerical_payload, callback)
+ * logger.debug(string_payload)
+ * logger.debug(object_payload)
+ * logger.debug(array_payload, callback)
+ * logger.debug(numerical_payload, callback)
  *
  * @param {anything} message - message or object to be logged.
  * @param {function} [callback] - A callback function: <code>function(err, response, body)</code>
@@ -664,10 +664,10 @@ SplunkLogger.prototype.debug = function(message, callback) {
  * Assumes that the object is not already in send format, if so use logger.send
  *
  * @example
- * logger.log.warn(string_payload)
- * logger.log.warn(object_payload)
- * logger.log.warn(array_payload, callback)
- * logger.log.warn(numerical_payload, callback)
+ * logger.warn(string_payload)
+ * logger.warn(object_payload)
+ * logger.warn(array_payload, callback)
+ * logger.warn(numerical_payload, callback)
  *
  * @param {anything} message - message or object to be logged.
  * @param {function} [callback] - A callback function: <code>function(err, response, body)</code>
@@ -683,10 +683,10 @@ SplunkLogger.prototype.warn = function(message, callback) {
  * Assumes that the object is not already in send format, if so use logger.send
  *
  * @example
- * logger.log.error(string_payload)
- * logger.log.error(object_payload)
- * logger.log.error(array_payload, callback)
- * logger.log.error(numerical_payload, callback)
+ * logger.error(string_payload)
+ * logger.error(object_payload)
+ * logger.error(array_payload, callback)
+ * logger..error(numerical_payload, callback)
  *
  * @param {anything} message - message or object to be logged.
  * @param {function} [callback] - A callback function: <code>function(err, response, body)</code>
