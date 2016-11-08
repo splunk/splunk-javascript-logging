@@ -165,7 +165,7 @@ describe("SplunkLogger", function() {
             assert.strictEqual(0, logger.config.maxBatchSize);
 
             var expected = {
-                json: true,
+                json: false,
                 strictSSL: false,
                 headers: {}
             };
@@ -849,7 +849,7 @@ describe("SplunkLogger", function() {
             var options = SplunkLogger.prototype._initializeRequestOptions();
             assert.ok(options);
             assert.ok(Object.keys(options).length, 3);
-            assert.strictEqual(options.json, true);
+            assert.strictEqual(options.json, false);
             assert.strictEqual(options.strictSSL, false);
             assert.ok(options.headers);
             assert.strictEqual(Object.keys(options.headers).length, 0);
@@ -862,7 +862,7 @@ describe("SplunkLogger", function() {
             var options = SplunkLogger.prototype._initializeRequestOptions(optionsOriginal);
             assert.ok(options);
             assert.ok(Object.keys(options).length, 5);
-            assert.strictEqual(options.json, true);
+            assert.strictEqual(options.json, false);
             assert.strictEqual(options.strictSSL, false);
             assert.strictEqual(options.something, optionsOriginal.something);
             assert.strictEqual(options.value, optionsOriginal.value);
@@ -871,7 +871,6 @@ describe("SplunkLogger", function() {
         });
         it("should get defaults with non-default values", function() {
             var optionsOriginal = {
-                json: false,
                 strictSSL: true,
                 headers: {
                     Authorization: "nothing"

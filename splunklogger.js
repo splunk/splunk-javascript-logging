@@ -148,7 +148,7 @@ var defaultConfig = {
 };
 
 var defaultRequestOptions = {
-    json: true, // Sets the content-type header to application/json.
+    json: false,
     strictSSL: false
 };
 
@@ -460,22 +460,33 @@ SplunkLogger.prototype._sendEvents = function(context, callback) {
                 splunkError = null;
                 requestError = err;
                 _response = resp;
-                _body = body;
-
-                // Try to parse an error response from Splunk Enterprise or Splunk Cloud
-                if (!requestError && body && body.code.toString() !== "0") {
-                    splunkError = new Error(body.text);
-                    splunkError.code = body.code;
-                }
 
                 // Retry if no Splunk error, a non-200 request response, and numRetries hasn't exceeded the limit
-                if (!splunkError && requestError && numRetries <= that.config.maxRetries) {
-                    utils.expBackoff({attempt: numRetries}, done);
+                if (requestError && numRetries <= that.config.maxRetries) {
+                    return utils.expBackoff({attempt: numRetries}, done);
                 }
-                else {
-                    // Stop iterating
-                    done(true);
+                else if (requestError) {
+                    return done(err);
                 }
+
+                try {
+                    _body = JSON.parse(body);
+                }
+                catch (err) {
+                    _body = body;
+
+                    splunkError = new Error("Unexpected response from Splunk. Request body was: " + _body);
+                    splunkError.code = -1;
+                }
+
+                // Try to parse an error response from Splunk Enterprise or Splunk Cloud
+                if (!splunkError && _body && _body.code && _body.code.toString() !== "0") {
+                    splunkError = new Error(_body.text);
+                    splunkError.code = _body.code;
+                }
+
+                // Stop iterating
+                done(true);
             });
         },
         function() {
