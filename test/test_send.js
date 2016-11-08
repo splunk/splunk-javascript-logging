@@ -190,8 +190,7 @@ describe("SplunkLogger send (integration tests)", function() {
             logger.send(context, function(err, resp, body) {
                 assert.ok(!err);
                 assert.ok(run);
-                assert.strictEqual(resp.headers["content-type"], "application/json; charset=UTF-8");
-                assert.strictEqual(resp.body, body);
+                assert.strictEqual(resp.body, JSON.stringify(body));
                 assert.strictEqual(body.text, invalidTokenBody.text);
                 assert.strictEqual(body.code, invalidTokenBody.code);
                 done();
@@ -234,8 +233,7 @@ describe("SplunkLogger send (integration tests)", function() {
 
             logger.send(context, function(err, resp, body) {
                 assert.ok(!err);
-                assert.strictEqual(resp.headers["content-type"], "application/json; charset=UTF-8");
-                assert.strictEqual(resp.body, body);
+                assert.strictEqual(resp.body, JSON.stringify(body));
                 assert.strictEqual(body.text, successBody.text);
                 assert.strictEqual(body.code, successBody.code);
                 done();
@@ -259,8 +257,7 @@ describe("SplunkLogger send (integration tests)", function() {
 
             logger.send(context, function(err, resp, body) {
                 assert.ok(!err);
-                assert.strictEqual(resp.headers["content-type"], "application/json; charset=UTF-8");
-                assert.strictEqual(resp.body, body);
+                assert.strictEqual(resp.body, JSON.stringify(body));
                 assert.strictEqual(body.text, successBody.text);
                 assert.strictEqual(body.code, successBody.code);
                 done();
@@ -289,8 +286,7 @@ describe("SplunkLogger send (integration tests)", function() {
 
             logger.send(context, function(err, resp, body) {
                 assert.ok(!err);
-                assert.strictEqual(resp.headers["content-type"], "application/json; charset=UTF-8");
-                assert.strictEqual(resp.body, body);
+                assert.strictEqual(resp.body, JSON.stringify(body));
                 assert.strictEqual(body.text, successBody.text);
                 assert.strictEqual(body.code, successBody.code);
                 done();
@@ -314,8 +310,7 @@ describe("SplunkLogger send (integration tests)", function() {
 
             logger.send(context, function(err, resp, body) {
                 assert.ok(!err);
-                assert.strictEqual(resp.headers["content-type"], "application/json; charset=UTF-8");
-                assert.strictEqual(resp.body, body);
+                assert.strictEqual(resp.body, JSON.stringify(body));
                 assert.strictEqual(body.text, successBody.text);
                 assert.strictEqual(body.code, successBody.code);
                 done();
@@ -339,8 +334,7 @@ describe("SplunkLogger send (integration tests)", function() {
 
             logger.send(context, function(err, resp, body) {
                 assert.ok(!err);
-                assert.strictEqual(resp.headers["content-type"], "application/json; charset=UTF-8");
-                assert.strictEqual(resp.body, body);
+                assert.strictEqual(resp.body, JSON.stringify(body));
                 assert.strictEqual(body.text, successBody.text);
                 assert.strictEqual(body.code, successBody.code);
                 done();
@@ -364,8 +358,7 @@ describe("SplunkLogger send (integration tests)", function() {
 
             logger.send(context, function(err, resp, body) {
                 assert.ok(!err);
-                assert.strictEqual(resp.headers["content-type"], "application/json; charset=UTF-8");
-                assert.strictEqual(resp.body, body);
+                assert.strictEqual(resp.body, JSON.stringify(body));
                 assert.strictEqual(body.text, successBody.text);
                 assert.strictEqual(body.code, successBody.code);
                 done();
@@ -386,8 +379,7 @@ describe("SplunkLogger send (integration tests)", function() {
 
             logger.send(context, function(err, resp, body) {
                 assert.ok(!err);
-                assert.strictEqual(resp.headers["content-type"], "application/json; charset=UTF-8");
-                assert.strictEqual(resp.body, body);
+                assert.strictEqual(resp.body, JSON.stringify(body));
                 assert.strictEqual(body.text, successBody.text);
                 assert.strictEqual(body.code, successBody.code);
                 done();
@@ -410,8 +402,7 @@ describe("SplunkLogger send (integration tests)", function() {
 
             logger.send(context, function(err, resp, body) {
                 assert.ok(!err);
-                assert.strictEqual(resp.headers["content-type"], "application/json; charset=UTF-8");
-                assert.strictEqual(resp.body, body);
+                assert.strictEqual(resp.body, JSON.stringify(body));
                 assert.strictEqual(body.text, successBody.text);
                 assert.strictEqual(body.code, successBody.code);
                 done();
@@ -514,8 +505,7 @@ describe("SplunkLogger send (integration tests)", function() {
 
             logger.send(context, function(err, resp, body) {
                 assert.ok(!err);
-                assert.strictEqual(resp.headers["content-type"], "application/json; charset=UTF-8");
-                assert.strictEqual(resp.body, body);
+                assert.strictEqual(resp.body, JSON.stringify(body));
                 assert.strictEqual(body.text, successBody.text);
                 assert.strictEqual(body.code, successBody.code);
                 done();
@@ -621,8 +611,7 @@ describe("SplunkLogger send (integration tests)", function() {
             logger.flush(function(err, resp, body) {
                 assert.ok(!err);
                 assert.ok(run);
-                assert.strictEqual(resp.headers["content-type"], "application/json; charset=UTF-8");
-                assert.strictEqual(resp.body, body);
+                assert.strictEqual(resp.body, JSON.stringify(body));
                 assert.strictEqual(body.text, noDataBody.text);
                 assert.strictEqual(body.code, noDataBody.code);
                 assert.strictEqual(logger.serializedContextQueue.length, 0);
@@ -671,8 +660,7 @@ describe("SplunkLogger send (integration tests)", function() {
             assert.ok(logger.eventsBatchSize > 50);
             logger.flush(function(err, resp, body) {
                 assert.ok(!err);
-                assert.strictEqual(resp.headers["content-type"], "application/json; charset=UTF-8");
-                assert.strictEqual(resp.body, body);
+                assert.strictEqual(resp.body, JSON.stringify(body));
                 assert.strictEqual(body.text, successBody.text);
                 assert.strictEqual(body.code, successBody.code);
                 assert.strictEqual(logger.serializedContextQueue.length, 0);
@@ -700,8 +688,7 @@ describe("SplunkLogger send (integration tests)", function() {
             assert.ok(logger.eventsBatchSize > 100);
             logger.flush(function(err, resp, body) {
                 assert.ok(!err);
-                assert.strictEqual(resp.headers["content-type"], "application/json; charset=UTF-8");
-                assert.strictEqual(resp.body, body);
+                assert.strictEqual(resp.body, JSON.stringify(body));
                 assert.strictEqual(body.text, successBody.text);
                 assert.strictEqual(body.code, successBody.code);
                 assert.strictEqual(logger.serializedContextQueue.length, 0);
@@ -728,7 +715,8 @@ describe("SplunkLogger send (integration tests)", function() {
                     post(requestOptions, callback);
                 }
                 else {
-                    callback(new Error(), {body: invalidTokenBody}, invalidTokenBody);
+                    var body = JSON.stringify(invalidTokenBody);
+                    callback(new Error(), {body: body}, body);
                 }
             };
             
@@ -763,7 +751,8 @@ describe("SplunkLogger send (integration tests)", function() {
                     post(requestOptions, callback);
                 }
                 else {
-                    callback(new Error(), {body: invalidTokenBody}, invalidTokenBody);
+                    var body = JSON.stringify(invalidTokenBody);
+                    callback(new Error(), {body: body}, body);
                 }
             };
             
@@ -798,7 +787,8 @@ describe("SplunkLogger send (integration tests)", function() {
                     post(requestOptions, callback);
                 }
                 else {
-                    callback(new Error(), {body: invalidTokenBody}, invalidTokenBody);
+                    var body = JSON.stringify(invalidTokenBody);
+                    callback(new Error(), {body: body}, body);
                 }
             };
             
@@ -833,7 +823,8 @@ describe("SplunkLogger send (integration tests)", function() {
                     post(requestOptions, callback);
                 }
                 else {
-                    callback(new Error(), {body: invalidTokenBody}, invalidTokenBody);
+                    var body = JSON.stringify(invalidTokenBody);
+                    callback(new Error(), {body: body}, body);
                 }
             };
             
@@ -868,7 +859,8 @@ describe("SplunkLogger send (integration tests)", function() {
                     post(requestOptions, callback);
                 }
                 else {
-                    callback(new Error(), {body: invalidTokenBody}, invalidTokenBody);
+                    var body = JSON.stringify(invalidTokenBody);
+                    callback(new Error(), {body: body}, body);
                 }
             };
             
@@ -903,7 +895,8 @@ describe("SplunkLogger send (integration tests)", function() {
                     post(requestOptions, callback);
                 }
                 else {
-                    callback(new Error(), {body: invalidTokenBody}, invalidTokenBody);
+                    var body = JSON.stringify(invalidTokenBody);
+                    callback(new Error(), {body: body}, body);
                 }
             };
             
@@ -1168,8 +1161,9 @@ describe("SplunkLogger send (integration tests)", function() {
                 _post(context, function(err, resp, body) {
                     posts++;
                     assert.ok(!err);
-                    assert.strictEqual(body.code, successBody.code);
-                    assert.strictEqual(body.text, successBody.text);
+                    var b = JSON.parse(body);
+                    assert.strictEqual(b.code, successBody.code);
+                    assert.strictEqual(b.text, successBody.text);
                     callback(err, resp, body);
                 });
             };
@@ -1201,8 +1195,9 @@ describe("SplunkLogger send (integration tests)", function() {
                 _post(context, function(err, resp, body) {
                     posts++;
                     assert.ok(!err);
-                    assert.strictEqual(body.code, successBody.code);
-                    assert.strictEqual(body.text, successBody.text);
+                    var b = JSON.parse(body);
+                    assert.strictEqual(b.code, successBody.code);
+                    assert.strictEqual(b.text, successBody.text);
                     callback(err, resp, body);
                 });
             };
@@ -1239,8 +1234,9 @@ describe("SplunkLogger send (integration tests)", function() {
                 _post(context, function(err, resp, body) {
                     posts++;
                     assert.ok(!err);
-                    assert.strictEqual(body.code, successBody.code);
-                    assert.strictEqual(body.text, successBody.text);
+                    var b = JSON.parse(body);
+                    assert.strictEqual(b.code, successBody.code);
+                    assert.strictEqual(b.text, successBody.text);
                     callback(err, resp, body);
                 });
             };
@@ -1281,8 +1277,9 @@ describe("SplunkLogger send (integration tests)", function() {
                 _post(context, function(err, resp, body) {
                     posts++;
                     assert.ok(!err);
-                    assert.strictEqual(body.code, successBody.code);
-                    assert.strictEqual(body.text, successBody.text);
+                    var b = JSON.parse(body);
+                    assert.strictEqual(b.code, successBody.code);
+                    assert.strictEqual(b.text, successBody.text);
                     callback(err, resp, body);
                 });
             };
@@ -1337,8 +1334,9 @@ describe("SplunkLogger send (integration tests)", function() {
                 _post(context, function(err, resp, body) {
                     posts++;
                     assert.ok(!err);
-                    assert.strictEqual(body.code, successBody.code);
-                    assert.strictEqual(body.text, successBody.text);
+                    var b = JSON.parse(body);
+                    assert.strictEqual(b.code, successBody.code);
+                    assert.strictEqual(b.text, successBody.text);
                     callback(err, resp, body);
                 });
             };
@@ -1384,8 +1382,9 @@ describe("SplunkLogger send (integration tests)", function() {
                 _post(context, function(err, resp, body) {
                     posts++;
                     assert.ok(!err);
-                    assert.strictEqual(body.code, successBody.code);
-                    assert.strictEqual(body.text, successBody.text);
+                    var b = JSON.parse(body);
+                    assert.strictEqual(b.code, successBody.code);
+                    assert.strictEqual(b.text, successBody.text);
                     callback(err, resp, body);
                 });
             };
@@ -1438,8 +1437,9 @@ describe("SplunkLogger send (integration tests)", function() {
                 _post(context, function(err, resp, body) {
                     posts++;
                     assert.ok(!err);
-                    assert.strictEqual(body.code, successBody.code);
-                    assert.strictEqual(body.text, successBody.text);
+                    var b = JSON.parse(body);
+                    assert.strictEqual(b.code, successBody.code);
+                    assert.strictEqual(b.text, successBody.text);
                     callback(err, resp, body);
                 });
             };
@@ -1495,8 +1495,9 @@ describe("SplunkLogger send (integration tests)", function() {
                     assert.strictEqual(logger.eventsBatchSize, 0);
 
                     assert.ok(!err);
-                    assert.strictEqual(body.code, successBody.code);
-                    assert.strictEqual(body.text, successBody.text);
+                    var b = JSON.parse(body);
+                    assert.strictEqual(b.code, successBody.code);
+                    assert.strictEqual(b.text, successBody.text);
 
                     done();
                 });
@@ -1529,8 +1530,9 @@ describe("SplunkLogger send (integration tests)", function() {
                     assert.strictEqual(logger.eventsBatchSize, 0);
 
                     assert.ok(!err);
-                    assert.strictEqual(body.code, successBody.code);
-                    assert.strictEqual(body.text, successBody.text);
+                    var b = JSON.parse(body);
+                    assert.strictEqual(b.code, successBody.code);
+                    assert.strictEqual(b.text, successBody.text);
 
                     done();
                 });
@@ -1575,8 +1577,9 @@ describe("SplunkLogger send (integration tests)", function() {
                     posts++;
 
                     assert.ok(!err);
-                    assert.strictEqual(body.code, successBody.code);
-                    assert.strictEqual(body.text, successBody.text);
+                    var b = JSON.parse(body);
+                    assert.strictEqual(b.code, successBody.code);
+                    assert.strictEqual(b.text, successBody.text);
                 });
             };
 
@@ -1620,8 +1623,9 @@ describe("SplunkLogger send (integration tests)", function() {
                     posts++;
 
                     assert.ok(!err);
-                    assert.strictEqual(body.code, successBody.code);
-                    assert.strictEqual(body.text, successBody.text);
+                    var b = JSON.parse(body);
+                    assert.strictEqual(b.code, successBody.code);
+                    assert.strictEqual(b.text, successBody.text);
                 });
             };
 
@@ -1670,8 +1674,9 @@ describe("SplunkLogger send (integration tests)", function() {
                     assert.strictEqual(logger.eventsBatchSize, 0);
 
                     assert.ok(!err);
-                    assert.strictEqual(body.code, successBody.code);
-                    assert.strictEqual(body.text, successBody.text);
+                    var b = JSON.parse(body);
+                    assert.strictEqual(b.code, successBody.code);
+                    assert.strictEqual(b.text, successBody.text);
 
                     done();
                 });
@@ -1740,8 +1745,9 @@ describe("SplunkLogger send (integration tests)", function() {
                     assert.strictEqual(logger.eventsBatchSize, 0);
 
                     assert.ok(!err);
-                    assert.strictEqual(body.code, successBody.code);
-                    assert.strictEqual(body.text, successBody.text);
+                    var b = JSON.parse(body);
+                    assert.strictEqual(b.code, successBody.code);
+                    assert.strictEqual(b.text, successBody.text);
 
                     done();
                 });
@@ -1785,8 +1791,9 @@ describe("SplunkLogger send (integration tests)", function() {
                     posts++;
 
                     assert.ok(!err);
-                    assert.strictEqual(body.code, successBody.code);
-                    assert.strictEqual(body.text, successBody.text);
+                    var b = JSON.parse(body);
+                    assert.strictEqual(b.code, successBody.code);
+                    assert.strictEqual(b.text, successBody.text);
                 });
             };
 
@@ -1850,6 +1857,41 @@ describe("SplunkLogger send (integration tests)", function() {
                 assert.ok(!err);
                 assert.strictEqual(body.code, successBody.code);
                 assert.strictEqual(body.text, successBody.text);
+                done();
+            });
+        });
+    });
+    describe("receiving HTML response", function() {
+        it("should handle JSON parsing exception without crashing", function(done) {
+            var config = {
+                token: configurationFile.token
+            };
+            var logger = new SplunkLogger(config);
+            logger.requestOptions.fail = "yes";
+
+            logger.error = function() {
+                return;
+            };
+
+            var post = logger._post;
+            logger._post = function(opts, callback) {
+                if (opts.fail === "yes") {
+                    var resp = {
+                        body: "<!doctype>\n<html>\n</html>"
+                    };
+                    callback(null, resp, resp.body);
+                }
+                else {
+                    post(opts, callback);
+                }
+            };
+
+            logger.send({message:"foo"}, function(err, resp, body) {
+                assert.ok(!err);
+                assert.ok(resp);
+                assert.ok(body);
+                assert.strictEqual(resp.body, body);
+                assert.strictEqual(body, "<!doctype>\n<html>\n</html>");
                 done();
             });
         });

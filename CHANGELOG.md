@@ -1,11 +1,17 @@
 # Splunk logging for JavaScript
 
+## v0.9.2
+
+### Bug Fixes
+
+* Workaround a urlencoding bug in the request library (GitHub issue [#6](https://github.com/splunk/splunk-javascript-logging/issues/6)).
+* Catch JSON parsing errors from the server without crashing (GitHub issue [#9](https://github.com/splunk/splunk-javascript-logging/issues/9)).
+
 ## v0.9.1
 
 ### Bug Fixes
 
 * Relax port validation for ports < 1000.
-
 
 ## v0.9.0
 

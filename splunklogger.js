@@ -76,7 +76,7 @@ function _defaultEventFormatter(message, severity) {
  *
  * @param {object} config - Configuration settings for a new [SplunkLogger]{@link SplunkLogger}.
  * @param {string} config.token - HTTP Event Collector token, required.
- * @param {string} [config.name=splunk-javascript-logging/0.9.1] - Name for this logger.
+ * @param {string} [config.name=splunk-javascript-logging/0.9.2] - Name for this logger.
  * @param {string} [config.host=localhost] - Hostname or IP address of Splunk Enterprise or Splunk Cloud server.
  * @param {string} [config.maxRetries=0] - How many times to retry when HTTP POST to Splunk Enterprise or Splunk Cloud fails.
  * @param {string} [config.path=/services/collector/event/1.0] - URL path to send data to on the Splunk Enterprise or Splunk Cloud server.
@@ -135,7 +135,7 @@ SplunkLogger.prototype.levels = {
 };
 
 var defaultConfig = {
-    name: "splunk-javascript-logging/0.9.1",
+    name: "splunk-javascript-logging/0.9.2",
     host: "localhost",
     path: "/services/collector/event/1.0",
     protocol: "https",
@@ -148,7 +148,7 @@ var defaultConfig = {
 };
 
 var defaultRequestOptions = {
-    json: true, // Sets the content-type header to application/json.
+    json: false,
     strictSSL: false
 };
 
@@ -460,22 +460,33 @@ SplunkLogger.prototype._sendEvents = function(context, callback) {
                 splunkError = null;
                 requestError = err;
                 _response = resp;
-                _body = body;
-
-                // Try to parse an error response from Splunk Enterprise or Splunk Cloud
-                if (!requestError && body && body.code.toString() !== "0") {
-                    splunkError = new Error(body.text);
-                    splunkError.code = body.code;
-                }
 
                 // Retry if no Splunk error, a non-200 request response, and numRetries hasn't exceeded the limit
-                if (!splunkError && requestError && numRetries <= that.config.maxRetries) {
-                    utils.expBackoff({attempt: numRetries}, done);
+                if (requestError && numRetries <= that.config.maxRetries) {
+                    return utils.expBackoff({attempt: numRetries}, done);
                 }
-                else {
-                    // Stop iterating
-                    done(true);
+                else if (requestError) {
+                    return done(err);
                 }
+
+                try {
+                    _body = JSON.parse(body);
+                }
+                catch (err) {
+                    _body = body;
+
+                    splunkError = new Error("Unexpected response from Splunk. Request body was: " + _body);
+                    splunkError.code = -1;
+                }
+
+                // Try to parse an error response from Splunk Enterprise or Splunk Cloud
+                if (!splunkError && _body && _body.code && _body.code.toString() !== "0") {
+                    splunkError = new Error(_body.text);
+                    splunkError.code = _body.code;
+                }
+
+                // Stop iterating
+                done(true);
             });
         },
         function() {
