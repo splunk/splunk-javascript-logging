@@ -1861,4 +1861,39 @@ describe("SplunkLogger send (integration tests)", function() {
             });
         });
     });
+    describe("receiving HTML response", function() {
+        it("should handle JSON parsing exception without crashing", function(done) {
+            var config = {
+                token: configurationFile.token
+            };
+            var logger = new SplunkLogger(config);
+            logger.requestOptions.fail = "yes";
+
+            logger.error = function() {
+                return;
+            };
+
+            var post = logger._post;
+            logger._post = function(opts, callback) {
+                if (opts.fail === "yes") {
+                    var resp = {
+                        body: "<!doctype>\n<html>\n</html>"
+                    };
+                    callback(null, resp, resp.body);
+                }
+                else {
+                    post(opts, callback);
+                }
+            };
+
+            logger.send({message:"foo"}, function(err, resp, body) {
+                assert.ok(!err);
+                assert.ok(resp);
+                assert.ok(body);
+                assert.strictEqual(resp.body, body);
+                assert.strictEqual(body, "<!doctype>\n<html>\n</html>");
+                done();
+            });
+        });
+    });
 });
