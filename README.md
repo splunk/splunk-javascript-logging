@@ -30,6 +30,25 @@ See the `examples` folder for usage examples:
 * `manual_batching.js`: Shows how to queue log messages, and send them in batches by manually calling `flush()`.
 * `retry.js`: Shows how to configure retries on errors.
 
+### SSL
+
+Note: SSL certificate validation is diabled by default.
+To enable it, set `requestOptions.strictSSL = true` on your `SplunkLogger` instance:
+
+```javascript
+var SplunkLogger = require("splunk-logging").Logger;
+
+var config = {
+    token: "your-token-here",
+    url: "https://splunk.local:8088"
+};
+
+var Logger = new SplunkLogger(config);
+
+// Enable SSL certificate validation
+Logger.requestOptions.strictSSL = true;
+```
+
 ### Basic example
 
 ```javascript
