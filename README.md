@@ -90,9 +90,16 @@ Stay connected with other developers building on Splunk software.
 
 </table>
 
-### Contact us
+## Support
 
-You can reach the developer platform team at _devinfo@splunk.com_.
+The Splunk logging library for .NET is community-supported.
+
+1. You can find help through our community on [Splunk Answers](http://answers.splunk.com/) (use the `logging-library-javascript` tag to identify your questions).
+2. File issues on [GitHub](https://github.com/splunk/splunk-javascript-logging/issues).
+
+## Contact us
+
+You can reach the Dev Platform team at [devinfo@splunk.com](mailto:devinfo@splunk.com).
 
 ## License
 
