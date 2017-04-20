@@ -30,7 +30,7 @@
     "node": ">=0.10.0"
   },
   "dependencies": {
-    "request": "2.61.0"
+    "request": "2.x.x"
   },
   "devDependencies": {
     "istanbul": "0.3.17",
