@@ -171,7 +171,7 @@ describe("SplunkLogger send (integration tests)", function() {
 
             var run = false;
 
-            logger.error = function(err, errContext) {
+            logger.onError = function(err, errContext) {
                 run = true;
                 assert.ok(err);
                 assert.strictEqual(err.message, invalidTokenBody.text);
@@ -280,7 +280,7 @@ describe("SplunkLogger send (integration tests)", function() {
                 }
             };
 
-            logger.error = function() {
+            logger.onError = function() {
                 assert.ok(false);
             };
 
@@ -423,7 +423,7 @@ describe("SplunkLogger send (integration tests)", function() {
 
             var run = false;
 
-            logger.error = function(err, errContext) {
+            logger.onError = function(err, errContext) {
                 run = true;
                 assert.ok(err);
                 assert.strictEqual(err.message, "socket hang up");
@@ -464,7 +464,7 @@ describe("SplunkLogger send (integration tests)", function() {
 
             var run = false;
 
-            logger.error = function(err, errContext) {
+            logger.onError = function(err, errContext) {
                 run = true;
                 assert.ok(err);
                 assert.strictEqual(err.message.indexOf("getaddrinfo ENOTFOUND"), 0);
@@ -527,7 +527,7 @@ describe("SplunkLogger send (integration tests)", function() {
 
             var run = false;
 
-            logger.error = function(err, errContext) {
+            logger.onError = function(err, errContext) {
                 run = true;
                 assert.ok(err);
                 assert.strictEqual(err.code, "SELF_SIGNED_CERT_IN_CHAIN");
@@ -598,7 +598,7 @@ describe("SplunkLogger send (integration tests)", function() {
 
             var run = false;
 
-            logger.error = function(err, errContext) {
+            logger.onError = function(err, errContext) {
                 run = true;
                 assert.ok(err);
                 assert.strictEqual(err.message, noDataBody.text);
@@ -626,7 +626,7 @@ describe("SplunkLogger send (integration tests)", function() {
 
             var logger = new SplunkLogger(config);
 
-            logger.error = function(err, errContext) {
+            logger.onError = function(err, errContext) {
                 assert.ok(err);
                 assert.strictEqual(err.message, noDataBody.text);
                 assert.strictEqual(err.code, noDataBody.code);
@@ -932,7 +932,7 @@ describe("SplunkLogger send (integration tests)", function() {
             };
 
             var run = false;
-            logger.error = function(err, context) {
+            logger.onError = function(err, context) {
                 assert.ok(err);
                 assert.ok(context);
                 run = true;
@@ -970,7 +970,7 @@ describe("SplunkLogger send (integration tests)", function() {
             };
 
             var run = false;
-            logger.error = function(err, context) {
+            logger.onError = function(err, context) {
                 assert.ok(err);
                 assert.ok(context);
                 run = true;
@@ -1008,7 +1008,7 @@ describe("SplunkLogger send (integration tests)", function() {
             };
 
             var run = false;
-            logger.error = function(err, context) {
+            logger.onError = function(err, context) {
                 assert.ok(err);
                 assert.ok(context);
                 run = true;
@@ -1045,7 +1045,7 @@ describe("SplunkLogger send (integration tests)", function() {
             };
 
             var run = false;
-            logger.error = function(err, context) {
+            logger.onError = function(err, context) {
                 assert.ok(err);
                 assert.ok(context);
                 run = true;
@@ -1084,7 +1084,7 @@ describe("SplunkLogger send (integration tests)", function() {
             };
 
             var run = false;
-            logger.error = function(err, context) {
+            logger.onError = function(err, context) {
                 assert.ok(err);
                 assert.ok(context);
                 run = true;
@@ -1123,7 +1123,7 @@ describe("SplunkLogger send (integration tests)", function() {
             };
 
             var run = false;
-            logger.error = function(err, context) {
+            logger.onError = function(err, context) {
                 assert.ok(err);
                 assert.ok(context);
                 run = true;

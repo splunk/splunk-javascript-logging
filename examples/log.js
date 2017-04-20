@@ -25,7 +25,7 @@ var SplunkLogger = require("../index").Logger;
  * Only the token property is required.
  */
 var config = {
-    token: "your-token-here",
+    token: process.env["SPLUNK_TOKEN"] || "your-token-here",
     url: "https://localhost:8088"
 };
 
@@ -37,29 +37,25 @@ Logger.onError = function(err, context) {
     console.log("error", err, "context", context);
 };
 
-// Define the payload to send to HTTP Event Collector
-var payload = {
-    // Message can be anything, it doesn't have to be an object
-    message: {
+// Define the message to send to HTTP Event Collector
+var message = {
         temperature: "70F",
         chickenCount: 500
-    },
-    // Metadata is optional
-    metadata: {
+    };
+
+// Metadata is optional
+var metadata = {
         source: "chicken coop",
         sourcetype: "httpevent",
         index: "main",
         host: "farm.local"
-    },
-    // Severity is also optional
-    severity: "info"
-};
+    };
 
-console.log("Sending payload", payload);
+console.log("Sending message using .log", message);
 
 /**
  * Since maxBatchCount is set to 1 by default,
- * calling send will immediately send the payload.
+ * calling send will immediately send the message.
  * 
  * The underlying HTTP POST request is made to
  *
@@ -82,7 +78,50 @@ console.log("Sending payload", payload);
  *     }
  *
  */
-Logger.send(payload, function(err, resp, body) {
+// Set metadata values
+Logger.set_metadata(metadata);
+
+Logger.log(message, function(err, resp, body) {
     // If successful, body will be { text: 'Success', code: 0 }
-    console.log("Response from Splunk", body);
+    console.log("Response from Splunk .log", body);
 });
+
+console.log("Sending message using .info", message);
+
+Logger.info(message, function(err, resp, body) {
+    // If successful, body will be { text: 'Success', code: 0 }
+    console.log("Response from Splunk .info", body);
+});
+
+console.log("Sending message using .warn", message);
+
+Logger.warn(message, function(err, resp, body) {
+    // If successful, body will be { text: 'Success', code: 0 }
+    console.log("Response from Splunk .warn", body);
+});
+
+console.log("Sending message using .debug", message);
+
+Logger.debug(message, function(err, resp, body) {
+    // If successful, body will be { text: 'Success', code: 0 }
+    console.log("Response from Splunk .debug", body);
+});
+
+console.log("Sending message using .error", message);
+
+Logger.error(message, function(err, resp, body) {
+    // If successful, body will be { text: 'Success', code: 0 }
+    console.log("Response from Splunk .error", body);
+});
+
+console.log("Sending one line string", "Hello World");
+Logger.log("Hello World", function(err, resp, body) {
+    // If successful, body will be { text: 'Success', code: 0 }
+    console.log("Response from Splunk .log", body);
+});
+
+// Clearing the metadata values
+Logger.clear_metadata();
+
+console.log("Sending hello world with no callback");
+Logger.log("Hello World with no callback");

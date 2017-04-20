@@ -104,7 +104,7 @@ var SplunkLogger = function(config) {
     this.serializedContextQueue = [];
     this.eventsBatchSize = 0;
     this.eventFormatter = _defaultEventFormatter;
-    this.error = _err;
+    this.onError = _err;
 
     this._enableTimer = utils.bind(this, this._enableTimer);
     this._disableTimer = utils.bind(this, this._disableTimer);
@@ -194,6 +194,34 @@ SplunkLogger.prototype._enableTimer = function(interval) {
             that.flush();
         }
     }, interval);
+};
+
+/**
+ * Sets the default metadata values for the convenience methods
+ *
+ * @example
+ * metadata = {
+ *      source: "chicken coop",
+ *      sourcetype: "httpevent",
+ *      index: "main",
+ *      host: "farm.local",
+ * };
+ * logger.set_metadata(metadata);
+ *
+ * @param metadata
+ */
+SplunkLogger.prototype.set_metadata = function (metadata) {
+    if (typeof metadata === "object") { this.metadata = metadata; }
+};
+
+/**
+ * Clears the default metadata values for the convencience methods
+ *
+ * @example
+ * logger.clear_metadata();
+ */
+SplunkLogger.prototype.clear_metadata = function() {
+    this.metadata = undefined;
 };
 
 /**
@@ -382,6 +410,23 @@ SplunkLogger.prototype._initializeContext = function(context) {
 };
 
 /**
+ * Fits data sent to convenience methods into object format expected by .send
+ *
+ * @param {anything} content
+ * @param {string} (optional) severity
+ * @returns {{message, content, severity: severity}}
+ * @private
+ */
+SplunkLogger.prototype._prep_context = function(content, severity) {
+    var context = {
+        "message": content,
+        "severity": severity
+    };
+    if (this.metadata) { context.metadata = this.metadata; }
+    return context;
+};
+
+/**
  * Takes anything and puts it in a JS object for the event/1.0 Splunk HTTP Event Collector format.
  *
  * @param {object} context
@@ -490,9 +535,9 @@ SplunkLogger.prototype._sendEvents = function(context, callback) {
             });
         },
         function() {
-            // Call error() for a request error or Splunk error
+            // Call onError() for a request error or Splunk error
             if (requestError || splunkError) {
-                that.error(requestError || splunkError, context);
+                that.onError(requestError || splunkError, context);
             }
 
             callback(requestError, _response, _body);
@@ -565,6 +610,102 @@ SplunkLogger.prototype.send = function(context, callback) {
     if (batchOverSize || batchOverCount) {
         this.flush(callback || function(){});
     }
+};
+
+/**
+ * Send() wrapper, formats data and calls send()
+ * Assumes that the object is not already in send format, if so use logger.send
+ * Will be sent with the default severity level - 'info' unless configured
+ *
+ * @examples
+ * logger.log(string_payload)
+ * logger.log(object_payload)
+ * logger.log(array_payload, callback)
+ * logger.log(numerical_payload, callback)
+ *
+ * @param {anything} message - message or object to be logged.
+ * @param {function} [callback] - A callback function: <code>function(err, response, body)</code>
+ * @public
+ */
+SplunkLogger.prototype.log = function(message, callback) {
+    var context = this._prep_context(message);
+    this.send(context, callback);
+};
+
+/**
+ * Send() wrapper, formats data with info severity and calls send()
+ * Assumes that the object is not already in send format, if so use logger.send
+ *
+ * @examples
+ * logger.info(string_payload)
+ * logger.info(object_payload)
+ * logger.info(array_payload, callback)
+ * logger.info(numerical_payload, callback)
+ *
+ * @param {anything} message - message or object to be logged.
+ * @param {function} [callback] - A callback function: <code>function(err, response, body)</code>
+ * @public
+ */
+SplunkLogger.prototype.info = function(message, callback) {
+    var context = this._prep_context(message, "info");
+    this.send(context, callback);
+};
+
+/**
+ * Send() wrapper, formats data with debug severity and calls send()
+ * Assumes that the object is not already in send format, if so use logger.send
+ *
+ * @example
+ * logger.debug(string_payload)
+ * logger.debug(object_payload)
+ * logger.debug(array_payload, callback)
+ * logger.debug(numerical_payload, callback)
+ *
+ * @param {anything} message - message or object to be logged.
+ * @param {function} [callback] - A callback function: <code>function(err, response, body)</code>
+ * @public
+ */
+SplunkLogger.prototype.debug = function(message, callback) {
+    var context = this._prep_context(message, "debug");
+    this.send(context, callback);
+};
+
+/**
+ * Send() wrapper, formats data with warn severity and calls send()
+ * Assumes that the object is not already in send format, if so use logger.send
+ *
+ * @example
+ * logger.warn(string_payload)
+ * logger.warn(object_payload)
+ * logger.warn(array_payload, callback)
+ * logger.warn(numerical_payload, callback)
+ *
+ * @param {anything} message - message or object to be logged.
+ * @param {function} [callback] - A callback function: <code>function(err, response, body)</code>
+ * @public
+ */
+SplunkLogger.prototype.warn = function(message, callback) {
+    var context = this._prep_context(message, "warn");
+    this.send(context, callback);
+};
+
+/**
+ * Send() wrapper, formats data with error severity and calls send()
+ * Assumes that the object is not already in send format, if so use logger.send
+ *
+ * @example
+ * logger.error(string_payload)
+ * logger.error(object_payload)
+ * logger.error(array_payload, callback)
+ * logger..error(numerical_payload, callback)
+ *
+ * @param {anything} message - message or object to be logged.
+ * @param {function} [callback] - A callback function: <code>function(err, response, body)</code>
+ * @public
+ */
+SplunkLogger.prototype.error = function(message, callback) {
+    var context = this._prep_context(message, "error");
+    this.send(context, callback);
 };
 
 /**

@@ -39,7 +39,7 @@ var config = {
 // Create a new logger
 var Logger = new SplunkLogger(config);
 
-Logger.error = function(err, context) {
+Logger.onError = function(err, context) {
     // Handle errors here
     console.log("error", err, "context", context);
 };
