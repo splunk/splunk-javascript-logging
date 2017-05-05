@@ -16,8 +16,8 @@ First, update npm to the latest version by running:
 
     sudo npm install npm -g
 
-Then run: 
- 
+Then run:
+
     npm install --save splunk-logging
 
 ## Usage

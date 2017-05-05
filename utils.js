@@ -31,7 +31,7 @@ var utils = {};
  */
 utils.formatTime = function(time) {
     var cleanTime;
-    
+
     // If time is a Date object, return its value.
     if (time instanceof Date) {
         time = time.valueOf();
@@ -208,6 +208,21 @@ utils.bind = function(self, fn) {
     return function () {
         return fn.apply(self, arguments);
     };
+};
+
+/**
+ * Merges objects together and returns a new object.
+ *
+ * @returns {object}
+ */
+utils.mergeObject = function() {
+    var ret = {};
+    for (var i = 0; i < arguments.length; i++) {
+        for (var key in arguments[i]) {
+            ret[key] = arguments[i][key];
+        }
+    }
+    return ret;
 };
 
 /**

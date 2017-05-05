@@ -16,6 +16,7 @@
 
 var SplunkLogger = require("../index").Logger;
 var assert = require("assert");
+var https = require("https");
 
 describe("SplunkLogger", function() {
     describe("constructor", function () {
@@ -552,6 +553,18 @@ describe("SplunkLogger", function() {
             assert.strictEqual("info", logger.config.level);
             assert.strictEqual(8088, logger.config.port);
             assert.strictEqual(10, logger.config.maxRetries);
+        });
+        it("should accept requestOptions", function () {
+            var config = {
+                token: "a-token-goes-here-usually",
+            };
+            var requestOptions = {
+                agent: new https.Agent()
+            };
+            var logger = new SplunkLogger(config, requestOptions);
+
+            assert.ok(logger);
+            assert.ok(logger.requestOptions.agent instanceof https.Agent);
         });
     });
     describe("_initializeConfig", function() {

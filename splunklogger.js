@@ -49,9 +49,14 @@ function _defaultEventFormatter(message, severity) {
     return event;
 }
 
+var defaultRequestOptions = {
+    json: false,
+    strictSSL: false
+};
+
 /**
- * Constructs a SplunkLogger, to send events to Splunk Enterprise or Splunk Cloud 
- * via HTTP Event Collector. See <code>defaultConfig</code> for default 
+ * Constructs a SplunkLogger, to send events to Splunk Enterprise or Splunk Cloud
+ * via HTTP Event Collector. See <code>defaultConfig</code> for default
  * configuration settings.
  *
  * @example
@@ -66,7 +71,7 @@ function _defaultEventFormatter(message, severity) {
  * var logger = new SplunkLogger(config);
  *
  * @property {object} config - Configuration settings for this <code>SplunkLogger</code> instance.
- * @param {object} requestOptions - Options to pass to <code>{@link https://github.com/request/request#requestpost|request.post()}</code>.
+ * @property {object} requestOptions - Options to pass to <code>{@link https://github.com/request/request#requestpost|request.post()}</code>.
  * See the {@link http://github.com/request/request|request documentation} for all available options.
  * @property {object[]} serializedContextQueue - Queue of serialized <code>context</code> objects to be sent to Splunk Enterprise or Splunk Cloud.
  * @property {function} eventFormatter - Formats events, returning an event as a string, <code>function(message, severity)</code>.
@@ -83,7 +88,7 @@ function _defaultEventFormatter(message, severity) {
  * @param {string} [config.protocol=https] - Protocol used to communicate with the Splunk Enterprise or Splunk Cloud server, <code>http</code> or <code>https</code>.
  * @param {number} [config.port=8088] - HTTP Event Collector port on the Splunk Enterprise or Splunk Cloud server.
  * @param {string} [config.url] - URL string to pass to {@link https://nodejs.org/api/url.html#url_url_parsing|url.parse}. This will try to set
- * <code>host</code>, <code>path</code>, <code>protocol</code>, <code>port</code>, <code>url</code>. Any of these values will be overwritten if 
+ * <code>host</code>, <code>path</code>, <code>protocol</code>, <code>port</code>, <code>url</code>. Any of these values will be overwritten if
  * the corresponding property is set on <code>config</code>.
  * @param {string} [config.level=info] - Logging level to use, will show up as the <code>severity</code> field of an event, see
  *  [SplunkLogger.levels]{@link SplunkLogger#levels} for common levels.
@@ -93,14 +98,18 @@ function _defaultEventFormatter(message, severity) {
  * events exceeds this many bytes. This setting is ignored when non-positive.
  * @param {number} [config.maxBatchCount=1] - Automatically flush events after this many
  * events have been queued. Defaults to flush immediately on sending an event. This setting is ignored when non-positive.
+ * @param {object} requestOptions - Options to pass to <code>{@link https://github.com/request/request#requestpost|request.post()}</code>.
+ * See the {@link http://github.com/request/request|request documentation} for all available options.
  * @constructor
  * @throws Will throw an error if the <code>config</code> parameter is malformed.
  */
-var SplunkLogger = function(config) {
+var SplunkLogger = function(config, requestOptions) {
     this._timerID = null;
     this._timerDuration = 0;
     this.config = this._initializeConfig(config);
-    this.requestOptions = this._initializeRequestOptions();
+    this.requestOptions = this._initializeRequestOptions(
+      utils.mergeObject(defaultRequestOptions, requestOptions)
+    );
     this.serializedContextQueue = [];
     this.eventsBatchSize = 0;
     this.eventFormatter = _defaultEventFormatter;
@@ -147,11 +156,6 @@ var defaultConfig = {
     maxBatchCount: 1
 };
 
-var defaultRequestOptions = {
-    json: false,
-    strictSSL: false
-};
-
 /**
  * Disables the interval timer set by <code>this._enableTimer()</code>.
  *
@@ -180,7 +184,7 @@ SplunkLogger.prototype._enableTimer = function(interval) {
     if (this._timerID) {
         this._disableTimer();
     }
-    
+
     // If batch interval is changed, update the config property
     if (this.config) {
         this.config.batchInterval = interval;
@@ -275,7 +279,7 @@ SplunkLogger.prototype._initializeConfig = function(config) {
         var startTimer = !this._timerID && ret.batchInterval > 0;
         // Has the interval timer already started, and the interval changed to a different duration?
         var changeTimer = this._timerID && this._timerDuration !== ret.batchInterval && ret.batchInterval > 0;
-        
+
         // Enable the timer
         if (startTimer || changeTimer) {
             this._enableTimer(ret.batchInterval);
@@ -397,7 +401,7 @@ SplunkLogger.prototype._makeBody = function(context) {
     var body = this._initializeMetadata(context);
     var time = utils.formatTime(body.time || Date.now());
     body.time = time.toString();
-    
+
     body.event = this.eventFormatter(context.message, context.severity || defaultConfig.level);
     return body;
 };
@@ -499,7 +503,7 @@ SplunkLogger.prototype._sendEvents = function(context, callback) {
         }
     );
 };
- 
+
 /**
  * Sends or queues data to be sent based on batching settings.
  * Default behavior is to send immediately.
@@ -508,8 +512,8 @@ SplunkLogger.prototype._sendEvents = function(context, callback) {
  * var SplunkLogger = require("splunk-logging").Logger;
  * var config = {
  *     token: "your-token-here"
- * }; 
- * 
+ * };
+ *
  * var logger = new SplunkLogger(config);
  *
  * // Payload to send to HTTP Event Collector.
@@ -525,7 +529,7 @@ SplunkLogger.prototype._sendEvents = function(context, callback) {
  *         index: "main",
  *         host: "farm.local",
  *     }
- * }; 
+ * };
  *
  * // The callback is only used if maxBatchCount=1, or
  * // batching thresholds have been exceeded.
@@ -552,7 +556,7 @@ SplunkLogger.prototype._sendEvents = function(context, callback) {
  */
 SplunkLogger.prototype.send = function(context, callback) {
     context = this._initializeContext(context);
-    
+
     // Store the context, and its estimated length
     var currentEvent = JSON.stringify(this._makeBody(context));
     this.serializedContextQueue.push(currentEvent);
@@ -586,7 +590,7 @@ SplunkLogger.prototype.flush = function(callback) {
     var context = {
         message: data
     };
-    
+
     this._sendEvents(context, callback);
 };
 
