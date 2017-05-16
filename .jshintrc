@@ -70,7 +70,7 @@
     "trailing"      : true,     // Prohibit trailing whitespaces. // TODO
     "white"         : false,    // Check against strict whitespace and indentation rules.
     "unused"        : true,
-
+    "indent"        : 4,
     "globals"   : {
         /* Mocha */
         "describe"   : false,
