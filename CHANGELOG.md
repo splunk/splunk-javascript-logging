@@ -1,5 +1,11 @@
 # Splunk logging for JavaScript
 
+## v0.9.3
+
+### Minor changes
+
+* Relax request dependency version, allows new installs to include security updates.
+
 ## v0.9.2
 
 ### Bug Fixes

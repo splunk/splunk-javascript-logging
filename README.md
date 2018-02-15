@@ -1,6 +1,6 @@
 # Splunk logging for JavaScript
 
-#### Version 0.9.2
+#### Version 0.9.3
 
 This project provides a simple JavaScript interface for logging to HTTP Event Collector in Splunk Enterprise and Splunk Cloud.
 
@@ -111,7 +111,7 @@ Stay connected with other developers building on Splunk software.
 
 ## Support
 
-The Splunk logging library for .NET is community-supported.
+The Splunk logging library for JavaScript is community-supported.
 
 1. You can find help through our community on [Splunk Answers](http://answers.splunk.com/) (use the `logging-library-javascript` tag to identify your questions).
 2. File issues on [GitHub](https://github.com/splunk/splunk-javascript-logging/issues).
