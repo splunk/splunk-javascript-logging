@@ -16,6 +16,7 @@
 
 var SplunkLogger = require("../index").Logger;
 var assert = require("assert");
+var fs = require("fs");
 
 /**
  * Load test configuration from test/config.json
@@ -24,7 +25,7 @@ var assert = require("assert");
  *     {"token": "token-goes-here"}
  *
  */
-var configurationFile = require("./config.json");
+var configurationFile = JSON.parse(fs.readFileSync("./config.json"));
 
 var successBody = {
     text: "Success",
