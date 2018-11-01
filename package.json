@@ -5,7 +5,9 @@
   "homepage": "http://dev.splunk.com",
   "main": "index.js",
   "scripts": {
-    "pretest": "jshint *.js test examples && jsdoc -d docs .",
+    "docs": "jsdoc -d docs .",
+    "jshint": "jshint *.js test examples",
+    "pretest": "npm run jshint && npm run docs",
     "test": "istanbul cover _mocha -- -R spec"
   },
   "repository": {
@@ -30,12 +32,12 @@
     "node": ">=0.10.0"
   },
   "dependencies": {
-    "request": "<=2.76.0"
+    "request": "^2.88.0"
   },
   "devDependencies": {
-    "istanbul": "0.3.17",
-    "jsdoc": "3.3.2",
-    "jshint": "<2.5.0",
-    "mocha": "2.2.5"
+    "istanbul": "^0.4.5",
+    "jsdoc": "^3.5.5",
+    "jshint": "^2.9.6",
+    "mocha": "^5.2.0"
   }
 }
