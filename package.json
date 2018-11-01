@@ -8,7 +8,7 @@
     "docs": "jsdoc -d docs .",
     "jshint": "jshint *.js test examples",
     "pretest": "npm run jshint && npm run docs",
-    "test": "istanbul cover _mocha -- -R spec"
+    "test": "istanbul cover _mocha -- -R spec --exit"
   },
   "repository": {
     "type": "git",
