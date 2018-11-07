@@ -1,5 +1,15 @@
 # Splunk logging for JavaScript
 
+## v0.10.0
+
+### Breaking changes
+
+* Dropped support for Node.js versions older than 4.0.0.
+
+### Minor changes
+
+* Upgrade version of request to 2.88.0.
+
 ## v0.9.3
 
 ### Minor changes
