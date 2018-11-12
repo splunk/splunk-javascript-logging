@@ -76,7 +76,7 @@ function _defaultEventFormatter(message, severity) {
  *
  * @param {object} config - Configuration settings for a new [SplunkLogger]{@link SplunkLogger}.
  * @param {string} config.token - HTTP Event Collector token, required.
- * @param {string} [config.name=splunk-javascript-logging/0.9.3] - Name for this logger.
+ * @param {string} [config.name=splunk-javascript-logging/0.10.1] - Name for this logger.
  * @param {string} [config.host=localhost] - Hostname or IP address of Splunk Enterprise or Splunk Cloud server.
  * @param {string} [config.maxRetries=0] - How many times to retry when HTTP POST to Splunk Enterprise or Splunk Cloud fails.
  * @param {string} [config.path=/services/collector/event/1.0] - URL path to send data to on the Splunk Enterprise or Splunk Cloud server.
@@ -135,7 +135,7 @@ SplunkLogger.prototype.levels = {
 };
 
 var defaultConfig = {
-    name: "splunk-javascript-logging/0.9.3",
+    name: "splunk-javascript-logging/0.10.1",
     host: "localhost",
     path: "/services/collector/event/1.0",
     protocol: "https",
