@@ -162,7 +162,7 @@ describe("Utils", function() {
     });
     describe("chain", function () {
         it("should succeed with 3 callbacks, passing a single argument through the chain", function(done) {
-            utils.chain([
+            utils.chain(
                 function(callback) {
                     callback(null, 1);
                 },
@@ -171,7 +171,7 @@ describe("Utils", function() {
                 },
                 function(val, callback) {
                     callback(null, val + 1);
-                }],
+                },
                 function(err, val) {
                     assert.ok(!err);
                     assert.strictEqual(val, 3);
@@ -236,7 +236,7 @@ describe("Utils", function() {
             );
         });
         it("should surface error from middle of the chain", function(done) {
-            utils.chain([
+            utils.chain(
                 function(callback) {
                     callback(null, 1, 2);
                 },
@@ -245,7 +245,7 @@ describe("Utils", function() {
                 },
                 function(val1, callback) {
                     callback(null, val1 + 1, 5);
-                }],
+                },
                 function(err, val1, val2) {
                     assert.ok(err);
                     assert.ok(!val1);
@@ -269,10 +269,10 @@ describe("Utils", function() {
             utils.chain();
         });
         it("should surface error from first callback in the chain", function(done) {
-            utils.chain([
+            utils.chain(
                 function(callback) {
                     callback("err");
-                }],
+                },
                 function(err) {
                     assert.ok(err);
                     done();
@@ -527,7 +527,7 @@ describe("Utils", function() {
 
             // Verify changing original array vals doesn't change copy's vals
             for (var k in a) {
-                    a[k]++;
+                a[k]++;
             }
             assert.notStrictEqual(copy[0], a[0]);
             assert.notStrictEqual(copy[1], a[1]);
