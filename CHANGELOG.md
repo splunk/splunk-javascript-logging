@@ -1,5 +1,11 @@
 # Splunk logging for JavaScript
 
+## v0.10.1
+
+### Minor changes
+
+* Update useragent to match library version.
+
 ## v0.10.0
 
 ### Breaking changes
