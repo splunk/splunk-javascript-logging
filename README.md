@@ -1,6 +1,6 @@
 # Splunk logging for JavaScript
 
-#### Version 0.9.3
+#### Version 0.10.0
 
 This project provides a simple JavaScript interface for logging to HTTP Event Collector in Splunk Enterprise and Splunk Cloud.
 
@@ -32,7 +32,7 @@ See the `examples` folder for usage examples:
 
 ### SSL
 
-Note: SSL certificate validation is diabled by default.
+Note: SSL certificate validation is disabled by default.
 To enable it, set `requestOptions.strictSSL = true` on your `SplunkLogger` instance:
 
 ```javascript
