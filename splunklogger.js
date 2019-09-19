@@ -481,7 +481,7 @@ SplunkLogger.prototype._sendEvents = function(context, callback) {
 
                 // Try to parse an error response from Splunk Enterprise or Splunk Cloud
                 if (!splunkError && _body && _body.code && _body.code.toString() !== "0") {
-                    splunkError = new Error(_body.text);
+                    splunkError = new Error(_body.text || _body);
                     splunkError.code = _body.code;
                 }
 
