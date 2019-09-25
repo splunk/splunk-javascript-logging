@@ -68,7 +68,7 @@ function _defaultEventFormatter(message, severity) {
  * @property {object} config - Configuration settings for this <code>SplunkLogger</code> instance.
  * @param {object} requestOptions - Options to pass to <code>{@link https://github.com/request/request#requestpost|request.post()}</code>.
  * See the {@link http://github.com/request/request|request documentation} for all available options.
- * @property {object[]} serializedContextQueue - Queue of serialized <code>context</code> objects to be sent to Splunk Enterprise or Splunk Cloud.
+ * @property {{ event, callback }[]} serializedContextQueue - Queue of serialized <code>context</code> objects to be sent to Splunk Enterprise or Splunk Cloud, along with callbacks to call when complete
  * @property {function} eventFormatter - Formats events, returning an event as a string, <code>function(message, severity)</code>.
  * Can be overwritten, the default event formatter will display event and severity as properties in a JSON object.
  * @property {function} error - A callback function for errors: <code>function(err, context)</code>.
@@ -416,15 +416,23 @@ SplunkLogger.prototype._post = function(requestOptions, callback) {
 /**
  * Sends events to Splunk Enterprise or Splunk Cloud, optionally with retries on non-Splunk errors.
  *
- * @param context
+ * @param {{ event, callback }[]} eventList
  * @param {function} callback - A callback function: <code>function(err, response, body)</code>
  * @private
  */
-SplunkLogger.prototype._sendEvents = function(context, callback) {
+SplunkLogger.prototype._sendEvents = function(eventList, callback) {
     callback = callback || /* istanbul ignore next*/ function(){};
 
     // Initialize the config once more to avoid undefined vals below
     this.config = this._initializeConfig(this.config);
+
+    var data = eventList.map(function(queueItem) {
+        return queueItem.event;
+    }).join("");
+
+    var context = {
+        message: data
+    };
 
     // Makes a copy of the request options so we can set the body
     var requestOptions = this._initializeRequestOptions(this.requestOptions);
@@ -495,6 +503,13 @@ SplunkLogger.prototype._sendEvents = function(context, callback) {
                 that.error(requestError || splunkError, context);
             }
 
+            // call callback for each event that was sent in the request
+            for (var  i = 0; i < eventList.length; i++) {
+                if (eventList[i].callback) {
+                    eventList[i].callback(requestError, _response, _body);
+                }
+            }
+
             callback(requestError, _response, _body);
         }
     );
@@ -555,7 +570,7 @@ SplunkLogger.prototype.send = function(context, callback) {
     
     // Store the context, and its estimated length
     var currentEvent = JSON.stringify(this._makeBody(context));
-    this.serializedContextQueue.push(currentEvent);
+    this.serializedContextQueue.push({ event: currentEvent, callback: callback });
     this.eventsBatchSize += Buffer.byteLength(currentEvent, "utf8");
 
     var batchOverSize = this.eventsBatchSize > this.config.maxBatchSize && this.config.maxBatchSize > 0;
@@ -563,7 +578,7 @@ SplunkLogger.prototype.send = function(context, callback) {
 
     // Only flush if the queue's byte size is too large, or has too many events
     if (batchOverSize || batchOverCount) {
-        this.flush(callback || function(){});
+        this.flush();
     }
 };
 
@@ -580,14 +595,8 @@ SplunkLogger.prototype.flush = function(callback) {
     var queue = this.serializedContextQueue;
     this.serializedContextQueue = [];
     this.eventsBatchSize = 0;
-
-    // Send all queued events
-    var data = queue.join("");
-    var context = {
-        message: data
-    };
     
-    this._sendEvents(context, callback);
+    this._sendEvents(queue, callback);
 };
 
 module.exports = SplunkLogger;
