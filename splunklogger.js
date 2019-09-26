@@ -68,7 +68,9 @@ function _defaultEventFormatter(message, severity) {
  * @property {object} config - Configuration settings for this <code>SplunkLogger</code> instance.
  * @param {object} requestOptions - Options to pass to <code>{@link https://github.com/request/request#requestpost|request.post()}</code>.
  * See the {@link http://github.com/request/request|request documentation} for all available options.
- * @property {{ event, callback }[]} serializedContextQueue - Queue of serialized <code>context</code> objects to be sent to Splunk Enterprise or Splunk Cloud, along with callbacks to call when complete
+ * @property {Object[]} serializedContextQueue - Queue of events and their callbacks to be sent to Splunk Enterprise or Splunk Cloud
+ * @property {Object} serializedContextQueue.event - Event definition
+ * @property {function} serializedContextQueue.callback - Callback to be invoked once event either is successfully sent, or failed to be sent
  * @property {function} eventFormatter - Formats events, returning an event as a string, <code>function(message, severity)</code>.
  * Can be overwritten, the default event formatter will display event and severity as properties in a JSON object.
  * @property {function} error - A callback function for errors: <code>function(err, context)</code>.
@@ -416,7 +418,9 @@ SplunkLogger.prototype._post = function(requestOptions, callback) {
 /**
  * Sends events to Splunk Enterprise or Splunk Cloud, optionally with retries on non-Splunk errors.
  *
- * @param {{ event, callback }[]} eventList
+ * @property {Object[]} eventList - List of events to send to Splunk Enterprise or Splunk Cloud
+ * @property {Object} eventList.event - Event definition to be sent
+ * @property {function} eventList.callback - Callback to be invoked once event either is successfully sent, or failed to be sent
  * @param {function} callback - A callback function: <code>function(err, response, body)</code>
  * @private
  */
