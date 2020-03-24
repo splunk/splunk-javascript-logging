@@ -118,9 +118,13 @@ The Splunk logging library for JavaScript is community-supported.
 
 ## Contact us
 
+You can [contact support][contact] if you have Splunk related questions.
+
 You can reach the Dev Platform team at [devinfo@splunk.com](mailto:devinfo@splunk.com).
 
 ## License
 
 The Splunk Logging Library for JavaScript is licensed under the Apache
 License 2.0. Details can be found in the LICENSE file.
+
+[contact]:                  https://www.splunk.com/en_us/support-and-services.html
