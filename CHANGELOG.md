@@ -1,6 +1,6 @@
 # Splunk logging for JavaScript
 
-## v0.10.1
+## v0.10.2
 
 ### Minor changes
 
