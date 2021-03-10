@@ -1,6 +1,6 @@
 # Splunk logging for JavaScript
 
-#### Version 0.10.1
+#### Version 0.10.2
 
 This project provides a simple JavaScript interface for logging to HTTP Event Collector in Splunk Enterprise and Splunk Cloud.
 
@@ -47,6 +47,25 @@ var Logger = new SplunkLogger(config);
 
 // Enable SSL certificate validation
 Logger.requestOptions.strictSSL = true;
+```
+
+### Configure Http Keep-Alive Agent
+
+Note: No default agent configuration is configured by default.
+To enable it, set `config.agent` to a valid http Agent (i.e. https://nodejs.org/api/http.html#http_new_agent_options)
+
+```javascript
+var SplunkLogger = require("splunk-logging").Logger;
+var Agent = require('http').Agent
+var agent = new Agent({ keepAlive: true })
+
+var config = {
+    token: "your-token-here",
+    url: "https://splunk.local:8088",
+    agent: agent,
+};
+
+var Logger = new SplunkLogger(config);
 ```
 
 ### Basic example

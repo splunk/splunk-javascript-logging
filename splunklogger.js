@@ -434,6 +434,10 @@ SplunkLogger.prototype._sendEvents = function(context, callback) {
     // since json is set to true.
     requestOptions.headers["Content-Type"] = "application/x-www-form-urlencoded";
     requestOptions.url = this.config.protocol + "://" + this.config.host + ":" + this.config.port + this.config.path;
+    
+    if (this.config.agent) {
+        requestOptions.agent = this.config.agent;
+    }
 
     // Initialize the context again, right before using it
     context = this._initializeContext(context);
