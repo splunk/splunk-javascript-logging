@@ -14,7 +14,7 @@
  * under the License.
  */
 
-var request = require("request");
+var needle = require("needle");
 var url = require("url");
 
 var utils = require("./utils");
@@ -410,7 +410,14 @@ SplunkLogger.prototype._makeBody = function(context) {
  * @private
  */
 SplunkLogger.prototype._post = function(requestOptions, callback) {
-    request.post(requestOptions, callback);
+    let body = requestOptions.body ;
+    let url = requestOptions.url;
+    let options = {
+        rejectUnauthorized : requestOptions.strictSSL,
+        json : requestOptions.json,
+        headers: requestOptions.headers
+    };
+    needle.post(url,body,options, callback);
 };
 
 /**
@@ -469,15 +476,8 @@ SplunkLogger.prototype._sendEvents = function(context, callback) {
                     return done(err);
                 }
 
-                try {
-                    _body = JSON.parse(body);
-                }
-                catch (err) {
-                    _body = body;
-
-                    splunkError = new Error("Unexpected response from Splunk. Request body was: " + _body);
-                    splunkError.code = -1;
-                }
+                //the response body is itselt a json object
+                _body = body;
 
                 // Try to parse an error response from Splunk Enterprise or Splunk Cloud
                 if (!splunkError && _body && _body.code && _body.code.toString() !== "0") {
