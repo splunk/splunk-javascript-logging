@@ -17,7 +17,15 @@ jobs:
         splunk-version:
           - latest
           - 8.0
-
+    services:
+      splunk:
+        image: splunk/splunk:${{matrix.splunk-version}}
+        env:
+          SPLUNK_START_ARGS: --accept-license
+          SPLUNK_PASSWORD: test_password
+        ports:
+          - 8089
+          - 8088
     steps:
     - uses: actions/checkout@v2
     - name: Use Node.js ${{ matrix.node-version }}
@@ -25,7 +33,5 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
     - run: npm install
-    - name: Splunk Docker Container Spin up
-      run: make up ${{matrix.splunk-version}}
     - name: Test Execution
       run: make test
