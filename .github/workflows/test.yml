@@ -26,6 +26,6 @@ jobs:
         node-version: ${{ matrix.node-version }}
     - run: npm install
     - name: Splunk Docker Container Spin up
-      run: make up
+      run: make up ${{matrix.splunk-version}}
     - name: Test Execution
       run: make test
