@@ -13,10 +13,10 @@ jobs:
     strategy:
       matrix:
         node-version: 
-          - 14.0
+          - "14.0"
         splunk-version:
           - latest
-          - 8.0
+          - "8.0"
     services:
       splunk:
         image: splunk/splunk:${{matrix.splunk-version}}
