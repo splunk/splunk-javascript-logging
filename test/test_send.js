@@ -488,7 +488,6 @@ describe("SplunkLogger send (integration tests)", function() {
                 assert.ok(err);
                 assert.strictEqual(err.message.indexOf("getaddrinfo ENOTFOUND"), 0);
                 assert.strictEqual(err.code, "ENOTFOUND");
-
                 assert.ok(errContext);
                 var body = JSON.parse(errContext.message);
                 assert.ok(body.hasOwnProperty("time"));
