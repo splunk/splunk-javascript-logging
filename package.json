@@ -1,6 +1,6 @@
 {
   "name": "splunk-logging",
-  "version": "0.0.1-beta",
+  "version": "0.10.1",
   "description": "Splunk HTTP Event Collector logging interface",
   "homepage": "http://dev.splunk.com",
   "main": "index.js",
