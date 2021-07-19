@@ -4,4 +4,4 @@ Some of the components included in the Splunk logging for JavaScript are license
 
 | Contributor | Description | License |
 |:----------- |:----------- |:------- |
-| [needle](https://github.com/tomas/needle) | Node.js http client | [MIT](https://github.com/splunk/splunk-sdk-javascript/blob/master/licenses/LICENSE-NEEDLE) |
+| [needle](https://github.com/tomas/needle) | Node.js http client | [MIT](https://github.com/splunk/splunk-javascript-logging/blob/master/licenses/LICENSE-NEEDLE) |
