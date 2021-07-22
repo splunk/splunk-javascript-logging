@@ -13,6 +13,7 @@ jobs:
       matrix:
         node-version: 
           - "14.0"
+          - "10.0"
         splunk-version:
           - latest
           - "8.0"
