@@ -1,13 +1,13 @@
 # Splunk logging for JavaScript
 
-#### Version 0.10.1
+#### Version 0.11.0
 
 This project provides a simple JavaScript interface for logging to HTTP Event Collector in Splunk Enterprise and Splunk Cloud.
 
 ## Requirements
 
-* Node.js v4 or later. Splunk logging for Javascript is tested with Node.js v4.2, v6.0 and v8.0.
-* Splunk Enterprise 6.3.0 or later, or Splunk Cloud. Splunk logging for Javascript is tested with Splunk Enterprise 7.0 and 7.2.
+* Node.js v4 or later. Splunk logging for Javascript is tested with Node.js v10.0 and v14.0.
+* Splunk Enterprise 6.3.0 or later, or Splunk Cloud. Splunk logging for Javascript is tested with Splunk Enterprise 8.0 and 8.2.0.
 * An HTTP Event Collector token from your Splunk Enterprise server.
 
 ## Installation
