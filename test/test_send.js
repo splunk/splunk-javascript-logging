@@ -590,9 +590,9 @@ describe("SplunkLogger send (integration tests)", function() {
 
             // Wrap sendevents to ensure it gets called
             var sendEvents = logger._sendEvents;
-            logger._sendEvents = function(cont, cb) {
+            logger._sendEvents = function(queue, cb) {
                 sent++;
-                sendEvents(cont, cb);
+                sendEvents(queue, cb);
             };
 
             logger.send(context);
