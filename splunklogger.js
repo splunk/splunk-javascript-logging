@@ -14,7 +14,7 @@
  * under the License.
  */
 
-var request = require("request");
+var needle = require("needle");
 var url = require("url");
 
 var utils = require("./utils");
@@ -66,8 +66,8 @@ function _defaultEventFormatter(message, severity) {
  * var logger = new SplunkLogger(config);
  *
  * @property {object} config - Configuration settings for this <code>SplunkLogger</code> instance.
- * @param {object} requestOptions - Options to pass to <code>{@link https://github.com/request/request#requestpost|request.post()}</code>.
- * See the {@link http://github.com/request/request|request documentation} for all available options.
+ * @param {object} requestOptions - Options to pass to <code>{@link https://github.com/tomas/needle#needleposturl-data-options-callback|needle.post()}</code>.
+ * See the {@link https://github.com/tomas/needle#request-options|needle documentation} for all available options.
  * @property {object[]} serializedContextQueue - Queue of serialized <code>context</code> objects to be sent to Splunk Enterprise or Splunk Cloud.
  * @property {function} eventFormatter - Formats events, returning an event as a string, <code>function(message, severity)</code>.
  * Can be overwritten, the default event formatter will display event and severity as properties in a JSON object.
@@ -76,7 +76,7 @@ function _defaultEventFormatter(message, severity) {
  *
  * @param {object} config - Configuration settings for a new [SplunkLogger]{@link SplunkLogger}.
  * @param {string} config.token - HTTP Event Collector token, required.
- * @param {string} [config.name=splunk-javascript-logging/0.10.1] - Name for this logger.
+ * @param {string} [config.name=splunk-javascript-logging/0.11.0] - Name for this logger.
  * @param {string} [config.host=localhost] - Hostname or IP address of Splunk Enterprise or Splunk Cloud server.
  * @param {string} [config.maxRetries=0] - How many times to retry when HTTP POST to Splunk Enterprise or Splunk Cloud fails.
  * @param {string} [config.path=/services/collector/event/1.0] - URL path to send data to on the Splunk Enterprise or Splunk Cloud server.
@@ -135,7 +135,7 @@ SplunkLogger.prototype.levels = {
 };
 
 var defaultConfig = {
-    name: "splunk-javascript-logging/0.10.1",
+    name: "splunk-javascript-logging/0.11.0",
     host: "localhost",
     path: "/services/collector/event/1.0",
     protocol: "https",
@@ -410,7 +410,12 @@ SplunkLogger.prototype._makeBody = function(context) {
  * @private
  */
 SplunkLogger.prototype._post = function(requestOptions, callback) {
-    request.post(requestOptions, callback);
+    let body = requestOptions.body ;
+    let url = requestOptions.url;
+    let options = requestOptions;
+    options["rejectUnauthorized"] = requestOptions.rejectUnauthorized ? requestOptions.rejectUnauthorized : requestOptions.strictSSL;
+    console.log(options);
+    needle.post(url,body,options, callback);
 };
 
 /**
@@ -469,15 +474,8 @@ SplunkLogger.prototype._sendEvents = function(context, callback) {
                     return done(err);
                 }
 
-                try {
-                    _body = JSON.parse(body);
-                }
-                catch (err) {
-                    _body = body;
-
-                    splunkError = new Error("Unexpected response from Splunk. Request body was: " + _body);
-                    splunkError.code = -1;
-                }
+                //the response body is itselt a json object
+                _body = body;
 
                 // Try to parse an error response from Splunk Enterprise or Splunk Cloud
                 if (!splunkError && _body && _body.code && _body.code.toString() !== "0") {

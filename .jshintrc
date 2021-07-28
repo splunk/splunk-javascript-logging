@@ -34,6 +34,7 @@
     "es5"           : false,     // Allow EcmaScript 5 syntax.
     "strict"        : false,    // Require `use strict` pragma  in every file.
     "globalstrict"  : false,    // Allow global "use strict" (also enables 'strict').
+    "esversion"     : 6,
 
 
     // The Good Parts.
