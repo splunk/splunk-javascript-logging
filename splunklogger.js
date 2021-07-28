@@ -414,7 +414,6 @@ SplunkLogger.prototype._post = function(requestOptions, callback) {
     let url = requestOptions.url;
     let options = requestOptions;
     options["rejectUnauthorized"] = requestOptions.rejectUnauthorized ? requestOptions.rejectUnauthorized : requestOptions.strictSSL;
-    console.log(options);
     needle.post(url,body,options, callback);
 };
 
