@@ -134,7 +134,7 @@ describe("SplunkLogger", function() {
             var logger = new SplunkLogger(config);
             assert.ok(logger);
             assert.strictEqual(config.token, logger.config.token);
-            assert.strictEqual("splunk-javascript-logging/0.11.0", logger.config.name);
+            assert.strictEqual("splunk-javascript-logging/0.11.1", logger.config.name);
             assert.strictEqual("localhost", logger.config.host);
             assert.strictEqual("/services/collector/event/1.0", logger.config.path);
             assert.strictEqual("https", logger.config.protocol);
@@ -153,7 +153,7 @@ describe("SplunkLogger", function() {
 
             assert.ok(logger);
             assert.strictEqual(config.token, logger.config.token);
-            assert.strictEqual("splunk-javascript-logging/0.11.0", logger.config.name);
+            assert.strictEqual("splunk-javascript-logging/0.11.1", logger.config.name);
             assert.strictEqual("localhost", logger.config.host);
             assert.strictEqual("/services/collector/event/1.0", logger.config.path);
             assert.strictEqual("https", logger.config.protocol);
@@ -184,7 +184,7 @@ describe("SplunkLogger", function() {
 
             assert.ok(logger);
             assert.strictEqual(config.token, logger.config.token);
-            assert.strictEqual("splunk-javascript-logging/0.11.0", logger.config.name);
+            assert.strictEqual("splunk-javascript-logging/0.11.1", logger.config.name);
             assert.strictEqual("localhost", logger.config.host);
             assert.strictEqual("/services/collector/event/1.0", logger.config.path);
             assert.strictEqual("https", logger.config.protocol);
@@ -291,7 +291,7 @@ describe("SplunkLogger", function() {
             assert.ok(logger._timerID);
 
             assert.strictEqual(config.token, logger.config.token);
-            assert.strictEqual("splunk-javascript-logging/0.11.0", logger.config.name);
+            assert.strictEqual("splunk-javascript-logging/0.11.1", logger.config.name);
             assert.strictEqual("localhost", logger.config.host);
             assert.strictEqual("/services/collector/event/1.0", logger.config.path);
             assert.strictEqual("https", logger.config.protocol);
@@ -310,7 +310,7 @@ describe("SplunkLogger", function() {
             assert.ok(!logger._timerID);
 
             assert.strictEqual(config.token, logger.config.token);
-            assert.strictEqual("splunk-javascript-logging/0.11.0", logger.config.name);
+            assert.strictEqual("splunk-javascript-logging/0.11.1", logger.config.name);
             assert.strictEqual("localhost", logger.config.host);
             assert.strictEqual("/services/collector/event/1.0", logger.config.path);
             assert.strictEqual("https", logger.config.protocol);
@@ -391,7 +391,7 @@ describe("SplunkLogger", function() {
             assert.ok(!logger._timerID);
 
             assert.strictEqual(config.token, logger.config.token);
-            assert.strictEqual("splunk-javascript-logging/0.11.0", logger.config.name);
+            assert.strictEqual("splunk-javascript-logging/0.11.1", logger.config.name);
             assert.strictEqual("localhost", logger.config.host);
             assert.strictEqual("/services/collector/event/1.0", logger.config.path);
             assert.strictEqual("http", logger.config.protocol);
@@ -408,7 +408,7 @@ describe("SplunkLogger", function() {
 
             assert.ok(logger);
             assert.strictEqual(config.token, logger.config.token);
-            assert.strictEqual("splunk-javascript-logging/0.11.0", logger.config.name);
+            assert.strictEqual("splunk-javascript-logging/0.11.1", logger.config.name);
             assert.strictEqual("localhost", logger.config.host);
             assert.strictEqual(config.path, logger.config.path);
             assert.strictEqual("https", logger.config.protocol);
@@ -425,7 +425,7 @@ describe("SplunkLogger", function() {
 
             assert.ok(logger);
             assert.strictEqual(config.token, logger.config.token);
-            assert.strictEqual("splunk-javascript-logging/0.11.0", logger.config.name);
+            assert.strictEqual("splunk-javascript-logging/0.11.1", logger.config.name);
             assert.strictEqual("localhost", logger.config.host);
             assert.strictEqual("/services/collector/event/1.0", logger.config.path);
             assert.strictEqual("https", logger.config.protocol);
@@ -442,7 +442,7 @@ describe("SplunkLogger", function() {
 
             assert.ok(logger);
             assert.strictEqual(config.token, logger.config.token);
-            assert.strictEqual("splunk-javascript-logging/0.11.0", logger.config.name);
+            assert.strictEqual("splunk-javascript-logging/0.11.1", logger.config.name);
             assert.strictEqual("localhost", logger.config.host);
             assert.strictEqual("/services/collector/event/1.0", logger.config.path);
             assert.strictEqual("https", logger.config.protocol);
@@ -460,7 +460,7 @@ describe("SplunkLogger", function() {
 
             assert.ok(logger);
             assert.strictEqual(config.token, logger.config.token);
-            assert.strictEqual("splunk-javascript-logging/0.11.0", logger.config.name);
+            assert.strictEqual("splunk-javascript-logging/0.11.1", logger.config.name);
             assert.strictEqual("splunk.local", logger.config.host);
             assert.strictEqual("/services/collector/different/1.0", logger.config.path);
             assert.strictEqual("http", logger.config.protocol);
@@ -477,7 +477,7 @@ describe("SplunkLogger", function() {
 
             assert.ok(logger);
             assert.strictEqual(config.token, logger.config.token);
-            assert.strictEqual("splunk-javascript-logging/0.11.0", logger.config.name);
+            assert.strictEqual("splunk-javascript-logging/0.11.1", logger.config.name);
             assert.strictEqual("localhost", logger.config.host);
             assert.strictEqual("/services/collector/event/1.0", logger.config.path);
             assert.strictEqual("http", logger.config.protocol);
@@ -494,7 +494,7 @@ describe("SplunkLogger", function() {
 
             assert.ok(logger);
             assert.strictEqual(config.token, logger.config.token);
-            assert.strictEqual("splunk-javascript-logging/0.11.0", logger.config.name);
+            assert.strictEqual("splunk-javascript-logging/0.11.1", logger.config.name);
             assert.strictEqual("splunk.local", logger.config.host);
             assert.strictEqual("/services/collector/event/1.0", logger.config.path);
             assert.strictEqual("http", logger.config.protocol);
@@ -511,7 +511,7 @@ describe("SplunkLogger", function() {
 
             assert.ok(logger);
             assert.strictEqual(config.token, logger.config.token);
-            assert.strictEqual("splunk-javascript-logging/0.11.0", logger.config.name);
+            assert.strictEqual("splunk-javascript-logging/0.11.1", logger.config.name);
             assert.strictEqual("splunk.local", logger.config.host);
             assert.strictEqual("/services/collector/event/1.0", logger.config.path);
             assert.strictEqual("http", logger.config.protocol);
@@ -528,7 +528,7 @@ describe("SplunkLogger", function() {
 
             assert.ok(logger);
             assert.strictEqual(config.token, logger.config.token);
-            assert.strictEqual("splunk-javascript-logging/0.11.0", logger.config.name);
+            assert.strictEqual("splunk-javascript-logging/0.11.1", logger.config.name);
             assert.strictEqual("splunk.local", logger.config.host);
             assert.strictEqual("/services/collector/event/1.0", logger.config.path);
             assert.strictEqual("https", logger.config.protocol);
@@ -545,7 +545,7 @@ describe("SplunkLogger", function() {
 
             assert.ok(logger);
             assert.strictEqual(config.token, logger.config.token);
-            assert.strictEqual("splunk-javascript-logging/0.11.0", logger.config.name);
+            assert.strictEqual("splunk-javascript-logging/0.11.1", logger.config.name);
             assert.strictEqual("localhost", logger.config.host);
             assert.strictEqual("/services/collector/event/1.0", logger.config.path);
             assert.strictEqual("https", logger.config.protocol);
@@ -679,7 +679,7 @@ describe("SplunkLogger", function() {
 
             assert.ok(loggerConfig);
             assert.strictEqual(config.token, loggerConfig.token);
-            assert.strictEqual("splunk-javascript-logging/0.11.0", loggerConfig.name);
+            assert.strictEqual("splunk-javascript-logging/0.11.1", loggerConfig.name);
             assert.strictEqual("localhost", loggerConfig.host);
             assert.strictEqual("/services/collector/event/1.0", loggerConfig.path);
             assert.strictEqual("https", loggerConfig.protocol);
@@ -698,7 +698,7 @@ describe("SplunkLogger", function() {
 
             assert.ok(loggerConfig);
             assert.strictEqual(config.token, loggerConfig.token);
-            assert.strictEqual("splunk-javascript-logging/0.11.0", loggerConfig.name);
+            assert.strictEqual("splunk-javascript-logging/0.11.1", loggerConfig.name);
             assert.strictEqual("localhost", loggerConfig.host);
             assert.strictEqual("/services/collector/event/1.0", loggerConfig.path);
             assert.strictEqual("https", loggerConfig.protocol);
@@ -717,7 +717,7 @@ describe("SplunkLogger", function() {
             var loggerConfig = SplunkLogger.prototype._initializeConfig(config);
 
             assert.strictEqual(config.token, loggerConfig.token);
-            assert.strictEqual("splunk-javascript-logging/0.11.0", loggerConfig.name);
+            assert.strictEqual("splunk-javascript-logging/0.11.1", loggerConfig.name);
             assert.strictEqual("localhost", loggerConfig.host);
             assert.strictEqual("/services/collector/event/1.0", loggerConfig.path);
             assert.strictEqual("http", loggerConfig.protocol);
@@ -736,7 +736,7 @@ describe("SplunkLogger", function() {
 
             assert.ok(loggerConfig);
             assert.strictEqual(config.token, loggerConfig.token);
-            assert.strictEqual("splunk-javascript-logging/0.11.0", loggerConfig.name);
+            assert.strictEqual("splunk-javascript-logging/0.11.1", loggerConfig.name);
             assert.strictEqual("localhost", loggerConfig.host);
             assert.strictEqual(config.path, loggerConfig.path);
             assert.strictEqual("https", loggerConfig.protocol);
@@ -755,7 +755,7 @@ describe("SplunkLogger", function() {
 
             assert.ok(loggerConfig);
             assert.strictEqual(config.token, loggerConfig.token);
-            assert.strictEqual("splunk-javascript-logging/0.11.0", loggerConfig.name);
+            assert.strictEqual("splunk-javascript-logging/0.11.1", loggerConfig.name);
             assert.strictEqual("localhost", loggerConfig.host);
             assert.strictEqual("/services/collector/event/1.0", loggerConfig.path);
             assert.strictEqual("https", loggerConfig.protocol);
@@ -774,7 +774,7 @@ describe("SplunkLogger", function() {
 
             assert.ok(loggerConfig);
             assert.strictEqual(config.token, loggerConfig.token);
-            assert.strictEqual("splunk-javascript-logging/0.11.0", loggerConfig.name);
+            assert.strictEqual("splunk-javascript-logging/0.11.1", loggerConfig.name);
             assert.strictEqual("splunk.local", loggerConfig.host);
             assert.strictEqual("/services/collector/different/1.0", loggerConfig.path);
             assert.strictEqual("http", loggerConfig.protocol);
@@ -793,7 +793,7 @@ describe("SplunkLogger", function() {
 
             assert.ok(loggerConfig);
             assert.strictEqual(config.token, loggerConfig.token);
-            assert.strictEqual("splunk-javascript-logging/0.11.0", loggerConfig.name);
+            assert.strictEqual("splunk-javascript-logging/0.11.1", loggerConfig.name);
             assert.strictEqual("localhost", loggerConfig.host);
             assert.strictEqual("/services/collector/event/1.0", loggerConfig.path);
             assert.strictEqual("http", loggerConfig.protocol);
@@ -812,7 +812,7 @@ describe("SplunkLogger", function() {
 
             assert.ok(loggerConfig);
             assert.strictEqual(config.token, loggerConfig.token);
-            assert.strictEqual("splunk-javascript-logging/0.11.0", loggerConfig.name);
+            assert.strictEqual("splunk-javascript-logging/0.11.1", loggerConfig.name);
             assert.strictEqual("splunk.local", loggerConfig.host);
             assert.strictEqual("/services/collector/event/1.0", loggerConfig.path);
             assert.strictEqual("https", loggerConfig.protocol);
@@ -833,7 +833,7 @@ describe("SplunkLogger", function() {
             assert.ok(loggerConfig);
             assert.ok(!loggerConfig.hasOwnProperty("something"));
             assert.strictEqual(config.token, loggerConfig.token);
-            assert.strictEqual("splunk-javascript-logging/0.11.0", loggerConfig.name);
+            assert.strictEqual("splunk-javascript-logging/0.11.1", loggerConfig.name);
             assert.strictEqual("splunk.local", loggerConfig.host);
             assert.strictEqual("/services/collector/event/1.0", loggerConfig.path);
             assert.strictEqual("https", loggerConfig.protocol);
@@ -959,7 +959,7 @@ describe("SplunkLogger", function() {
 
             var expected = {
                 token: config.token,
-                name: "splunk-javascript-logging/0.11.0",
+                name: "splunk-javascript-logging/0.11.1",
                 host: "localhost",
                 path: "/services/collector/event/1.0",
                 protocol: "https",
@@ -993,7 +993,7 @@ describe("SplunkLogger", function() {
 
             var expected = {
                 token: config.token,
-                name: "splunk-javascript-logging/0.11.0",
+                name: "splunk-javascript-logging/0.11.1",
                 host: "localhost",
                 path: "/services/collector/event/1.0",
                 protocol: "https",
