@@ -1,5 +1,11 @@
 # Splunk logging for JavaScript
 
+## v0.11.1
+
+### Minor changes
+
+* remove the console.log statement
+
 ## v0.11.0
 
 ### New features & APIs
