@@ -34,7 +34,7 @@
     "node": ">=4.0.0"
   },
   "dependencies": {
-    "needle": "^2.6.0"
+    "needle": "~2.8.0"
   },
   "devDependencies": {
     "nyc": "^15.1.0",
