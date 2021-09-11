@@ -349,6 +349,9 @@ SplunkLogger.prototype._initializeMetadata = function(context) {
         if (context.metadata.hasOwnProperty("index")) {
             metadata.index = context.metadata.index;
         }
+        if (context.metadata.hasOwnProperty("fields")) {
+            metadata.fields = context.metadata.fields;
+        }
     }
     return metadata;
 };
@@ -521,6 +524,13 @@ SplunkLogger.prototype._sendEvents = function(context, callback) {
  *         sourcetype: "httpevent",
  *         index: "main",
  *         host: "farm.local",
+ *         fields: {
+ *             device: "001",
+ *             sensors: [
+ *                 "s44",
+ *                 "s657"
+ *             ]
+ *         },
  *     }
  * }; 
  *
@@ -543,6 +553,8 @@ SplunkLogger.prototype._sendEvents = function(context, callback) {
  * If not specified, Splunk Enterprise or Splunk Cloud will decide the value.
  * @param {string} [context.metadata.source] - If not specified, Splunk Enterprise or Splunk Cloud will decide the value.
  * @param {string} [context.metadata.sourcetype] - If not specified, Splunk Enterprise or Splunk Cloud will decide the value.
+ * @param {string} [context.metadata.fields] - Specifies a JSON object that contains explicit custom fields to be defined at index time.
+ * If not specified, Splunk Enterprise or Splunk Cloud will decide the value.
  * @param {function} [callback] - A callback function: <code>function(err, response, body)</code>.
  * @throws Will throw an error if the <code>context</code> parameter is malformed.
  * @public
