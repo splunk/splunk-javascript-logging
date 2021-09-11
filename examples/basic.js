@@ -49,7 +49,14 @@ var payload = {
         source: "chicken coop",
         sourcetype: "httpevent",
         index: "main",
-        host: "farm.local"
+        host: "farm.local",
+        fields: {
+            device: "001",
+            sensors: [
+                "s44",
+                "s657"
+            ]
+        },
     },
     // Severity is also optional
     severity: "info"
@@ -72,6 +79,10 @@ console.log("Sending payload", payload);
  *         "sourcetype": "httpevent",
  *         "index": "main",
  *         "host": "farm.local",
+ *         "fields": {
+ *             "device": "001",
+ *             "sensors": ["s44", "s657"]
+ *         },
  *         "event": {
  *             "message": {
  *                 "temperature": "70F",
