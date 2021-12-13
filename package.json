@@ -1,12 +1,16 @@
 {
   "name": "splunk-logging",
-  "version": "0.9.2",
+  "version": "0.11.1",
   "description": "Splunk HTTP Event Collector logging interface",
   "homepage": "http://dev.splunk.com",
   "main": "index.js",
   "scripts": {
-    "pretest": "jshint *.js test examples && jsdoc -d docs .",
-    "test": "istanbul cover _mocha -- -R spec"
+    "docs": "jsdoc -d docs .",
+    "jshint": "jshint *.js test examples",
+    "pretest": "npm run jshint && npm run docs",
+    "test": "nyc --reporter=lcov --reporter=text-summary _mocha -- -R spec --exit",
+    "test-specific-file": "_mocha -- -R spec --exit ",
+    "test-specific": "_mocha -- -R spec --exit -g "
   },
   "repository": {
     "type": "git",
@@ -27,15 +31,15 @@
   },
   "license": "Apache-2.0",
   "engine": {
-    "node": ">=0.10.0"
+    "node": ">=4.0.0"
   },
   "dependencies": {
-    "request": "2.x.x"
+    "needle": "^2.6.0"
   },
   "devDependencies": {
-    "istanbul": "0.3.17",
-    "jsdoc": "3.3.2",
-    "jshint": "<2.5.0",
-    "mocha": "2.2.5"
+    "nyc": "^15.1.0",
+    "jsdoc": "^3.6.7",
+    "jshint": "^2.12.0",
+    "mocha": "^8.4.0"
   }
 }

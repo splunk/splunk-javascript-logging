@@ -16,15 +16,9 @@
 
 var SplunkLogger = require("../index").Logger;
 var assert = require("assert");
+var needle = require("needle");
 
-/**
- * Load test configuration from test/config.json
- * It just needs a token:
- *
- *     {"token": "token-goes-here"}
- *
- */
-var configurationFile = require("./config.json");
+var TOKEN;
 
 var successBody = {
     text: "Success",
@@ -42,6 +36,31 @@ var noDataBody = {
 };
 
 describe("SplunkLogger _makeBody", function() {
+    describe("Setup Splunk on localhost:8089 HEC", function() {
+        it("should be enabled", function(done) {
+            needle.post("https://admin:changed!@localhost:8089/servicesNS/admin/splunk_httpinput/data/inputs/http/http/enable?output_mode=json", null, {rejectUnauthorized: false}, function(err)     {
+                assert.ok(!err);
+                done();
+            });
+        });
+        it("should create a token in test/config.json", function(done) {
+            needle.post("https://admin:changed!@localhost:8089/servicesNS/admin/splunk_httpinput/data/inputs/http?output_mode=json", { name : "splunk_logging" + Date.now()}, {rejectUnauthorized: false}, function(err, resp, body) {
+                assert.ok(!err);
+                body = JSON.stringify(body);
+                var tokenStart = body.indexOf("\"token\":\"");
+                var tokenEnd = tokenStart + 36; // 36 = guid length
+                var token = body.substring(tokenStart + 9, tokenEnd + 9); // 9 = prefix length of \"token\":\"
+                assert.strictEqual(token.length, 36);
+                TOKEN = token;
+                done();
+             });
+         });
+        it("should have the env variable set", function() {
+            assert.ok(TOKEN);
+            assert.strictEqual(TOKEN.length, 36);
+        });
+    });
+
     it("should error with no args", function() {
         try {
             var logger = new SplunkLogger({token: "token-goes-here"});
@@ -190,7 +209,7 @@ describe("SplunkLogger send (integration tests)", function() {
             logger.send(context, function(err, resp, body) {
                 assert.ok(!err);
                 assert.ok(run);
-                assert.strictEqual(resp.body, JSON.stringify(body));
+                assert.strictEqual(resp.body, body);
                 assert.strictEqual(body.text, invalidTokenBody.text);
                 assert.strictEqual(body.code, invalidTokenBody.code);
                 done();
@@ -198,7 +217,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should send without callback", function(done) {
             var config = {
-                token: configurationFile.token
+                token: TOKEN
             };
 
             var logger = new SplunkLogger(config);
@@ -220,7 +239,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should succeed with valid token", function(done) {
             var config = {
-                token: configurationFile.token
+                token: TOKEN
             };
 
             var logger = new SplunkLogger(config);
@@ -233,7 +252,7 @@ describe("SplunkLogger send (integration tests)", function() {
 
             logger.send(context, function(err, resp, body) {
                 assert.ok(!err);
-                assert.strictEqual(resp.body, JSON.stringify(body));
+                assert.strictEqual(resp.body, body);
                 assert.strictEqual(body.text, successBody.text);
                 assert.strictEqual(body.code, successBody.code);
                 done();
@@ -241,7 +260,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should succeed with valid token, using custom time", function(done) {
             var config = {
-                token: configurationFile.token
+                token: TOKEN
             };
 
             var logger = new SplunkLogger(config);
@@ -257,7 +276,7 @@ describe("SplunkLogger send (integration tests)", function() {
 
             logger.send(context, function(err, resp, body) {
                 assert.ok(!err);
-                assert.strictEqual(resp.body, JSON.stringify(body));
+                assert.strictEqual(resp.body, body);
                 assert.strictEqual(body.text, successBody.text);
                 assert.strictEqual(body.code, successBody.code);
                 done();
@@ -266,7 +285,7 @@ describe("SplunkLogger send (integration tests)", function() {
         // TODO: test unsuccessfully sending to another index with specific index token settings
         it("should succeed with valid token, sending to a different index", function(done) {
             var config = {
-                token: configurationFile.token
+                token: TOKEN
             };
 
             var logger = new SplunkLogger(config);
@@ -286,7 +305,7 @@ describe("SplunkLogger send (integration tests)", function() {
 
             logger.send(context, function(err, resp, body) {
                 assert.ok(!err);
-                assert.strictEqual(resp.body, JSON.stringify(body));
+                assert.strictEqual(resp.body, body);
                 assert.strictEqual(body.text, successBody.text);
                 assert.strictEqual(body.code, successBody.code);
                 done();
@@ -294,7 +313,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should succeed with valid token, changing source", function(done) {
             var config = {
-                token: configurationFile.token
+                token: TOKEN
             };
 
             var logger = new SplunkLogger(config);
@@ -310,7 +329,7 @@ describe("SplunkLogger send (integration tests)", function() {
 
             logger.send(context, function(err, resp, body) {
                 assert.ok(!err);
-                assert.strictEqual(resp.body, JSON.stringify(body));
+                assert.strictEqual(resp.body, body);
                 assert.strictEqual(body.text, successBody.text);
                 assert.strictEqual(body.code, successBody.code);
                 done();
@@ -318,7 +337,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should succeed with valid token, changing sourcetype", function(done) {
             var config = {
-                token: configurationFile.token
+                token: TOKEN
             };
 
             var logger = new SplunkLogger(config);
@@ -334,7 +353,7 @@ describe("SplunkLogger send (integration tests)", function() {
 
             logger.send(context, function(err, resp, body) {
                 assert.ok(!err);
-                assert.strictEqual(resp.body, JSON.stringify(body));
+                assert.strictEqual(resp.body, body);
                 assert.strictEqual(body.text, successBody.text);
                 assert.strictEqual(body.code, successBody.code);
                 done();
@@ -342,7 +361,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should succeed with valid token, changing host", function(done) {
             var config = {
-                token: configurationFile.token
+                token: TOKEN
             };
 
             var logger = new SplunkLogger(config);
@@ -358,7 +377,7 @@ describe("SplunkLogger send (integration tests)", function() {
 
             logger.send(context, function(err, resp, body) {
                 assert.ok(!err);
-                assert.strictEqual(resp.body, JSON.stringify(body));
+                assert.strictEqual(resp.body, body);
                 assert.strictEqual(body.text, successBody.text);
                 assert.strictEqual(body.code, successBody.code);
                 done();
@@ -366,7 +385,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should succeed with valid token", function(done) {
             var config = {
-                token: configurationFile.token
+                token: TOKEN
             };
 
             var logger = new SplunkLogger(config);
@@ -379,7 +398,7 @@ describe("SplunkLogger send (integration tests)", function() {
 
             logger.send(context, function(err, resp, body) {
                 assert.ok(!err);
-                assert.strictEqual(resp.body, JSON.stringify(body));
+                assert.strictEqual(resp.body, body);
                 assert.strictEqual(body.text, successBody.text);
                 assert.strictEqual(body.code, successBody.code);
                 done();
@@ -387,11 +406,11 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should succeed without token passed through context", function(done) {
             var config = {
-                token: configurationFile.token
+                token: TOKEN
             };
             var logger = new SplunkLogger(config);
 
-            assert.strictEqual(logger.config.token, config.token);
+            assert.strictEqual(logger.config.token, TOKEN);
 
             var data = "something";
 
@@ -402,7 +421,7 @@ describe("SplunkLogger send (integration tests)", function() {
 
             logger.send(context, function(err, resp, body) {
                 assert.ok(!err);
-                assert.strictEqual(resp.body, JSON.stringify(body));
+                assert.strictEqual(resp.body, body);
                 assert.strictEqual(body.text, successBody.text);
                 assert.strictEqual(body.code, successBody.code);
                 done();
@@ -410,7 +429,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should fail on wrong protocol (assumes HTTP is invalid)", function(done) {
             var config = {
-                token: configurationFile.token,
+                token: TOKEN,
                 protocol: "http"
             };
 
@@ -451,7 +470,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should fail on wrong Splunk server", function(done) {
             var config = {
-                token: configurationFile.token,
+                token: TOKEN,
                 url: "https://something-so-invalid-that-it-should-never-exist.xyz:12345/junk"
             };
 
@@ -469,7 +488,6 @@ describe("SplunkLogger send (integration tests)", function() {
                 assert.ok(err);
                 assert.strictEqual(err.message.indexOf("getaddrinfo ENOTFOUND"), 0);
                 assert.strictEqual(err.code, "ENOTFOUND");
-
                 assert.ok(errContext);
                 var body = JSON.parse(errContext.message);
                 assert.ok(body.hasOwnProperty("time"));
@@ -492,7 +510,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should succeed with valid token, using non-default url", function(done) {
             var config = {
-                token: configurationFile.token,
+                token: TOKEN,
                 url: "https://localhost:8088/services/collector/event/1.0"
             };
 
@@ -505,7 +523,7 @@ describe("SplunkLogger send (integration tests)", function() {
 
             logger.send(context, function(err, resp, body) {
                 assert.ok(!err);
-                assert.strictEqual(resp.body, JSON.stringify(body));
+                assert.strictEqual(resp.body, body);
                 assert.strictEqual(body.text, successBody.text);
                 assert.strictEqual(body.code, successBody.code);
                 done();
@@ -513,7 +531,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should error with valid token, using strict SSL", function(done) {
             var config = {
-                token: configurationFile.token
+                token: TOKEN
             };
 
             var logger = new SplunkLogger(config);
@@ -530,7 +548,7 @@ describe("SplunkLogger send (integration tests)", function() {
             logger.error = function(err, errContext) {
                 run = true;
                 assert.ok(err);
-                assert.strictEqual(err.code, "SELF_SIGNED_CERT_IN_CHAIN");
+
                 assert.ok(errContext);
 
                 var body = JSON.parse(errContext.message);
@@ -547,7 +565,10 @@ describe("SplunkLogger send (integration tests)", function() {
             logger.send(context, function(err, resp, body) {
                 assert.ok(err);
                 assert.ok(run);
-                assert.strictEqual(err.code, "SELF_SIGNED_CERT_IN_CHAIN");
+                // err.code is only defined on modern modern Node.js versions
+                if (err.code) {
+                    assert.strictEqual(err.code, "SELF_SIGNED_CERT_IN_CHAIN");
+                }
                 assert.ok(!resp);
                 assert.ok(!body);
                 done();
@@ -555,7 +576,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should send 2 events with valid token, w/o callbacks", function(done) {
             var config = {
-                token: configurationFile.token
+                token: TOKEN
             };
 
             var logger = new SplunkLogger(config);
@@ -591,7 +612,7 @@ describe("SplunkLogger send (integration tests)", function() {
     describe("default batching settings", function () {
         it("should get no data response when flushing empty batch with valid token", function(done) {
             var config = {
-                token: configurationFile.token
+                token: TOKEN
             };
 
             var logger = new SplunkLogger(config);
@@ -611,7 +632,7 @@ describe("SplunkLogger send (integration tests)", function() {
             logger.flush(function(err, resp, body) {
                 assert.ok(!err);
                 assert.ok(run);
-                assert.strictEqual(resp.body, JSON.stringify(body));
+                assert.strictEqual(resp.body, body);
                 assert.strictEqual(body.text, noDataBody.text);
                 assert.strictEqual(body.code, noDataBody.code);
                 assert.strictEqual(logger.serializedContextQueue.length, 0);
@@ -621,7 +642,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should be noop when flushing empty batch, without callback, with valid token", function(done) {
             var config = {
-                token: configurationFile.token
+                token: TOKEN
             };
 
             var logger = new SplunkLogger(config);
@@ -643,7 +664,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should flush a batch of 1 event with valid token", function(done) {
             var config = {
-                token: configurationFile.token,
+                token: TOKEN,
                 maxBatchCount: 0 // Use manual batching
             };
 
@@ -660,7 +681,7 @@ describe("SplunkLogger send (integration tests)", function() {
             assert.ok(logger.eventsBatchSize > 50);
             logger.flush(function(err, resp, body) {
                 assert.ok(!err);
-                assert.strictEqual(resp.body, JSON.stringify(body));
+                assert.strictEqual(resp.body, body);
                 assert.strictEqual(body.text, successBody.text);
                 assert.strictEqual(body.code, successBody.code);
                 assert.strictEqual(logger.serializedContextQueue.length, 0);
@@ -670,7 +691,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should flush a batch of 2 events with valid token", function(done) {
             var config = {
-                token: configurationFile.token,
+                token: TOKEN,
                 maxBatchCount: 0
             };
 
@@ -688,7 +709,7 @@ describe("SplunkLogger send (integration tests)", function() {
             assert.ok(logger.eventsBatchSize > 100);
             logger.flush(function(err, resp, body) {
                 assert.ok(!err);
-                assert.strictEqual(resp.body, JSON.stringify(body));
+                assert.strictEqual(resp.body, body);
                 assert.strictEqual(body.text, successBody.text);
                 assert.strictEqual(body.code, successBody.code);
                 assert.strictEqual(logger.serializedContextQueue.length, 0);
@@ -700,7 +721,7 @@ describe("SplunkLogger send (integration tests)", function() {
     describe("using retry", function() {
         it("should retry exactly 0 times (send once only)", function(done) {
             var config = {
-                token: configurationFile.token,
+                token: TOKEN,
                 maxRetries: 0
             };
             var logger = new SplunkLogger(config);
@@ -735,7 +756,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should retry exactly once", function(done) {
             var config = {
-                token: configurationFile.token,
+                token: TOKEN,
                 maxRetries: 1,
                 maxBatchCount: 1
             };
@@ -771,7 +792,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should retry exactly twice", function(done) {
             var config = {
-                token: configurationFile.token,
+                token: TOKEN,
                 maxRetries: 2,
                 maxBatchCount: 1
             };
@@ -807,7 +828,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should retry exactly 5 times", function(done) {
             var config = {
-                token: configurationFile.token,
+                token: TOKEN,
                 maxRetries: 5,
                 maxBatchCount: 1
             };
@@ -843,7 +864,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should not retry on initial success when maxRetries=1", function(done) {
             var config = {
-                token: configurationFile.token,
+                token: TOKEN,
                 maxRetries: 1,
                 maxBatchCount: 1
             };
@@ -879,7 +900,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should retry once when maxRetries=10", function(done) {
             var config = {
-                token: configurationFile.token,
+                token: TOKEN,
                 maxRetries: 10,
                 maxBatchCount: 1
             };
@@ -915,7 +936,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should retry on request error when maxRetries=0", function(done) {
             var config = {
-                token: configurationFile.token,
+                token: TOKEN,
                 maxRetries: 0,
                 host: "bad-hostname.invalid",
                 maxBatchCount: 1
@@ -953,7 +974,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should retry on request error when maxRetries=1", function(done) {
             var config = {
-                token: configurationFile.token,
+                token: TOKEN,
                 maxRetries: 1,
                 host: "bad-hostname.invalid",
                 maxBatchCount: 1
@@ -991,7 +1012,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should retry on request error when maxRetries=5", function(done) {
             var config = {
-                token: configurationFile.token,
+                token: TOKEN,
                 maxRetries: 5,
                 host: "bad-hostname.invalid",
                 maxBatchCount: 1
@@ -1148,7 +1169,7 @@ describe("SplunkLogger send (integration tests)", function() {
     describe("using batch interval", function() {
         it("should not make a POST request if contextQueue is always empty", function(done) {
             var config = {
-                token: configurationFile.token,
+                token: TOKEN,
                 batchInterval: 100
             };
             var logger = new SplunkLogger(config);
@@ -1161,9 +1182,8 @@ describe("SplunkLogger send (integration tests)", function() {
                 _post(context, function(err, resp, body) {
                     posts++;
                     assert.ok(!err);
-                    var b = JSON.parse(body);
-                    assert.strictEqual(b.code, successBody.code);
-                    assert.strictEqual(b.text, successBody.text);
+                    assert.strictEqual(body.code, successBody.code);
+                    assert.strictEqual(body.text, successBody.text);
                     callback(err, resp, body);
                 });
             };
@@ -1181,7 +1201,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should only make 1 POST request for 1 event", function(done) {
             var config = {
-                token: configurationFile.token,
+                token: TOKEN,
                 batchInterval: 100,
                 maxBatchCount: 10
             };
@@ -1195,9 +1215,8 @@ describe("SplunkLogger send (integration tests)", function() {
                 _post(context, function(err, resp, body) {
                     posts++;
                     assert.ok(!err);
-                    var b = JSON.parse(body);
-                    assert.strictEqual(b.code, successBody.code);
-                    assert.strictEqual(b.text, successBody.text);
+                    assert.strictEqual(body.code, successBody.code);
+                    assert.strictEqual(body.text, successBody.text);
                     callback(err, resp, body);
                 });
             };
@@ -1220,7 +1239,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should only make 1 POST request for 2 events", function(done) {
             var config = {
-                token: configurationFile.token,
+                token: TOKEN,
                 batchInterval: 100,
                 maxBatchCount: 10
             };
@@ -1234,9 +1253,8 @@ describe("SplunkLogger send (integration tests)", function() {
                 _post(context, function(err, resp, body) {
                     posts++;
                     assert.ok(!err);
-                    var b = JSON.parse(body);
-                    assert.strictEqual(b.code, successBody.code);
-                    assert.strictEqual(b.text, successBody.text);
+                    assert.strictEqual(body.code, successBody.code);
+                    assert.strictEqual(body.text, successBody.text);
                     callback(err, resp, body);
                 });
             };
@@ -1262,7 +1280,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should only make 1 POST request for 5 events", function(done) {
             var config = {
-                token: configurationFile.token,
+                token: TOKEN,
                 batchInterval: 200,
                 maxBatchSize: 5000,
                 maxBatchCount: 10
@@ -1277,9 +1295,8 @@ describe("SplunkLogger send (integration tests)", function() {
                 _post(context, function(err, resp, body) {
                     posts++;
                     assert.ok(!err);
-                    var b = JSON.parse(body);
-                    assert.strictEqual(b.code, successBody.code);
-                    assert.strictEqual(b.text, successBody.text);
+                    assert.strictEqual(body.code, successBody.code);
+                    assert.strictEqual(body.text, successBody.text);
                     callback(err, resp, body);
                 });
             };
@@ -1306,7 +1323,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should error when trying to set batchInterval to a negative value after logger creation", function() {
             var config = {
-                token: configurationFile.token
+                token: TOKEN
             };
             var logger = new SplunkLogger(config);
 
@@ -1321,7 +1338,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should flush a stale event after enabling batching and batchInterval", function(done) {
             var config = {
-                token: configurationFile.token,
+                token: TOKEN,
                 maxBatchCount: 10
             };
             var logger = new SplunkLogger(config);
@@ -1334,9 +1351,8 @@ describe("SplunkLogger send (integration tests)", function() {
                 _post(context, function(err, resp, body) {
                     posts++;
                     assert.ok(!err);
-                    var b = JSON.parse(body);
-                    assert.strictEqual(b.code, successBody.code);
-                    assert.strictEqual(b.text, successBody.text);
+                    assert.strictEqual(body.code, successBody.code);
+                    assert.strictEqual(body.text, successBody.text);
                     callback(err, resp, body);
                 });
             };
@@ -1367,7 +1383,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should flush an event with batchInterval, then set batchInterval=0 and maxBatchCount=3 for manual batching", function(done) {
             var config = {
-                token: configurationFile.token,
+                token: TOKEN,
                 batchInterval: 100,
                 maxBatchSize: 100000,
                 maxBatchCount: 3
@@ -1382,9 +1398,8 @@ describe("SplunkLogger send (integration tests)", function() {
                 _post(context, function(err, resp, body) {
                     posts++;
                     assert.ok(!err);
-                    var b = JSON.parse(body);
-                    assert.strictEqual(b.code, successBody.code);
-                    assert.strictEqual(b.text, successBody.text);
+                    assert.strictEqual(body.code, successBody.code);
+                    assert.strictEqual(body.text, successBody.text);
                     callback(err, resp, body);
                 });
             };
@@ -1423,7 +1438,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should flush an event with batchInterval=100", function(done) {
             var config = {
-                token: configurationFile.token,
+                token: TOKEN,
                 batchInterval: 100,
                 maxBatchCount: 10
             };
@@ -1437,9 +1452,8 @@ describe("SplunkLogger send (integration tests)", function() {
                 _post(context, function(err, resp, body) {
                     posts++;
                     assert.ok(!err);
-                    var b = JSON.parse(body);
-                    assert.strictEqual(b.code, successBody.code);
-                    assert.strictEqual(b.text, successBody.text);
+                    assert.strictEqual(body.code, successBody.code);
+                    assert.strictEqual(body.text, successBody.text);
                     callback(err, resp, body);
                 });
             };
@@ -1477,7 +1491,7 @@ describe("SplunkLogger send (integration tests)", function() {
     describe("using max batch size", function() {
         it("should flush first event immediately with maxBatchSize=1", function(done) {
             var config = {
-                token: configurationFile.token
+                token: TOKEN
             };
             var logger = new SplunkLogger(config);
 
@@ -1495,9 +1509,8 @@ describe("SplunkLogger send (integration tests)", function() {
                     assert.strictEqual(logger.eventsBatchSize, 0);
 
                     assert.ok(!err);
-                    var b = JSON.parse(body);
-                    assert.strictEqual(b.code, successBody.code);
-                    assert.strictEqual(b.text, successBody.text);
+                    assert.strictEqual(body.code, successBody.code);
+                    assert.strictEqual(body.text, successBody.text);
 
                     done();
                 });
@@ -1510,7 +1523,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should flush first 2 events after maxBatchSize>100", function(done) {
             var config = {
-                token: configurationFile.token,
+                token: TOKEN,
                 maxBatchCount: 10,
                 maxBatchSize: 100
             };
@@ -1530,9 +1543,8 @@ describe("SplunkLogger send (integration tests)", function() {
                     assert.strictEqual(logger.eventsBatchSize, 0);
 
                     assert.ok(!err);
-                    var b = JSON.parse(body);
-                    assert.strictEqual(b.code, successBody.code);
-                    assert.strictEqual(b.text, successBody.text);
+                    assert.strictEqual(body.code, successBody.code);
+                    assert.strictEqual(body.text, successBody.text);
 
                     done();
                 });
@@ -1561,7 +1573,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should flush first event after 200ms, with maxBatchSize=200", function(done) {
             var config = {
-                token: configurationFile.token,
+                token: TOKEN,
                 maxBatchSize: 200,
                 batchInterval: 200,
                 maxBatchCount: 10
@@ -1577,9 +1589,8 @@ describe("SplunkLogger send (integration tests)", function() {
                     posts++;
 
                     assert.ok(!err);
-                    var b = JSON.parse(body);
-                    assert.strictEqual(b.code, successBody.code);
-                    assert.strictEqual(b.text, successBody.text);
+                    assert.strictEqual(body.code, successBody.code);
+                    assert.strictEqual(body.text, successBody.text);
                 });
             };
 
@@ -1607,7 +1618,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should flush first event before 200ms, with maxBatchSize=1", function(done) {
             var config = {
-                token: configurationFile.token,
+                token: TOKEN,
                 maxBatchSize: 1,
                 batchInterval: 200,
                 maxBatchCount: 10
@@ -1623,9 +1634,8 @@ describe("SplunkLogger send (integration tests)", function() {
                     posts++;
 
                     assert.ok(!err);
-                    var b = JSON.parse(body);
-                    assert.strictEqual(b.code, successBody.code);
-                    assert.strictEqual(b.text, successBody.text);
+                    assert.strictEqual(body.code, successBody.code);
+                    assert.strictEqual(body.text, successBody.text);
                 });
             };
 
@@ -1654,7 +1664,7 @@ describe("SplunkLogger send (integration tests)", function() {
     describe("using max batch count", function() {
         it("should flush first event immediately with maxBatchCount=1 with large maxBatchSize", function(done) {
             var config = {
-                token: configurationFile.token,
+                token: TOKEN,
                 maxBatchCount: 1,
                 maxBatchSize: 123456
             };
@@ -1674,9 +1684,8 @@ describe("SplunkLogger send (integration tests)", function() {
                     assert.strictEqual(logger.eventsBatchSize, 0);
 
                     assert.ok(!err);
-                    var b = JSON.parse(body);
-                    assert.strictEqual(b.code, successBody.code);
-                    assert.strictEqual(b.text, successBody.text);
+                    assert.strictEqual(body.code, successBody.code);
+                    assert.strictEqual(body.text, successBody.text);
 
                     done();
                 });
@@ -1689,7 +1698,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should not flush events with maxBatchCount=0 (meaning ignore) and large maxBatchSize", function(done) {
             var config = {
-                token: configurationFile.token,
+                token: TOKEN,
                 maxBatchCount: 0,
                 maxBatchSize: 123456
             };
@@ -1725,7 +1734,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should flush first 2 events after maxBatchCount=2, ignoring large maxBatchSize", function(done) {
             var config = {
-                token: configurationFile.token,
+                token: TOKEN,
                 maxBatchCount: 2,
                 maxBatchSize: 123456
             };
@@ -1745,9 +1754,8 @@ describe("SplunkLogger send (integration tests)", function() {
                     assert.strictEqual(logger.eventsBatchSize, 0);
 
                     assert.ok(!err);
-                    var b = JSON.parse(body);
-                    assert.strictEqual(b.code, successBody.code);
-                    assert.strictEqual(b.text, successBody.text);
+                    assert.strictEqual(body.code, successBody.code);
+                    assert.strictEqual(body.text, successBody.text);
 
                     done();
                 });
@@ -1776,7 +1784,7 @@ describe("SplunkLogger send (integration tests)", function() {
         });
         it("should flush first event after 200ms, with maxBatchCount=10", function(done) {
             var config = {
-                token: configurationFile.token,
+                token: TOKEN,
                 maxBatchCount: 10,
                 batchInterval: 200
             };
@@ -1791,9 +1799,8 @@ describe("SplunkLogger send (integration tests)", function() {
                     posts++;
 
                     assert.ok(!err);
-                    var b = JSON.parse(body);
-                    assert.strictEqual(b.code, successBody.code);
-                    assert.strictEqual(b.text, successBody.text);
+                    assert.strictEqual(body.code, successBody.code);
+                    assert.strictEqual(body.text, successBody.text);
                 });
             };
 
@@ -1823,7 +1830,7 @@ describe("SplunkLogger send (integration tests)", function() {
     describe("using custom eventFormatter", function() {
         it("should use custom event formatter, instead of the default", function(done) {
             var config = {
-                token: configurationFile.token,
+                token: TOKEN,
                 maxBatchCount: 1
             };
             var logger = new SplunkLogger(config);
@@ -1864,7 +1871,7 @@ describe("SplunkLogger send (integration tests)", function() {
     describe("receiving HTML response", function() {
         it("should handle JSON parsing exception without crashing", function(done) {
             var config = {
-                token: configurationFile.token
+                token: TOKEN
             };
             var logger = new SplunkLogger(config);
             logger.requestOptions.fail = "yes";

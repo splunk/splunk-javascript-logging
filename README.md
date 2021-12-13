@@ -1,13 +1,13 @@
 # Splunk logging for JavaScript
 
-#### Version 0.9.2
+#### Version 0.11.1
 
 This project provides a simple JavaScript interface for logging to HTTP Event Collector in Splunk Enterprise and Splunk Cloud.
 
 ## Requirements
 
-* Node.js v0.10 or later.
-* Splunk Enterprise 6.3.0 or later, or Splunk Cloud.
+* Node.js v4 or later. Splunk logging for Javascript is tested with Node.js v10.0 and v14.0.
+* Splunk Enterprise 6.3.0 or later, or Splunk Cloud. Splunk logging for Javascript is tested with Splunk Enterprise 8.0 and 8.2.0.
 * An HTTP Event Collector token from your Splunk Enterprise server.
 
 ## Installation
@@ -32,7 +32,7 @@ See the `examples` folder for usage examples:
 
 ### SSL
 
-Note: SSL certificate validation is diabled by default.
+Note: SSL certificate validation is disabled by default.
 To enable it, set `requestOptions.strictSSL = true` on your `SplunkLogger` instance:
 
 ```javascript
@@ -111,12 +111,14 @@ Stay connected with other developers building on Splunk software.
 
 ## Support
 
-The Splunk logging library for .NET is community-supported.
+The Splunk logging library for JavaScript is community-supported.
 
 1. You can find help through our community on [Splunk Answers](http://answers.splunk.com/) (use the `logging-library-javascript` tag to identify your questions).
 2. File issues on [GitHub](https://github.com/splunk/splunk-javascript-logging/issues).
 
 ## Contact us
+
+You can [contact support][contact] if you have Splunk related questions.
 
 You can reach the Dev Platform team at [devinfo@splunk.com](mailto:devinfo@splunk.com).
 
@@ -124,3 +126,5 @@ You can reach the Dev Platform team at [devinfo@splunk.com](mailto:devinfo@splun
 
 The Splunk Logging Library for JavaScript is licensed under the Apache
 License 2.0. Details can be found in the LICENSE file.
+
+[contact]:                  https://www.splunk.com/en_us/support-and-services.html
