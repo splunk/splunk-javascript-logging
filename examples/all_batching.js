@@ -59,6 +59,13 @@ var payload = {
         sourcetype: "httpevent",
         index: "main",
         host: "farm.local",
+        fields: {
+            device: "001",
+            sensors: [
+                "s44",
+                "s657"
+            ]
+        },
     },
     // Severity is also optional
     severity: "info"

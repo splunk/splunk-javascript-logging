@@ -383,6 +383,36 @@ describe("SplunkLogger send (integration tests)", function() {
                 done();
             });
         });
+        it("should succeed with valid token, changing fields", function(done) {
+            var config = {
+                token: TOKEN
+            };
+
+            var logger = new SplunkLogger(config);
+
+            var data = "something else";
+
+            var context = {
+                message: data,
+                metadata: {
+                    fields: {
+                        club: "glee",
+                        wins: [
+                            "regionals",
+                            "nationals"
+                        ]
+                    }
+                }
+            };
+
+            logger.send(context, function (err, resp, body) {
+                assert.ok(!err);
+                assert.strictEqual(resp.body, body);
+                assert.strictEqual(body.text, successBody.text);
+                assert.strictEqual(body.code, successBody.code);
+                done();
+            });
+        });
         it("should succeed with valid token", function(done) {
             var config = {
                 token: TOKEN
