@@ -856,6 +856,25 @@ describe("SplunkLogger", function() {
             assert.strictEqual(0, loggerConfig.batchInterval);
             assert.strictEqual(0, loggerConfig.maxBatchSize);
         });
+        it("should use the default contentType if not overriden", function() {
+            var config = {
+                token: "a-token-goes-here-usually",
+                url: "splunk.local"
+            };
+            var loggerConfig = SplunkLogger.prototype._initializeConfig(config);
+
+            assert.strictEqual("application/x-www-form-urlencoded", loggerConfig.contentType);
+        });
+        it("should set the contentType if overriden", function() {
+            var config = {
+                token: "a-token-goes-here-usually",
+                url: "splunk.local",
+                contentType: "application/json"
+            };
+            var loggerConfig = SplunkLogger.prototype._initializeConfig(config);
+
+            assert.strictEqual("application/json", loggerConfig.contentType);
+        });
     });
     describe("_initializeRequestOptions", function() {
         it("should get defaults with no args", function() {

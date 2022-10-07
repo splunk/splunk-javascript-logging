@@ -144,6 +144,7 @@ SplunkLogger.prototype.levels = {
 };
 
 var defaultConfig = {
+    contentType: "application/x-www-form-urlencoded",
     name: "splunk-javascript-logging/0.11.1",
     host: "localhost",
     path: "/services/collector/event/1.0",
@@ -288,6 +289,9 @@ SplunkLogger.prototype._initializeConfig = function(config) {
         else if (this._timerID && (ret.batchInterval <= 0 || this._timerDuration < 0)) {
             this._disableTimer();
         }
+
+        // Allow Content-Type header override from config
+        ret.contentType = utils.orByFalseyProp("contentType", config, ret, defaultConfig);
     }
     return ret;
 };
@@ -443,7 +447,7 @@ SplunkLogger.prototype._sendEvents = function(context, callback) {
     requestOptions.headers["Authorization"] = "Splunk " + this.config.token;
     // Manually set the content-type header, the default is application/json
     // since json is set to true.
-    requestOptions.headers["Content-Type"] = "application/x-www-form-urlencoded";
+    requestOptions.headers["Content-Type"] = this.config.contentType;
     requestOptions.url = this.config.protocol + "://" + this.config.host + ":" + this.config.port + this.config.path;
 
     // Initialize the context again, right before using it
