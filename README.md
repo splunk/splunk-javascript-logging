@@ -111,16 +111,12 @@ Stay connected with other developers building on Splunk software.
 
 ## Support
 
-The Splunk logging library for JavaScript is community-supported.
+### Support
 
-1. You can find help through our community on [Splunk Answers](http://answers.splunk.com/) (use the `logging-library-javascript` tag to identify your questions).
+The Splunk Logging Library for JavaScript is community-supported.
+
+1. You can find help through our community on [Splunk Answers](https://community.splunk.com/t5/tag/logging-library-javascript/tg-p) (use the `logging-library-javascript` tag to identify your questions).
 2. File issues on [GitHub](https://github.com/splunk/splunk-javascript-logging/issues).
-
-## Contact us
-
-You can [contact support][contact] if you have Splunk related questions.
-
-You can reach the Dev Platform team at [devinfo@splunk.com](mailto:devinfo@splunk.com).
 
 ## License
 
